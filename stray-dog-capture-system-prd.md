@@ -36,7 +36,7 @@
 
 ### 1.1 Purpose
 
-The Stray Dog Capture & Reporting System (SDCRS) is a state-wide civic initiative that leverages the existing teacher workforce as a distributed reporting network for stray dog sightings. Teachers report sightings through a mobile application with photo evidence and location data. Verified reports are routed to Municipal Corporations for action, and teachers receive incentive-based payouts for valid submissions.
+The Stray Dog Capture & Reporting System (SDCRS) is a state-wide civic initiative that leverages the existing teacher workforce as a distributed reporting network for stray dog sightings. Teachers report sightings through a mobile application with photo evidence and location data. Verified applications are routed to Municipal Corporations for action, and teachers receive incentive-based payouts only after the Municipal Corporation successfully captures or resolves the incident.
 
 ### 1.2 Key Value Propositions
 
@@ -50,7 +50,7 @@ The Stray Dog Capture & Reporting System (SDCRS) is a state-wide civic initiativ
 A mobile-first application for teachers to submit geo-tagged photo evidence of stray dogs, supported by:
 - Automated duplicate detection using image hashing
 - Human verification workflow for flagged submissions
-- Gamification and payout system tied to verified reports
+- Gamification and payout system tied to successful capture/resolution by Municipal Corporation
 - Operational dashboards for Municipal Corporation field teams
 - Administrative dashboards for program monitoring and fraud detection
 
@@ -205,6 +205,7 @@ The state has approximately 400,000 teachers distributed across all districts an
 | SUB-02 | Capture/upload selfie at same location (for verification) | P0 |
 | SUB-03 | Auto-extract GPS coordinates from image EXIF data | P0 |
 | SUB-04 | Flag submission if GPS is missing or appears spoofed | P0 |
+| SUB-04a | Auto-reject submission if GPS coordinates are outside valid tenant boundary | P0 |
 | SUB-05 | Capture timestamp automatically; reject if >48 hours old | P0 |
 | SUB-06 | Allow manual location adjustment via map pin (with audit log) | P1 |
 | SUB-07 | Dog condition tags: `normal`, `injured`, `aggressive`, `with puppies`, `collared` | P0 |
@@ -289,7 +290,7 @@ The state has approximately 400,000 teachers distributed across all districts an
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| PTS-01 | Award base points (50) for each verified submission | P0 |
+| PTS-01 | Award base points (50) for each successfully captured/resolved incident | P0 |
 | PTS-02 | Bonus: +25 points for injured/aggressive dog report | P0 |
 | PTS-03 | Bonus: +25 points for first report in a new locality | P1 |
 | PTS-04 | Streak bonus: +10% for 7 consecutive days of reporting | P2 |
@@ -300,7 +301,7 @@ The state has approximately 400,000 teachers distributed across all districts an
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| PAY-01 | Calculate payout weekly based on verified submissions | P0 |
+| PAY-01 | Calculate payout weekly based on successfully captured/resolved incidents | P0 |
 | PAY-02 | Generate payout file for treasury/DBT integration | P0 |
 | PAY-03 | Update teacher dashboard upon successful disbursement | P0 |
 | PAY-04 | Handle failed transactions with retry mechanism | P0 |
@@ -441,10 +442,10 @@ The state has approximately 400,000 teachers distributed across all districts an
                                     │
          ┌──────────────────────────┼──────────────────────────┐
          │                          │                          │
-┌────────▼────────┐      ┌──────────▼──────────┐    ┌─────────▼─────────┐
+┌────────▼────────┐      ┌──────────▼──────────┐    ┌──────────▼────────┐
 │  Submission     │      │  Verification       │    │  Payout           │
 │  Service        │      │  Service            │    │  Service          │
-└────────┬────────┘      └──────────┬──────────┘    └─────────┬─────────┘
+└────────┬────────┘      └──────────┬──────────┘    └──────────┬────────┘
          │                          │                          │
          │               ┌──────────▼──────────┐               │
          │               │  Duplicate Detection│               │
