@@ -1,0 +1,41 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "ResolutionType": [
+    {
+      "code": "CAPTURED",
+      "name": "Captured",
+      "description": "Dog captured and taken to shelter",
+      "payoutEligible": true,
+      "active": true
+    },
+    {
+      "code": "RELOCATED",
+      "name": "Relocated",
+      "description": "Dog relocated to safer area",
+      "payoutEligible": true,
+      "active": true
+    },
+    {
+      "code": "STERILIZED_RELEASED",
+      "name": "Sterilized & Released",
+      "description": "Dog sterilized and released (ABC program)",
+      "payoutEligible": true,
+      "active": true
+    },
+    {
+      "code": "UNABLE_TO_LOCATE",
+      "name": "Unable to Locate",
+      "description": "Dog could not be found at reported location",
+      "payoutEligible": false,
+      "active": true
+    },
+    {
+      "code": "ALREADY_RESOLVED",
+      "name": "Already Resolved",
+      "description": "Issue already resolved by other means",
+      "payoutEligible": false,
+      "active": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "PayoutConfig": [
+    {
+      "code": "DEFAULT",
+      "amountPerCapture": 500,
+      "currency": "INR",
+      "paymentMethod": "UPI",
+      "maxMonthlyPayoutPerTeacher": 5000,
+      "maxDailyReportsPerTeacher": 5,
+      "minIntervalBetweenReportsMinutes": 30,
+      "payoutTriggerState": "CAPTURED",
+      "eligibleResolutionTypes": ["CAPTURED", "RELOCATED", "STERILIZED_RELEASED"],
+      "active": true
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "DigitStudio",
+  "DocumentConfig": [
+    {
+      "module": "SDCRS.STRAY_DOG_REPORT",
+      "actions": [
+        {
+          "action": "SUBMIT",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": false
+          },
+          "documents": [
+            {
+              "code": "SDCRS_DOG_PHOTO",
+              "name": "dog-photo",
+              "active": true,
+              "isMandatory": true,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 3,
+              "allowedFileTypes": ["jpeg", "jpg", "png"],
+              "showTextInput": false,
+              "extractExif": true
+            },
+            {
+              "code": "SDCRS_REPORTER_SELFIE",
+              "name": "reporter-selfie",
+              "active": true,
+              "isMandatory": true,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 1,
+              "allowedFileTypes": ["jpeg", "jpg", "png"],
+              "showTextInput": false,
+              "requireFrontCamera": true
+            }
+          ]
+        },
+        {
+          "action": "VERIFY",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": false
+          },
+          "documents": []
+        },
+        {
+          "action": "REJECT",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": true
+          },
+          "documents": []
+        },
+        {
+          "action": "MARK_DUPLICATE",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": true
+          },
+          "documents": []
+        },
+        {
+          "action": "ASSIGN",
+          "assignee": {
+            "show": true,
+            "isMandatory": true,
+            "roles": ["MC_OFFICER"]
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": false
+          },
+          "documents": []
+        },
+        {
+          "action": "START_FIELD_VISIT",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": false
+          },
+          "documents": []
+        },
+        {
+          "action": "MARK_CAPTURED",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": true
+          },
+          "documents": [
+            {
+              "code": "SDCRS_CAPTURE_PROOF",
+              "name": "capture-proof",
+              "active": true,
+              "isMandatory": true,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 3,
+              "allowedFileTypes": ["jpeg", "jpg", "png"],
+              "showTextInput": false
+            },
+            {
+              "code": "SDCRS_SHELTER_RECEIPT",
+              "name": "shelter-receipt",
+              "active": true,
+              "isMandatory": false,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 1,
+              "allowedFileTypes": ["jpeg", "jpg", "png", "pdf"],
+              "showTextInput": false
+            }
+          ]
+        },
+        {
+          "action": "MARK_UNABLE_TO_LOCATE",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": true
+          },
+          "documents": [
+            {
+              "code": "SDCRS_LOCATION_VISIT_PROOF",
+              "name": "location-visit-proof",
+              "active": true,
+              "isMandatory": false,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 2,
+              "allowedFileTypes": ["jpeg", "jpg", "png"],
+              "showTextInput": false
+            }
+          ]
+        },
+        {
+          "action": "MANUAL_RESOLVE",
+          "assignee": {
+            "show": false,
+            "isMandatory": false
+          },
+          "comments": {
+            "show": true,
+            "isMandatory": true
+          },
+          "documents": [
+            {
+              "code": "SDCRS_MANUAL_PAYMENT_PROOF",
+              "name": "manual-payment-proof",
+              "active": true,
+              "isMandatory": true,
+              "maxSizeInMB": 5,
+              "maxFilesAllowed": 1,
+              "allowedFileTypes": ["jpeg", "jpg", "png", "pdf"],
+              "showTextInput": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

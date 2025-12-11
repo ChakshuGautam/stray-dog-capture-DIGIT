@@ -1,0 +1,62 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "RejectionReason": [
+    {
+      "code": "UNCLEAR_PHOTO",
+      "name": "Unclear Photo",
+      "description": "Photo is blurry or dog is not clearly visible",
+      "type": "MANUAL",
+      "active": true
+    },
+    {
+      "code": "NO_DOG_VISIBLE",
+      "name": "No Dog Visible",
+      "description": "No dog visible in the submitted photo",
+      "type": "MANUAL",
+      "active": true
+    },
+    {
+      "code": "DUPLICATE_REPORT",
+      "name": "Duplicate Report",
+      "description": "This dog has already been reported",
+      "type": "MANUAL",
+      "active": true
+    },
+    {
+      "code": "OUTSIDE_BOUNDARY",
+      "name": "Outside Service Area",
+      "description": "Location is outside the service boundary",
+      "type": "AUTO",
+      "active": true
+    },
+    {
+      "code": "INVALID_LOCATION",
+      "name": "Invalid Location",
+      "description": "GPS coordinates do not match photo EXIF data",
+      "type": "AUTO",
+      "active": true
+    },
+    {
+      "code": "STALE_PHOTO",
+      "name": "Stale Photo",
+      "description": "Photo is older than 48 hours",
+      "type": "AUTO",
+      "active": true
+    },
+    {
+      "code": "DUPLICATE_IMAGE",
+      "name": "Duplicate Image",
+      "description": "Image matches a previously submitted report",
+      "type": "AUTO",
+      "active": true
+    },
+    {
+      "code": "FRAUDULENT_SUBMISSION",
+      "name": "Fraudulent Submission",
+      "description": "Report flagged as potentially fraudulent",
+      "type": "MANUAL",
+      "active": true
+    }
+  ]
+}

@@ -59,6 +59,13 @@ stray-dog-capture/
 │   ├── 04b-ccrs-inspired-custom-service.md
 │   ├── 04c-ccrs-fork/                # Approach C: Fork PGR services
 │   ├── 04c-ccrs-fork-modified.md
+│   ├── 04d-digit-studio/             # Approach D: DIGIT Studio configuration
+│   │   └── data/ncr/                 # MDMS config files
+│   │       ├── Studio/               # ServiceConfiguration
+│   │       ├── DigitStudio/          # DocumentConfig per action
+│   │       ├── SDCRS/                # Domain master data
+│   │       └── ACCESSCONTROL-ROLES/  # Role definitions
+│   ├── 04d-digit-studio-configuration.md
 │   │
 │   ├── 05-sequence-diagrams.md       # Sequence diagrams documentation
 │   ├── 05-sequence-diagrams/         # PlantUML sequence diagrams
@@ -352,15 +359,22 @@ Copy contents of `06-workflow/sdcrs-workflow-viz-upi.ts` to:
 
 | Approach | Location | Description | Recommended? |
 |----------|----------|-------------|--------------|
-| **A** | `04a-ccrs/` | Configure existing CCRS/PGR service | No |
-| **B** | `04b-no-ccrs/` | Build custom SDCRS service | **Yes** |
+| **A** | `04a-ccrs/` | Configure existing CCRS/PGR service with `additionalDetail` JSONB | No |
+| **B** | `04b-no-ccrs/` | Build custom SDCRS service (Spring Boot) | **Yes** |
 | **C** | `04c-ccrs-fork/` | Fork and modify PGR service | No |
+| **D** | `04d-digit-studio/` | Use DIGIT Studio ServiceConfiguration pattern | Consider |
 
-**Approach B** is recommended because:
+**Approach B** is recommended for production because:
 - Full control over domain model
 - Clean separation from PGR/complaint handling
 - Easier to add SDCRS-specific features (fraud detection, UPI payouts)
 - No dependency on CCRS release cycles
+
+**Approach D** is good for rapid prototyping because:
+- Zero custom backend code - configuration only
+- Form fields + workflow + documents in single config
+- Auto form rendering on frontend from field definitions
+- Good for validating requirements before building custom service
 
 ---
 
