@@ -1,0 +1,198 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+  "roleactions": [
+    {
+      "rolecode": "TEACHER",
+      "actionid": 5001,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "TEACHER",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "TEACHER",
+      "actionid": 5004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 5002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 5011,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 5012,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 5002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 5004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 5011,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 5012,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5011,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5012,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5013,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 5014,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 5005,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 5007,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 5010,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 5015,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5005,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5007,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5008,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5010,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 5015,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "SYSTEM",
+      "actionid": 5002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "SYSTEM",
+      "actionid": 5006,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "SYSTEM",
+      "actionid": 5009,
+      "actioncode": "",
+      "tenantId": "ncr"
+    }
+  ]
+}

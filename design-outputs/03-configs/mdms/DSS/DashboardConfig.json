@@ -6,6 +6,7 @@
       "name": "SDCRS_OVERVIEW",
       "id": "sdcrs-overview",
       "isActive": true,
+      "roleIds": ["TEACHER", "VERIFIER", "MC_OFFICER", "MC_SUPERVISOR", "DISTRICT_ADMIN", "STATE_ADMIN"],
       "style": "linear",
       "visualizations": [
         {
@@ -63,6 +64,7 @@
       "name": "SDCRS_PAYOUT",
       "id": "sdcrs-payout",
       "isActive": true,
+      "roleIds": ["DISTRICT_ADMIN", "STATE_ADMIN"],
       "style": "linear",
       "visualizations": [
         {
@@ -106,6 +108,7 @@
       "name": "SDCRS_SLA",
       "id": "sdcrs-sla",
       "isActive": true,
+      "roleIds": ["VERIFIER", "MC_SUPERVISOR", "DISTRICT_ADMIN", "STATE_ADMIN"],
       "style": "linear",
       "visualizations": [
         {
@@ -149,6 +152,7 @@
       "name": "SDCRS_PERFORMANCE",
       "id": "sdcrs-performance",
       "isActive": true,
+      "roleIds": ["MC_SUPERVISOR", "DISTRICT_ADMIN", "STATE_ADMIN"],
       "style": "linear",
       "visualizations": [
         {

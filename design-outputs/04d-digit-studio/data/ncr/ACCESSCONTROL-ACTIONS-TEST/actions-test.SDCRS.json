@@ -12,7 +12,7 @@
       "displayName": "Create Stray Dog Report",
       "orderNumber": 1,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5002,
@@ -24,7 +24,7 @@
       "displayName": "Update Stray Dog Report",
       "orderNumber": 2,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5003,
@@ -36,7 +36,7 @@
       "displayName": "Search Stray Dog Reports",
       "orderNumber": 3,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5004,
@@ -48,7 +48,7 @@
       "displayName": "Track Stray Dog Report",
       "orderNumber": 4,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5005,
@@ -60,7 +60,7 @@
       "displayName": "Count Stray Dog Reports",
       "orderNumber": 5,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5006,
@@ -72,7 +72,7 @@
       "displayName": "Create Payout",
       "orderNumber": 6,
       "serviceCode": "SDCRS",
-      "parentModule": "payout"
+      "parentModule": ""
     },
     {
       "id": 5007,
@@ -84,7 +84,7 @@
       "displayName": "Search Payouts",
       "orderNumber": 7,
       "serviceCode": "SDCRS",
-      "parentModule": "payout"
+      "parentModule": ""
     },
     {
       "id": 5008,
@@ -96,7 +96,7 @@
       "displayName": "Retry Failed Payout",
       "orderNumber": 8,
       "serviceCode": "SDCRS",
-      "parentModule": "payout"
+      "parentModule": ""
     },
     {
       "id": 5009,
@@ -108,7 +108,7 @@
       "displayName": "Check Fraud Risk",
       "orderNumber": 9,
       "serviceCode": "SDCRS",
-      "parentModule": "fraud"
+      "parentModule": ""
     },
     {
       "id": 5010,
@@ -120,7 +120,7 @@
       "displayName": "Search Fraud Records",
       "orderNumber": 10,
       "serviceCode": "SDCRS",
-      "parentModule": "fraud"
+      "parentModule": ""
     },
     {
       "id": 5011,
@@ -132,7 +132,7 @@
       "displayName": "Search SDCRS Inbox",
       "orderNumber": 11,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5012,
@@ -144,7 +144,7 @@
       "displayName": "Count SDCRS Inbox",
       "orderNumber": 12,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5013,
@@ -156,7 +156,7 @@
       "displayName": "Assign Report to Officer",
       "orderNumber": 13,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5014,
@@ -168,7 +168,7 @@
       "displayName": "Search Assignments",
       "orderNumber": 14,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
+      "parentModule": ""
     },
     {
       "id": 5015,
@@ -180,67 +180,7 @@
       "displayName": "View Dashboard Statistics",
       "orderNumber": 15,
       "serviceCode": "SDCRS",
-      "parentModule": "sdcrs-services"
-    },
-    {
-      "id": 5100,
-      "url": "/dashboard-analytics/dashboard/getChartV2",
-      "code": "null",
-      "name": "DSS Get Chart",
-      "path": "",
-      "enabled": true,
-      "displayName": "DSS Get Chart Data",
-      "orderNumber": 100,
-      "serviceCode": "DSS",
-      "parentModule": "dss-dashboard"
-    },
-    {
-      "id": 5101,
-      "url": "/dashboard-analytics/dashboard/getDashboardConfig/sdcrs-overview",
-      "code": "null",
-      "name": "DSS SDCRS Overview Config",
-      "path": "",
-      "enabled": true,
-      "displayName": "SDCRS Overview Dashboard",
-      "orderNumber": 101,
-      "serviceCode": "DSS",
-      "parentModule": "dss-dashboard"
-    },
-    {
-      "id": 5102,
-      "url": "/dashboard-analytics/dashboard/getDashboardConfig/sdcrs-payout",
-      "code": "null",
-      "name": "DSS SDCRS Payout Config",
-      "path": "",
-      "enabled": true,
-      "displayName": "SDCRS Payout Dashboard",
-      "orderNumber": 102,
-      "serviceCode": "DSS",
-      "parentModule": "dss-dashboard"
-    },
-    {
-      "id": 5103,
-      "url": "/dashboard-analytics/dashboard/getDashboardConfig/sdcrs-sla",
-      "code": "null",
-      "name": "DSS SDCRS SLA Config",
-      "path": "",
-      "enabled": true,
-      "displayName": "SDCRS SLA Dashboard",
-      "orderNumber": 103,
-      "serviceCode": "DSS",
-      "parentModule": "dss-dashboard"
-    },
-    {
-      "id": 5104,
-      "url": "/dashboard-analytics/dashboard/getDashboardConfig/sdcrs-performance",
-      "code": "null",
-      "name": "DSS SDCRS Performance Config",
-      "path": "",
-      "enabled": true,
-      "displayName": "SDCRS Performance Dashboard",
-      "orderNumber": 104,
-      "serviceCode": "DSS",
-      "parentModule": "dss-dashboard"
+      "parentModule": ""
     }
   ]
 }

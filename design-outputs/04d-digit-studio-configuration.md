@@ -845,49 +845,270 @@ This document describes how to implement SDCRS using the **DIGIT Studio ServiceC
 
 ---
 
-## 3. Roles Configuration
+## 3. Access Control Configuration
 
-**Config File:** `data/ncr/ACCESSCONTROL-ROLES/roles.json` (additions)
+Access control in DIGIT requires **three** separate configuration files:
+
+| File | Purpose |
+|------|---------|
+| `ACCESSCONTROL-ROLES/roles.SDCRS.json` | Role definitions (code, name, description) |
+| `ACCESSCONTROL-ACTIONS-TEST/actions-test.SDCRS.json` | Action definitions (id, url, name, serviceCode) |
+| `ACCESSCONTROL-ROLEACTIONS/roleactions.SDCRS.json` | Role-to-action mappings (rolecode → actionid) |
+
+### 3.1 Roles
+
+**Config File:** `data/ncr/ACCESSCONTROL-ROLES/roles.SDCRS.json`
 
 ```json
-[
-  {
-    "code": "TEACHER",
-    "name": "Teacher",
-    "description": "School teacher who reports stray dog sightings",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_TEACHER"
-  },
-  {
-    "code": "VERIFIER",
-    "name": "Verifier",
-    "description": "Backend operator who verifies submitted reports",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_VERIFIER"
-  },
-  {
-    "code": "MC_OFFICER",
-    "name": "MC Officer",
-    "description": "Municipal Corporation officer who captures stray dogs",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_MC_OFFICER"
-  },
-  {
-    "code": "MC_SUPERVISOR",
-    "name": "MC Supervisor",
-    "description": "Supervisor for MC Officers, assigns field work",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_MC_SUPERVISOR"
-  },
-  {
-    "code": "DISTRICT_ADMIN",
-    "name": "District Admin",
-    "description": "District-level program administrator",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_DISTRICT_ADMIN"
-  },
-  {
-    "code": "STATE_ADMIN",
-    "name": "State Admin",
-    "description": "State-level program administrator",
-    "labelKey": "ACCESSCONTROL_ROLES_ROLES_STATE_ADMIN"
-  }
-]
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ROLES",
+  "roles": [
+    {
+      "code": "TEACHER",
+      "name": "Teacher",
+      "description": "School teacher who reports stray dog sightings"
+    },
+    {
+      "code": "VERIFIER",
+      "name": "Verifier",
+      "description": "Backend operator who verifies submitted reports"
+    },
+    {
+      "code": "MC_OFFICER",
+      "name": "MC Officer",
+      "description": "Municipal Corporation officer who captures stray dogs"
+    },
+    {
+      "code": "MC_SUPERVISOR",
+      "name": "MC Supervisor",
+      "description": "Supervisor for MC Officers, assigns field work"
+    },
+    {
+      "code": "DISTRICT_ADMIN",
+      "name": "District Admin",
+      "description": "District-level program administrator"
+    },
+    {
+      "code": "STATE_ADMIN",
+      "name": "State Admin",
+      "description": "State-level program administrator"
+    }
+  ]
+}
+```
+
+### 3.2 Actions (API URLs)
+
+**Config File:** `data/ncr/ACCESSCONTROL-ACTIONS-TEST/actions-test.SDCRS.json`
+
+```json
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+  "actions-test": [
+    {
+      "id": 5001,
+      "url": "/sdcrs-services/v1/report/_create",
+      "name": "SDCRS Report Create",
+      "displayName": "Create Stray Dog Report",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 1
+    },
+    {
+      "id": 5002,
+      "url": "/sdcrs-services/v1/report/_update",
+      "name": "SDCRS Report Update",
+      "displayName": "Update Stray Dog Report",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 2
+    },
+    {
+      "id": 5003,
+      "url": "/sdcrs-services/v1/report/_search",
+      "name": "SDCRS Report Search",
+      "displayName": "Search Stray Dog Reports",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 3
+    },
+    {
+      "id": 5004,
+      "url": "/sdcrs-services/v1/report/_track",
+      "name": "SDCRS Report Track",
+      "displayName": "Track Stray Dog Report",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 4
+    },
+    {
+      "id": 5005,
+      "url": "/sdcrs-services/v1/report/_count",
+      "name": "SDCRS Report Count",
+      "displayName": "Count Stray Dog Reports",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 5
+    },
+    {
+      "id": 5006,
+      "url": "/payout/v1/_create",
+      "name": "SDCRS Payout Create",
+      "displayName": "Create Payout",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 6
+    },
+    {
+      "id": 5007,
+      "url": "/payout/v1/_search",
+      "name": "SDCRS Payout Search",
+      "displayName": "Search Payouts",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 7
+    },
+    {
+      "id": 5008,
+      "url": "/payout/v1/_retry",
+      "name": "SDCRS Payout Retry",
+      "displayName": "Retry Failed Payout",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 8
+    },
+    {
+      "id": 5009,
+      "url": "/fraud/v1/_check",
+      "name": "SDCRS Fraud Check",
+      "displayName": "Check Fraud Risk",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 9
+    },
+    {
+      "id": 5010,
+      "url": "/fraud/v1/_search",
+      "name": "SDCRS Fraud Search",
+      "displayName": "Search Fraud Records",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 10
+    },
+    {
+      "id": 5011,
+      "url": "/sdcrs-services/v1/inbox/_search",
+      "name": "SDCRS Inbox Search",
+      "displayName": "Search SDCRS Inbox",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 11
+    },
+    {
+      "id": 5012,
+      "url": "/sdcrs-services/v1/inbox/_count",
+      "name": "SDCRS Inbox Count",
+      "displayName": "Count SDCRS Inbox",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 12
+    },
+    {
+      "id": 5013,
+      "url": "/sdcrs-services/v1/assignment/_create",
+      "name": "SDCRS Assignment Create",
+      "displayName": "Assign Report to Officer",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 13
+    },
+    {
+      "id": 5014,
+      "url": "/sdcrs-services/v1/assignment/_search",
+      "name": "SDCRS Assignment Search",
+      "displayName": "Search Assignments",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 14
+    },
+    {
+      "id": 5015,
+      "url": "/sdcrs-services/v1/dashboard/_stats",
+      "name": "SDCRS Dashboard Stats",
+      "displayName": "View Dashboard Statistics",
+      "serviceCode": "SDCRS",
+      "enabled": true,
+      "orderNumber": 15
+    }
+  ]
+}
+```
+
+### 3.3 Role-Action Mappings
+
+**Config File:** `data/ncr/ACCESSCONTROL-ROLEACTIONS/roleactions.SDCRS.json`
+
+Role-action mappings control which roles can access which API endpoints:
+
+| actionid | url | Roles with Access |
+|----------|-----|-------------------|
+| 5001 | `/sdcrs-services/v1/report/_create` | TEACHER |
+| 5002 | `/sdcrs-services/v1/report/_update` | VERIFIER, MC_OFFICER, MC_SUPERVISOR, SYSTEM |
+| 5003 | `/sdcrs-services/v1/report/_search` | TEACHER, VERIFIER, MC_OFFICER, MC_SUPERVISOR, DISTRICT_ADMIN, STATE_ADMIN |
+| 5004 | `/sdcrs-services/v1/report/_track` | TEACHER, MC_OFFICER |
+| 5005 | `/sdcrs-services/v1/report/_count` | DISTRICT_ADMIN, STATE_ADMIN |
+| 5006 | `/payout/v1/_create` | SYSTEM |
+| 5007 | `/payout/v1/_search` | DISTRICT_ADMIN, STATE_ADMIN |
+| 5008 | `/payout/v1/_retry` | STATE_ADMIN |
+| 5009 | `/fraud/v1/_check` | SYSTEM |
+| 5010 | `/fraud/v1/_search` | DISTRICT_ADMIN, STATE_ADMIN |
+| 5011 | `/sdcrs-services/v1/inbox/_search` | VERIFIER, MC_OFFICER, MC_SUPERVISOR |
+| 5012 | `/sdcrs-services/v1/inbox/_count` | VERIFIER, MC_OFFICER, MC_SUPERVISOR |
+| 5013 | `/sdcrs-services/v1/assignment/_create` | MC_SUPERVISOR |
+| 5014 | `/sdcrs-services/v1/assignment/_search` | MC_SUPERVISOR |
+| 5015 | `/sdcrs-services/v1/dashboard/_stats` | DISTRICT_ADMIN, STATE_ADMIN |
+
+```json
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+  "roleactions": [
+    { "rolecode": "TEACHER", "actionid": 5001, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "TEACHER", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "TEACHER", "actionid": 5004, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "VERIFIER", "actionid": 5002, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "VERIFIER", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "VERIFIER", "actionid": 5011, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "VERIFIER", "actionid": 5012, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_OFFICER", "actionid": 5002, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_OFFICER", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_OFFICER", "actionid": 5004, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_OFFICER", "actionid": 5011, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_OFFICER", "actionid": 5012, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5002, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5011, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5012, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5013, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "MC_SUPERVISOR", "actionid": 5014, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "DISTRICT_ADMIN", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "DISTRICT_ADMIN", "actionid": 5005, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "DISTRICT_ADMIN", "actionid": 5007, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "DISTRICT_ADMIN", "actionid": 5010, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "DISTRICT_ADMIN", "actionid": 5015, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5003, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5005, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5007, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5008, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5010, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "STATE_ADMIN", "actionid": 5015, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "SYSTEM", "actionid": 5002, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "SYSTEM", "actionid": 5006, "actioncode": "", "tenantId": "ncr" },
+    { "rolecode": "SYSTEM", "actionid": 5009, "actioncode": "", "tenantId": "ncr" }
+  ]
+}
 ```
 
 ---
@@ -1121,13 +1342,33 @@ This document describes how to implement SDCRS using the **DIGIT Studio ServiceC
 
 ---
 
-## 7. Implementation Checklist
+## 7. Configuration File Summary
 
-- [ ] Create `SDCRS.ServiceConfiguration.json` in Studio module
-- [ ] Create `DocumentConfig.SDCRS.json` in DigitStudio module
-- [ ] Add SDCRS roles to ACCESSCONTROL-ROLES
-- [ ] Create SDCRS MDMS module with master data
-- [ ] Configure ID generation formats
+All configuration files for Option D:
+
+| Path | Description |
+|------|-------------|
+| `data/ncr/Studio/SDCRS.ServiceConfiguration.json` | Complete form fields + workflow |
+| `data/ncr/DigitStudio/DocumentConfig.SDCRS.json` | Per-action document requirements |
+| `data/ncr/ACCESSCONTROL-ROLES/roles.SDCRS.json` | SDCRS role definitions |
+| `data/ncr/ACCESSCONTROL-ACTIONS-TEST/actions-test.SDCRS.json` | API URL action definitions |
+| `data/ncr/ACCESSCONTROL-ROLEACTIONS/roleactions.SDCRS.json` | Role-to-action mappings |
+| `data/ncr/SDCRS/ReportType.json` | Report type master data |
+| `data/ncr/SDCRS/ResolutionType.json` | Resolution type master data |
+| `data/ncr/SDCRS/RejectionReason.json` | Rejection reason master data |
+| `data/ncr/SDCRS/PayoutConfig.json` | Payout configuration |
+
+---
+
+## 8. Implementation Checklist
+
+- [x] Create `SDCRS.ServiceConfiguration.json` in Studio module
+- [x] Create `DocumentConfig.SDCRS.json` in DigitStudio module
+- [x] Add SDCRS roles to ACCESSCONTROL-ROLES
+- [x] Create ACCESSCONTROL-ACTIONS-TEST with API URLs
+- [x] Create ACCESSCONTROL-ROLEACTIONS with role-to-action mappings
+- [x] Create SDCRS MDMS module with master data
+- [ ] Configure ID generation formats (idgen service)
 - [ ] Add localization keys for all labels
 - [ ] Configure inbox search criteria
 - [ ] Set up auto-validation service (hooks into Studio)
@@ -1136,7 +1377,7 @@ This document describes how to implement SDCRS using the **DIGIT Studio ServiceC
 
 ---
 
-## 8. Custom Logic Still Required
+## 9. Custom Logic Still Required
 
 Even with DIGIT Studio, some custom logic is needed:
 
