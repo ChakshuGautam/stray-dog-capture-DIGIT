@@ -428,7 +428,84 @@ If using SDCRS-specific role codes, add to [`ACCESSCONTROL-ROLES/roles.json`](./
 
 **Schema File:** [`configs/additionalDetail-schema.json`](./04a-ccrs/configs/additionalDetail-schema.json)
 
-Dog-specific data stored in PGR's `additionalDetail` field:
+Dog-specific data stored in PGR's `additionalDetail` field. The schema has 6 top-level objects:
+
+### 4.1 dogDetails (Required)
+
+Information about the reported stray dog.
+
+| Field | Type | Required | Constraints | Description |
+|-------|------|----------|-------------|-------------|
+| `description` | string | ✅ | - | Free text description of the dog |
+| `count` | integer | - | min: 1, default: 1 | Number of dogs observed |
+| `isAggressive` | boolean | - | default: false | Whether dog displayed aggressive behavior |
+| `breed` | string | - | - | Estimated breed (Mixed, Street, etc.) |
+| `estimatedAge` | string | - | enum: Puppy, Young, Adult, Senior | Estimated age category |
+| `distinctiveMarks` | string | - | - | Any distinctive marks or features |
+
+### 4.2 evidence (Required: photoFileStoreId)
+
+Photographic evidence and EXIF metadata.
+
+| Field | Type | Required | Constraints | Description |
+|-------|------|----------|-------------|-------------|
+| `photoFileStoreId` | string | ✅ | uuid format | File Store ID for dog photo |
+| `selfieFileStoreId` | string | - | uuid format | File Store ID for reporter selfie |
+| `imageHash` | string | - | - | pHash for duplicate detection |
+| `photoTimestamp` | integer | - | epoch ms | EXIF timestamp from photo |
+| `exifGpsLat` | number | - | -90 to 90 | GPS latitude from EXIF data |
+| `exifGpsLon` | number | - | -180 to 180 | GPS longitude from EXIF data |
+
+### 4.3 validation (System-populated)
+
+Auto-validation results populated by the validation service.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `gpsValid` | boolean | - | GPS coordinates match EXIF data |
+| `boundaryValid` | boolean | - | Location is within tenant boundary |
+| `timestampValid` | boolean | - | Photo is within 48-hour window |
+| `duplicateCheckPassed` | boolean | - | No duplicate images found |
+| `autoValidationResult` | string | enum: PASS, FAIL | Overall validation result |
+| `autoValidationTime` | integer | epoch ms | Validation timestamp |
+
+### 4.4 resolution (MC Officer-populated)
+
+Resolution details filled by MC Officer after field visit.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `type` | string | enum: CAPTURED, RELOCATED, STERILIZED_RELEASED, UNABLE_TO_LOCATE, ALREADY_RESOLVED | Resolution outcome |
+| `notes` | string | - | Officer notes on resolution |
+| `shelterName` | string | - | Shelter where dog was taken |
+| `capturePhotoFileStoreId` | string | uuid format | File Store ID for capture proof photo |
+| `resolvedTime` | integer | epoch ms | Resolution timestamp |
+
+### 4.5 payout (System-populated)
+
+Payout information managed by the payout service.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `eligible` | boolean | - | Whether payout is eligible |
+| `amount` | number | - | Payout amount (₹500 fixed) |
+| `currency` | string | default: INR | Currency code |
+| `demandId` | string | uuid format | Collection Service demand ID |
+| `paymentStatus` | string | enum: PENDING, PROCESSING, COMPLETED, FAILED | Payment status |
+| `paymentTime` | integer | epoch ms | Payment completion timestamp |
+
+### 4.6 reporter (Teacher metadata)
+
+Additional reporter information synced from HRMS.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `teacherId` | string | HRMS Teacher/Employee ID |
+| `schoolCode` | string | School UDISE code |
+| `schoolName` | string | School name |
+| `districtCode` | string | District code |
+
+### Sample additionalDetail Payload
 
 ```json
 {
@@ -466,7 +543,7 @@ Dog-specific data stored in PGR's `additionalDetail` field:
   "payout": {
     "eligible": true,
     "amount": 500,
-    "currency": "DJF",
+    "currency": "INR",
     "demandId": "uuid-demand-1",
     "paymentStatus": "COMPLETED",
     "paymentTime": 1701434567890
