@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "stage": "05-assignment",
+    "step": 4,
+    "description": "SMS notification sent to assigned MC Officer",
+    "sender": "egov-notification-sms Service",
+    "receiver": "MC Officer's Phone",
+    "trigger": "Report assigned to officer (workflow → ASSIGNED)",
+    "previousPacket": "03-assign-action.json",
+    "nextPacket": "../06-field-visit/01-officer-app-inbox.json",
+    "verified": false,
+    "assumption": "SMS template for officer assignment notification"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876500001",
+      "message": "New stray dog report assigned to you. Report ID: DR-DJ-2024-000123. Location: Near Govt High School Main Gate, Ward 5. Type: Aggressive. Please respond within 24 hours. Open app for details.",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_ASSIGN_OFFICER",
+      "category": "TRANSACTION"
+    }
+  },
+  "pushNotification": {
+    "_comment": "If officer has mobile app with push enabled",
+    "title": "New Assignment",
+    "body": "Aggressive stray dog reported near Govt High School. Respond within 24h.",
+    "data": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "action": "VIEW_ASSIGNMENT"
+    }
+  }
+}

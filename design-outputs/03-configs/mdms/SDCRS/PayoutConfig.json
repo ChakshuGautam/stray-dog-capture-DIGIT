@@ -1,0 +1,15 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "PayoutConfig": [
+    {
+      "code": "STANDARD_PAYOUT",
+      "amountPerReport": 500,
+      "currency": "INR",
+      "minimumPhotos": 2,
+      "maximumDailyReports": 5,
+      "monthlyPayoutCap": 5000,
+      "active": true
+    }
+  ]
+}

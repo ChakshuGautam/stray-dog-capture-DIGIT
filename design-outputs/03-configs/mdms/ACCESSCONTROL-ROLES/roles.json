@@ -1,0 +1,36 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ROLES",
+  "roles": [
+    {
+      "code": "TEACHER",
+      "name": "Teacher",
+      "description": "School teacher who reports stray dog sightings"
+    },
+    {
+      "code": "VERIFIER",
+      "name": "Verifier",
+      "description": "Backend operator who verifies submitted reports"
+    },
+    {
+      "code": "MC_OFFICER",
+      "name": "MC Officer",
+      "description": "Municipal Corporation officer who captures stray dogs"
+    },
+    {
+      "code": "MC_SUPERVISOR",
+      "name": "MC Supervisor",
+      "description": "Supervisor for MC Officers, assigns work"
+    },
+    {
+      "code": "DISTRICT_ADMIN",
+      "name": "District Admin",
+      "description": "District-level reporting and analytics"
+    },
+    {
+      "code": "STATE_ADMIN",
+      "name": "State Admin",
+      "description": "State-wide program management"
+    }
+  ]
+}

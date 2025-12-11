@@ -1,0 +1,310 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 7,
+    "description": "Fraud Detection Service returns evaluation results with SpEL-based rule outcomes",
+    "sender": "Fraud Detection Service",
+    "receiver": "SDCRS Validator",
+    "trigger": "Fraud evaluation complete (internal + external rules)",
+    "previousPacket": "06-fraud-score-request.json",
+    "nextPacket": "08-validation-result-pass.json or 09-validation-result-fail.json",
+    "verified": true,
+    "source": "08-fraud-detection-service.md - Section 2.5 SpEL Expression Evaluator"
+  },
+  "responsePass": {
+    "_comment": "Low risk - clean submission, only minor rules triggered",
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "fraud-detection",
+        "ver": "1.0",
+        "ts": 1734176206000,
+        "status": "successful"
+      },
+      "response": {
+        "referenceId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "moduleCode": "SDCRS",
+        "totalScore": 16,
+        "riskLevel": "LOW",
+        "recommendation": "APPROVE",
+        "evaluatedAt": 1734176206000,
+        "ruleResults": [
+          {
+            "ruleId": "SDCRS-001",
+            "ruleCode": "RAPID_FIRE_SUBMISSION",
+            "category": "VEL",
+            "conditionType": "VELOCITY",
+            "triggered": true,
+            "score": 10,
+            "weight": 10,
+            "details": {
+              "message": "3 submissions in 1 hour window",
+              "threshold": 5,
+              "actual": 3
+            }
+          },
+          {
+            "ruleId": "SDCRS-006",
+            "ruleCode": "SCHOOL_HOURS_SUBMISSION",
+            "category": "TMP",
+            "conditionType": "TIME_WINDOW",
+            "triggered": true,
+            "score": 6,
+            "weight": 6,
+            "details": {
+              "message": "Submission during school hours",
+              "submissionHour": 10,
+              "timezone": "Africa/Djibouti"
+            }
+          },
+          {
+            "ruleId": "SDCRS-013",
+            "ruleCode": "PACK_SIZE_SUSPICIOUSLY_LARGE",
+            "category": "DQ",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#additionalData != null && #additionalData['dogCount'] != null && #additionalData['dogCount'] > 10",
+            "triggered": false,
+            "score": 0,
+            "weight": 15,
+            "details": {
+              "message": "Pack size within normal range",
+              "evaluated": "#additionalData['dogCount'] = 2"
+            }
+          },
+          {
+            "ruleId": "SDCRS-014",
+            "ruleCode": "INCOMPLETE_EVIDENCE_SET",
+            "category": "EVD",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#evidences == null || #evidenceCount < 2",
+            "triggered": false,
+            "score": 0,
+            "weight": 20,
+            "details": {
+              "message": "Evidence complete",
+              "evaluated": "#evidenceCount = 2"
+            }
+          }
+        ],
+        "externalResults": [
+          {
+            "ruleId": "EXT-001",
+            "ruleCode": "NO_DOG_DETECTED",
+            "validatorId": "OBJECT_DETECTOR",
+            "checkExpression": "dogCount == 0",
+            "triggered": false,
+            "score": 0,
+            "weight": 35,
+            "predictions": {
+              "dogCount": 2,
+              "confidence": 0.92
+            },
+            "details": {
+              "message": "Dog detected in image",
+              "expressionResult": false
+            }
+          }
+        ],
+        "summary": {
+          "totalRulesEvaluated": 39,
+          "internalRulesTriggered": 2,
+          "externalRulesTriggered": 0,
+          "customSpelRulesEvaluated": 5,
+          "customSpelRulesTriggered": 0
+        }
+      }
+    }
+  },
+  "responseFail": {
+    "_comment": "High risk - multiple SpEL rules triggered, auto-reject",
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "fraud-detection",
+        "ver": "1.0",
+        "ts": 1734176206000,
+        "status": "successful"
+      },
+      "response": {
+        "referenceId": "dr-uuid-002-fraud-test",
+        "moduleCode": "SDCRS",
+        "totalScore": 100,
+        "riskLevel": "CRITICAL",
+        "recommendation": "AUTO_REJECT",
+        "evaluatedAt": 1734176206000,
+        "ruleResults": [
+          {
+            "ruleId": "SDCRS-001",
+            "ruleCode": "RAPID_FIRE_SUBMISSION",
+            "category": "VEL",
+            "conditionType": "VELOCITY",
+            "triggered": true,
+            "score": 10,
+            "weight": 10,
+            "details": {
+              "message": "8 submissions in 1 hour window",
+              "threshold": 5,
+              "actual": 8
+            }
+          },
+          {
+            "ruleId": "SDCRS-013",
+            "ruleCode": "PACK_SIZE_SUSPICIOUSLY_LARGE",
+            "category": "DQ",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#additionalData != null && #additionalData['dogCount'] != null && #additionalData['dogCount'] > 10",
+            "triggered": true,
+            "score": 15,
+            "weight": 15,
+            "details": {
+              "message": "Suspicious pack size reported",
+              "evaluated": "#additionalData['dogCount'] = 15",
+              "expressionResult": true
+            }
+          },
+          {
+            "ruleId": "SDCRS-014",
+            "ruleCode": "INCOMPLETE_EVIDENCE_SET",
+            "category": "EVD",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#evidences == null || #evidenceCount < 2",
+            "triggered": true,
+            "score": 20,
+            "weight": 20,
+            "details": {
+              "message": "Missing required evidence",
+              "evaluated": "#evidenceCount = 1",
+              "expressionResult": true
+            }
+          },
+          {
+            "ruleId": "SDCRS-015",
+            "ruleCode": "LOCATION_IN_RESTRICTED_AREA",
+            "category": "LOC",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#latitude != null && #longitude != null && (#latitude > 28.55 && #latitude < 28.57 && #longitude > 77.08 && #longitude < 77.12)",
+            "triggered": true,
+            "score": 25,
+            "weight": 25,
+            "details": {
+              "message": "Location in restricted government zone",
+              "evaluated": "#latitude = 28.56, #longitude = 77.10",
+              "expressionResult": true
+            }
+          },
+          {
+            "ruleId": "SDCRS-016",
+            "ruleCode": "HIGH_VALUE_REPORTER",
+            "category": "IDN",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#additionalData != null && #additionalData['lifetimeReportCount'] != null && #additionalData['lifetimeReportCount'] > 50",
+            "triggered": true,
+            "score": 10,
+            "weight": 10,
+            "details": {
+              "message": "High-volume reporter flagged for review",
+              "evaluated": "#additionalData['lifetimeReportCount'] = 100",
+              "expressionResult": true
+            }
+          },
+          {
+            "ruleId": "SDCRS-017",
+            "ruleCode": "SUSPICIOUS_DEVICE_MODEL",
+            "category": "COL",
+            "conditionType": "CUSTOM",
+            "spelExpression": "#deviceId != null && (#deviceId.contains('emulator') || #deviceId.contains('sdk') || #deviceId.contains('generic'))",
+            "triggered": true,
+            "score": 20,
+            "weight": 20,
+            "details": {
+              "message": "Submission from emulator/virtual device",
+              "evaluated": "#deviceId = 'emulator-5554'",
+              "expressionResult": true
+            }
+          }
+        ],
+        "externalResults": [
+          {
+            "ruleId": "EXT-001",
+            "ruleCode": "NO_DOG_DETECTED",
+            "validatorId": "OBJECT_DETECTOR",
+            "checkExpression": "dogCount == 0",
+            "triggered": false,
+            "score": 0,
+            "weight": 35,
+            "predictions": {
+              "dogCount": 1,
+              "confidence": 0.75
+            }
+          },
+          {
+            "ruleId": "EXT-003",
+            "ruleCode": "FACE_MISMATCH",
+            "validatorId": "FACE_MATCHER",
+            "checkExpression": "facesDetected == 0 || (match == false && similarity < 0.7)",
+            "triggered": false,
+            "score": 0,
+            "weight": 30,
+            "predictions": {
+              "facesDetected": 1,
+              "match": true,
+              "similarity": 0.89
+            }
+          }
+        ],
+        "summary": {
+          "totalRulesEvaluated": 39,
+          "internalRulesTriggered": 7,
+          "externalRulesTriggered": 0,
+          "customSpelRulesEvaluated": 5,
+          "customSpelRulesTriggered": 5
+        },
+        "autoRejectReason": "CRITICAL risk level (score: 100) exceeded threshold of 80"
+      }
+    }
+  },
+  "riskThresholds": {
+    "_comment": "From FraudDetectionService configuration",
+    "thresholds": {
+      "approveThreshold": 20,
+      "manualReviewThreshold": 50,
+      "autoRejectThreshold": 80
+    },
+    "riskLevels": {
+      "LOW": {"max": 25, "recommendation": "APPROVE"},
+      "MEDIUM": {"min": 26, "max": 50, "recommendation": "MANUAL_REVIEW"},
+      "HIGH": {"min": 51, "max": 75, "recommendation": "MANUAL_REVIEW"},
+      "CRITICAL": {"min": 76, "recommendation": "AUTO_REJECT"}
+    }
+  },
+  "spelRuleSummary": {
+    "_comment": "CUSTOM type rules using SpEL expressions (Section 2.5)",
+    "rules": [
+      {
+        "id": "SDCRS-013",
+        "code": "PACK_SIZE_SUSPICIOUSLY_LARGE",
+        "expression": "#additionalData['dogCount'] > 10"
+      },
+      {
+        "id": "SDCRS-014",
+        "code": "INCOMPLETE_EVIDENCE_SET",
+        "expression": "#evidences == null || #evidenceCount < 2"
+      },
+      {
+        "id": "SDCRS-015",
+        "code": "LOCATION_IN_RESTRICTED_AREA",
+        "expression": "#latitude > 28.55 && #latitude < 28.57 && #longitude > 77.08 && #longitude < 77.12"
+      },
+      {
+        "id": "SDCRS-016",
+        "code": "HIGH_VALUE_REPORTER",
+        "expression": "#additionalData['lifetimeReportCount'] > 50"
+      },
+      {
+        "id": "SDCRS-017",
+        "code": "SUSPICIOUS_DEVICE_MODEL",
+        "expression": "#deviceId.contains('emulator') || #deviceId.contains('sdk')"
+      }
+    ]
+  }
+}

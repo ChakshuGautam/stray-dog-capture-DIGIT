@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 1,
+    "description": "MC Officer views assigned reports in mobile app",
+    "sender": "MC Officer Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Officer opens app to view assignments",
+    "previousPacket": "../05-assignment/04-officer-notification.json",
+    "nextPacket": "02-report-detail-with-location.json",
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - assignedOfficerId filter"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer officer-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734187200000,
+        "action": "_search",
+        "msgId": "20241214153200|en_IN",
+        "userInfo": {
+          "id": 24500,
+          "uuid": "mco-uuid-001",
+          "userName": "MCO001",
+          "name": "Ibrahim Ali",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_OFFICER"}]
+        }
+      },
+      "searchCriteria": {
+        "tenantId": "dj.djibouti-ville",
+        "assignedOfficerId": "mco-uuid-001",
+        "status": ["ASSIGNED", "IN_PROGRESS"],
+        "sortBy": "createdTime",
+        "sortOrder": "ASC",
+        "offset": 0,
+        "limit": 20
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "serviceType": "StrayDogAggressive",
+          "status": "ASSIGNED",
+          "location": {
+            "latitude": 11.5886,
+            "longitude": 43.1456,
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "wardCode": "W005",
+            "address": "Near Govt High School Main Gate"
+          },
+          "evidence": {
+            "photoUrl": "https://filestore.dj.digit.org/filestore/v1/files/id?fileStoreId=fs-photo-uuid-001"
+          },
+          "assignedAt": 1734183800000,
+          "auditDetails": {
+            "createdTime": 1734176201000
+          }
+        }
+      ],
+      "TotalCount": 1
+    }
+  }
+}

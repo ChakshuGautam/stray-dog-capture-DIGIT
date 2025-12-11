@@ -1,0 +1,148 @@
+# Modified PGR Indexer Configuration for SDCRS Fork
+# Adds SDCRS-specific fields to Elasticsearch index
+# Version: 2.0
+
+ServiceMaps:
+  serviceName: PGR Indexer
+  version: 1.0
+  mappings:
+    - topic: save-pgr-service
+      configKey: INDEX
+      indexes:
+        - name: pgrindex-v1
+          type: general
+          id: $.id
+          isBulk: false
+          jsonPath: $.service
+          customJsonMapping:
+            indexMapping:
+              # Standard PGR fields
+              - jsonPath: $.id
+                outPath: Data.id
+              - jsonPath: $.tenantId
+                outPath: Data.tenantId
+              - jsonPath: $.serviceCode
+                outPath: Data.serviceCode
+              - jsonPath: $.serviceRequestId
+                outPath: Data.serviceRequestId
+              - jsonPath: $.description
+                outPath: Data.description
+              - jsonPath: $.accountId
+                outPath: Data.accountId
+              - jsonPath: $.rating
+                outPath: Data.rating
+              - jsonPath: $.active
+                outPath: Data.active
+              - jsonPath: $.auditDetails.createdBy
+                outPath: Data.createdBy
+              - jsonPath: $.auditDetails.createdTime
+                outPath: Data.createdTime
+              - jsonPath: $.auditDetails.lastModifiedBy
+                outPath: Data.lastModifiedBy
+              - jsonPath: $.auditDetails.lastModifiedTime
+                outPath: Data.lastModifiedTime
+              # SDCRS-specific fields
+              - jsonPath: $.dogCount
+                outPath: Data.dogCount
+              - jsonPath: $.isAggressive
+                outPath: Data.isAggressive
+              - jsonPath: $.breed
+                outPath: Data.breed
+              - jsonPath: $.estimatedAge
+                outPath: Data.estimatedAge
+              - jsonPath: $.distinctiveMarks
+                outPath: Data.distinctiveMarks
+              - jsonPath: $.photoFileStoreId
+                outPath: Data.photoFileStoreId
+              - jsonPath: $.imageHash
+                outPath: Data.imageHash
+              - jsonPath: $.reporterType
+                outPath: Data.reporterType
+              - jsonPath: $.schoolCode
+                outPath: Data.schoolCode
+              - jsonPath: $.schoolName
+                outPath: Data.schoolName
+              - jsonPath: $.assignedOfficerId
+                outPath: Data.assignedOfficerId
+              - jsonPath: $.assignedOfficerName
+                outPath: Data.assignedOfficerName
+              - jsonPath: $.assignedTime
+                outPath: Data.assignedTime
+              - jsonPath: $.resolutionType
+                outPath: Data.resolutionType
+              - jsonPath: $.resolutionTime
+                outPath: Data.resolutionTime
+              - jsonPath: $.payoutEligible
+                outPath: Data.payoutEligible
+              - jsonPath: $.payoutAmount
+                outPath: Data.payoutAmount
+              - jsonPath: $.payoutStatus
+                outPath: Data.payoutStatus
+              - jsonPath: $.rejectionReason
+                outPath: Data.rejectionReason
+              - jsonPath: $.trackingId
+                outPath: Data.trackingId
+              # Address/location
+              - jsonPath: $.address.latitude
+                outPath: Data.address.latitude
+              - jsonPath: $.address.longitude
+                outPath: Data.address.longitude
+              - jsonPath: $.address.locality.code
+                outPath: Data.address.locality
+              - jsonPath: $.address.ward.code
+                outPath: Data.address.ward
+              - jsonPath: $.address.district.code
+                outPath: Data.address.district
+
+    - topic: update-pgr-service
+      configKey: INDEX
+      indexes:
+        - name: pgrindex-v1
+          type: general
+          id: $.id
+          isBulk: false
+          jsonPath: $.service
+          customJsonMapping:
+            indexMapping:
+              # Standard PGR fields
+              - jsonPath: $.id
+                outPath: Data.id
+              - jsonPath: $.tenantId
+                outPath: Data.tenantId
+              - jsonPath: $.serviceCode
+                outPath: Data.serviceCode
+              - jsonPath: $.serviceRequestId
+                outPath: Data.serviceRequestId
+              - jsonPath: $.description
+                outPath: Data.description
+              - jsonPath: $.rating
+                outPath: Data.rating
+              - jsonPath: $.active
+                outPath: Data.active
+              - jsonPath: $.auditDetails.lastModifiedBy
+                outPath: Data.lastModifiedBy
+              - jsonPath: $.auditDetails.lastModifiedTime
+                outPath: Data.lastModifiedTime
+              # SDCRS-specific fields (updateable)
+              - jsonPath: $.dogCount
+                outPath: Data.dogCount
+              - jsonPath: $.isAggressive
+                outPath: Data.isAggressive
+              - jsonPath: $.assignedOfficerId
+                outPath: Data.assignedOfficerId
+              - jsonPath: $.assignedOfficerName
+                outPath: Data.assignedOfficerName
+              - jsonPath: $.assignedTime
+                outPath: Data.assignedTime
+              - jsonPath: $.resolutionType
+                outPath: Data.resolutionType
+              - jsonPath: $.resolutionTime
+                outPath: Data.resolutionTime
+              - jsonPath: $.payoutEligible
+                outPath: Data.payoutEligible
+              - jsonPath: $.payoutAmount
+                outPath: Data.payoutAmount
+              - jsonPath: $.payoutStatus
+                outPath: Data.payoutStatus
+              - jsonPath: $.rejectionReason
+                outPath: Data.rejectionReason

@@ -1,0 +1,150 @@
+@startuml SDCRS_Payout_UPI
+!theme plain
+title SDCRS - UPI Payout Processing Flow
+footer Stray Dog Capture & Reporting System - December 2024
+
+' Participants
+participant "MC Officer" as MC
+participant "SDCRS\nService" as SDCRS
+participant "Workflow\nService" as WF
+participant "Kafka" as KF
+participant "UPI Payout\nAdapter" as UPI
+participant "Razorpay X" as RZP
+participant "Teacher\nBank" as BANK
+participant "Notification\nService" as NS
+actor "Teacher" as TCH
+database "PostgreSQL" as DB
+
+' =========================================================
+' CAPTURE PHASE
+' =========================================================
+note over MC, SDCRS: MC Officer marks dog as captured
+
+MC -> SDCRS: 1. POST /sdcrs/v1/report/_update\n{action: "MARK_CAPTURED", evidence: [...]}
+
+SDCRS -> WF: 2. Transition: IN_PROGRESS → CAPTURED
+WF --> SDCRS: 3. OK (state: CAPTURED)
+
+SDCRS -> DB: 4. Update report status
+DB --> SDCRS: 5. OK
+
+' =========================================================
+' PAYOUT TRIGGER PHASE
+' =========================================================
+note over SDCRS, UPI #Gold: System automatically initiates payout
+
+SDCRS -> SDCRS: 6. PayoutTriggerService\nFetch teacher VPA
+
+SDCRS -> KF: 7. Push to upi-payout-create\n{referenceId, beneficiaryId, vpa, amount: 500}
+
+SDCRS -> WF: 8. Transition: CAPTURED → PAYOUT_PENDING
+WF --> SDCRS: 9. OK (state: PAYOUT_PENDING)
+
+SDCRS -> NS: 10. Notify: Payout initiated
+NS -> TCH: 11. SMS: "Payout of Rs.500 initiated"
+
+SDCRS --> MC: 12. Response: Report updated
+
+' =========================================================
+' UPI ADAPTER PROCESSING
+' =========================================================
+note over KF, UPI #LightBlue: UPI Adapter processes payout
+
+KF -> UPI: 13. Consume payout request
+
+UPI -> DB: 14. Check idempotency key
+DB --> UPI: 15. New request (proceed)
+
+UPI -> UPI: 16. Validate VPA format\n(regex: ^[a-zA-Z0-9.\\-_]+@[a-zA-Z]+$)
+
+UPI -> RZP: 17. POST /contacts\n{name, email, mobile, reference_id}
+RZP --> UPI: 18. {contact_id: "cont_xxx"}
+
+UPI -> RZP: 19. POST /fund_accounts\n{contact_id, account_type: "vpa", vpa}
+RZP --> UPI: 20. {fund_account_id: "fa_xxx"}
+
+UPI -> RZP: 21. POST /payouts\n{fund_account_id, amount: 50000, mode: "UPI", narration}
+RZP --> UPI: 22. {payout_id: "pout_xxx", status: "queued"}
+
+UPI -> DB: 23. Save payout record\n(status: INITIATED)
+
+UPI -> KF: 24. Push to upi-payout-persist
+
+' =========================================================
+' RAZORPAY UPI PROCESSING
+' =========================================================
+note over RZP, BANK #LightGreen: Razorpay processes UPI payment
+
+RZP -> BANK: 25. UPI COLLECT request\nteacher@upi
+
+BANK -> BANK: 26. Process transfer
+
+BANK --> RZP: 27. Transfer successful\n(UTR: 12345678)
+
+' =========================================================
+' WEBHOOK CALLBACK (SUCCESS)
+' =========================================================
+note over RZP, UPI #PaleGreen: Webhook notification
+
+RZP -> UPI: 28. POST /webhook/v1/razorpay\n{event: "payout.processed", payload: {utr, status}}
+
+UPI -> UPI: 29. Verify HMAC signature
+
+UPI -> DB: 30. Update payout status: COMPLETED
+
+UPI -> KF: 31. Push to sdcrs-payout-callback\n{referenceId, status: "COMPLETED", utr}
+
+' =========================================================
+' SDCRS CALLBACK HANDLING
+' =========================================================
+note over KF, SDCRS: SDCRS handles callback
+
+KF -> SDCRS: 32. Consume callback
+
+SDCRS -> DB: 33. Update report with UTR
+
+SDCRS -> WF: 34. Transition: PAYOUT_PENDING → RESOLVED
+WF --> SDCRS: 35. OK (state: RESOLVED)
+
+SDCRS -> NS: 36. Notify: Payout successful
+NS -> TCH: 37. SMS: "Rs.500 credited to your UPI\nUTR: 12345678"
+
+' =========================================================
+' FAILURE SCENARIO (ALT)
+' =========================================================
+alt #LightPink Payment Failed
+
+  RZP -> UPI: 38. POST /webhook/v1/razorpay\n{event: "payout.failed", reason}
+
+  UPI -> DB: 39. Update status: FAILED\n(increment retry_count)
+
+  UPI -> KF: 40. Push to sdcrs-payout-callback\n{status: "FAILED", reason}
+
+  KF -> SDCRS: 41. Consume failure callback
+
+  SDCRS -> WF: 42. Transition: PAYOUT_PENDING → PAYOUT_FAILED
+  WF --> SDCRS: 43. OK (state: PAYOUT_FAILED)
+
+  SDCRS -> NS: 44. Notify admin
+  NS -> TCH: 45. SMS: "Payout pending. Will retry."
+
+  note over SDCRS: Admin can:\n- RETRY_PAYOUT → PAYOUT_PENDING\n- MANUAL_RESOLVE → RESOLVED
+
+end
+
+' =========================================================
+' LEGEND
+' =========================================================
+legend right
+  **Kafka Topics:**
+  • upi-payout-create: Trigger
+  • upi-payout-persist: Save
+  • sdcrs-payout-callback: Result
+
+  **Key Fields:**
+  • VPA: teacher@upi
+  • Amount: Rs.500 (50000 paise)
+  • UTR: Bank reference
+endlegend
+
+@enduml

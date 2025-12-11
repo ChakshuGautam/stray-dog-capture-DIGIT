@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SDCRS additionalDetail Schema",
+  "description": "Schema for dog-specific data stored in PGR's additionalDetail JSONB field",
+  "type": "object",
+  "properties": {
+    "dogDetails": {
+      "type": "object",
+      "description": "Information about the reported stray dog",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Free text description of the dog"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of dogs observed"
+        },
+        "isAggressive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the dog displayed aggressive behavior"
+        },
+        "breed": {
+          "type": "string",
+          "description": "Estimated breed (Mixed, Street, etc.)"
+        },
+        "estimatedAge": {
+          "type": "string",
+          "enum": ["Puppy", "Young", "Adult", "Senior"],
+          "description": "Estimated age category"
+        },
+        "distinctiveMarks": {
+          "type": "string",
+          "description": "Any distinctive marks or features"
+        }
+      },
+      "required": ["description"]
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Photographic evidence",
+      "properties": {
+        "photoFileStoreId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "File Store ID for dog photo"
+        },
+        "selfieFileStoreId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "File Store ID for reporter selfie"
+        },
+        "imageHash": {
+          "type": "string",
+          "description": "pHash for duplicate detection"
+        },
+        "photoTimestamp": {
+          "type": "integer",
+          "description": "EXIF timestamp from photo (epoch ms)"
+        },
+        "exifGpsLat": {
+          "type": "number",
+          "description": "GPS latitude from EXIF data"
+        },
+        "exifGpsLon": {
+          "type": "number",
+          "description": "GPS longitude from EXIF data"
+        }
+      },
+      "required": ["photoFileStoreId"]
+    },
+    "validation": {
+      "type": "object",
+      "description": "Auto-validation results",
+      "properties": {
+        "gpsValid": {
+          "type": "boolean",
+          "description": "GPS coordinates match EXIF data"
+        },
+        "boundaryValid": {
+          "type": "boolean",
+          "description": "Location is within tenant boundary"
+        },
+        "timestampValid": {
+          "type": "boolean",
+          "description": "Photo is within 48-hour window"
+        },
+        "duplicateCheckPassed": {
+          "type": "boolean",
+          "description": "No duplicate images found"
+        },
+        "autoValidationResult": {
+          "type": "string",
+          "enum": ["PASS", "FAIL"],
+          "description": "Overall validation result"
+        },
+        "autoValidationTime": {
+          "type": "integer",
+          "description": "Validation timestamp (epoch ms)"
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "description": "Resolution details from MC Officer",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["CAPTURED", "RELOCATED", "STERILIZED_RELEASED", "UNABLE_TO_LOCATE", "ALREADY_RESOLVED"],
+          "description": "Resolution outcome type"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Officer notes on resolution"
+        },
+        "shelterName": {
+          "type": "string",
+          "description": "Shelter where dog was taken"
+        },
+        "capturePhotoFileStoreId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "File Store ID for capture proof photo"
+        },
+        "resolvedTime": {
+          "type": "integer",
+          "description": "Resolution timestamp (epoch ms)"
+        }
+      }
+    },
+    "payout": {
+      "type": "object",
+      "description": "Payout information for reporter",
+      "properties": {
+        "eligible": {
+          "type": "boolean",
+          "description": "Whether payout is eligible"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Payout amount"
+        },
+        "currency": {
+          "type": "string",
+          "default": "DJF",
+          "description": "Currency code"
+        },
+        "demandId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Collection Service demand ID"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"],
+          "description": "Payment processing status"
+        },
+        "paymentTime": {
+          "type": "integer",
+          "description": "Payment completion timestamp (epoch ms)"
+        }
+      }
+    },
+    "reporter": {
+      "type": "object",
+      "description": "Additional reporter information",
+      "properties": {
+        "teacherId": {
+          "type": "string",
+          "description": "Teacher ID code"
+        },
+        "schoolCode": {
+          "type": "string",
+          "description": "School code"
+        },
+        "schoolName": {
+          "type": "string",
+          "description": "School name"
+        },
+        "districtCode": {
+          "type": "string",
+          "description": "District code"
+        }
+      }
+    }
+  }
+}

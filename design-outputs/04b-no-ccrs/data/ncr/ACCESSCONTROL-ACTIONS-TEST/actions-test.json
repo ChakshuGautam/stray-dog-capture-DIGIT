@@ -1,0 +1,54 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+  "actions-test": [
+    {
+      "id": 2001,
+      "name": "Create Dog Report",
+      "url": "/sdcrs-services/v1/report/_create",
+      "displayName": "Create Dog Report",
+      "orderNumber": 1,
+      "parentModule": "sdcrs-services",
+      "enabled": true,
+      "serviceCode": "SDCRS",
+      "code": "null",
+      "path": ""
+    },
+    {
+      "id": 2002,
+      "name": "Update Dog Report",
+      "url": "/sdcrs-services/v1/report/_update",
+      "displayName": "Update Dog Report",
+      "orderNumber": 2,
+      "parentModule": "sdcrs-services",
+      "enabled": true,
+      "serviceCode": "SDCRS",
+      "code": "null",
+      "path": ""
+    },
+    {
+      "id": 2003,
+      "name": "Search Dog Reports",
+      "url": "/sdcrs-services/v1/report/_search",
+      "displayName": "Search Dog Reports",
+      "orderNumber": 3,
+      "parentModule": "sdcrs-services",
+      "enabled": true,
+      "serviceCode": "SDCRS",
+      "code": "null",
+      "path": ""
+    },
+    {
+      "id": 2004,
+      "name": "Count Dog Reports",
+      "url": "/sdcrs-services/v1/report/_count",
+      "displayName": "Count Dog Reports",
+      "orderNumber": 4,
+      "parentModule": "sdcrs-services",
+      "enabled": true,
+      "serviceCode": "SDCRS",
+      "code": "null",
+      "path": ""
+    }
+  ]
+}

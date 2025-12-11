@@ -1,0 +1,88 @@
+{
+  "_meta": {
+    "stage": "10-search-and-track",
+    "step": 4,
+    "description": "Admin searches reports with multiple filters",
+    "sender": "Admin Web Portal",
+    "receiver": "SDCRS Service",
+    "trigger": "Admin applies search filters on dashboard",
+    "previousPacket": null,
+    "nextPacket": null,
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - all filter fields"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer admin-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000000,
+        "userInfo": {
+          "uuid": "admin-uuid-001",
+          "userName": "ADMIN001",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "STATE_ADMIN"}]
+        }
+      },
+      "searchCriteria": {
+        "tenantId": "dj.djibouti-ville",
+        "status": ["PAYOUT_PENDING", "PAYOUT_FAILED"],
+        "serviceType": "StrayDogAggressive",
+        "locality": "DJC001",
+        "fromDate": 1733961600000,
+        "toDate": 1734220800000,
+        "sortBy": "createdTime",
+        "sortOrder": "DESC",
+        "offset": 0,
+        "limit": 50
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-003-abcd",
+          "reportNumber": "DR-DJ-2024-000130",
+          "trackingId": "DEF11111",
+          "serviceType": "StrayDogAggressive",
+          "status": "PAYOUT_FAILED",
+          "location": {"locality": "Djibouti Centre"},
+          "payoutDetails": {
+            "payoutStatus": "FAILED",
+            "failureReason": "Invalid beneficiary VPA",
+            "retryCount": 2
+          }
+        }
+      ],
+      "TotalCount": 1
+    }
+  },
+  "searchCriteriaOptions": {
+    "_comment": "All available search filters",
+    "filters": {
+      "tenantId": "required - tenant scope",
+      "reportId": "UUID of specific report",
+      "reportNumber": "Human-readable report number",
+      "trackingId": "Public tracking ID",
+      "status": "Array of status values",
+      "serviceType": "Dog report type",
+      "reporterId": "UUID of teacher",
+      "assignedOfficerId": "UUID of MC Officer",
+      "locality": "Locality code",
+      "wardCode": "Ward code",
+      "fromDate": "Created after timestamp",
+      "toDate": "Created before timestamp"
+    }
+  }
+}

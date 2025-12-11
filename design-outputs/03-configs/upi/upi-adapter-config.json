@@ -1,0 +1,92 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "upi-payout-adapter",
+  "UPIPayoutConfig": {
+    "enabled": true,
+    "provider": {
+      "name": "RAZORPAY",
+      "baseUrl": "${UPI_PAYOUT_HOST}",
+      "timeout": 30000
+    },
+    "authentication": {
+      "type": "API_KEY",
+      "keyId": "${RAZORPAY_KEY_ID}",
+      "keySecret": "${RAZORPAY_KEY_SECRET}"
+    },
+    "payoutConfig": {
+      "mode": "UPI",
+      "purpose": "payout",
+      "currency": "INR",
+      "queueIfLowBalance": true,
+      "maxRetries": 3,
+      "retryDelayMs": 5000
+    },
+    "fundAccount": {
+      "accountType": "vpa",
+      "defaultBankHandle": "upi"
+    },
+    "numberGeneration": {
+      "format": "SDCRS/UPI/[fy:yyyy-yy]/[SEQ_SDCRS_UPI]"
+    },
+    "validation": {
+      "vpaPattern": "^[a-zA-Z0-9.\\-_]{2,256}@[a-zA-Z]{2,64}$",
+      "minAmount": 1,
+      "maxAmount": 100000
+    },
+    "kafka": {
+      "topics": {
+        "create": "upi-payout-create",
+        "status": "upi-payout-status",
+        "error": "upi-payout-error",
+        "persist": "upi-payout-persist",
+        "sdcrsCallback": "sdcrs-payout-callback"
+      }
+    },
+    "webhook": {
+      "enabled": true,
+      "endpoint": "/webhook/v1/razorpay",
+      "secret": "${UPI_WEBHOOK_SECRET}",
+      "events": [
+        "payout.processed",
+        "payout.failed",
+        "payout.reversed"
+      ]
+    },
+    "statusMapping": {
+      "INITIATED": {
+        "providerStatus": ["queued", "pending"],
+        "sdcrsAction": "none"
+      },
+      "PROCESSING": {
+        "providerStatus": ["processing"],
+        "sdcrsAction": "none"
+      },
+      "COMPLETED": {
+        "providerStatus": ["processed"],
+        "sdcrsAction": "transitionToResolved"
+      },
+      "FAILED": {
+        "providerStatus": ["failed", "cancelled", "rejected"],
+        "sdcrsAction": "markPayoutFailed"
+      },
+      "REVERSED": {
+        "providerStatus": ["reversed"],
+        "sdcrsAction": "markPayoutReversed"
+      }
+    },
+    "notifications": {
+      "onInitiated": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_UPI_PAYOUT_INITIATED"
+      },
+      "onCompleted": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_UPI_PAYOUT_SUCCESS"
+      },
+      "onFailed": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_UPI_PAYOUT_FAILED"
+      }
+    }
+  }
+}

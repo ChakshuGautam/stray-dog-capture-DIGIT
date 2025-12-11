@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 5,
+    "description": "Verifier marks report as duplicate of existing report",
+    "sender": "Verifier Web Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Verifier identifies report is same dog as previous report",
+    "previousPacket": "02-report-detail-view.json",
+    "nextPacket": "06-rejection-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - MARK_DUPLICATE action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer verifier-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734180200000,
+        "action": "_update",
+        "msgId": "20241214133200|en_IN",
+        "authToken": "verifier-jwt-token...",
+        "userInfo": {
+          "id": 24300,
+          "uuid": "ver-uuid-001-abcd-efgh",
+          "userName": "V001",
+          "name": "Ahmed Hassan",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "VERIFIER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "MARK_DUPLICATE",
+            "comment": "Duplicate of report DR-DJ-2024-000100"
+          },
+          "rejectionReason": "DUPLICATE",
+          "rejectionRemarks": "Same dog already reported in DR-DJ-2024-000100 (still active). Same location, same distinctive markings.",
+          "additionalDetails": {
+            "duplicateOf": "DR-DJ-2024-000100"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "DUPLICATE",
+          "rejectionReason": "DUPLICATE",
+          "rejectionRemarks": "Same dog already reported in DR-DJ-2024-000100 (still active).",
+          "payoutEligible": false,
+          "additionalDetails": {
+            "duplicateOf": "DR-DJ-2024-000100"
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PENDING_VERIFICATION",
+    "action": "MARK_DUPLICATE",
+    "nextState": "DUPLICATE",
+    "isTerminal": true,
+    "allowedRoles": ["VERIFIER"]
+  }
+}

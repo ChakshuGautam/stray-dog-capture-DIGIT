@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 2,
+    "description": "SDCRS updates report to RESOLVED after successful payout",
+    "sender": "SDCRS Service (Kafka Consumer)",
+    "receiver": "Workflow Service → Persister",
+    "trigger": "Payout success callback received",
+    "previousPacket": "01-payout-success-callback.json",
+    "nextPacket": "03-payout-success-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - PAYOUT_SUCCESS action"
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734188440000,
+        "action": "_update",
+        "userInfo": {
+          "uuid": "system-uuid",
+          "userName": "SYSTEM",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "PAYOUT_SUCCESS",
+            "comment": "UPI payout successful. UTR: 423456789012"
+          },
+          "payoutDetails": {
+            "payoutId": "pay-uuid-001-abcd-efgh-ijkl",
+            "razorpayPayoutId": "pout_NhY2MnOpKc4n9I",
+            "payoutStatus": "SUCCESS",
+            "payoutAmount": 500,
+            "utr": "423456789012",
+            "payoutCompletedAt": 1734188435000
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "RESOLVED",
+          "payoutDetails": {
+            "payoutStatus": "SUCCESS",
+            "payoutAmount": 500,
+            "utr": "423456789012"
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PAYOUT_PENDING",
+    "action": "PAYOUT_SUCCESS",
+    "nextState": "RESOLVED",
+    "isTerminal": true,
+    "allowedRoles": ["SYSTEM"]
+  }
+}

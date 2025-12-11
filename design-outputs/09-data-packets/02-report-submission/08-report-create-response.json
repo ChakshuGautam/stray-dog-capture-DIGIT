@@ -1,0 +1,105 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 8,
+    "description": "SDCRS Service returns created report with tracking ID",
+    "sender": "SDCRS Service",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "Report created successfully, async validation triggered",
+    "previousPacket": "07-report-create-request.json",
+    "nextPacket": "09-kafka-persister-message.json",
+    "verified": true,
+    "source": "DogReportResponse.java, DogReport.java"
+  },
+  "response": {
+    "status": 201,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176201000,
+        "resMsgId": "res-msg-create-001",
+        "msgId": "20241214123640|en_IN",
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "trackingUrl": "https://sdcrs.djibouti.gov.dj/track/ABC12345",
+          "serviceType": "StrayDogAggressive",
+          "description": "Pack of 3 aggressive dogs near school gate. They chase students during morning assembly.",
+          "status": "PENDING_VALIDATION",
+          "location": {
+            "id": "loc-uuid-001",
+            "latitude": 11.5886,
+            "longitude": 43.1456,
+            "address": "Near Govt High School Main Gate, Djibouti-Ville",
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "ward": "Ward 5",
+            "wardCode": "W005",
+            "district": "Djibouti-Ville",
+            "districtCode": "DJ01",
+            "city": "Djibouti",
+            "pincode": "10000",
+            "gpsLatitude": 11.5887,
+            "gpsLongitude": 43.1455,
+            "gpsAccuracy": 8.5,
+            "gpsTimestamp": 1734176145000,
+            "gpsValidated": null,
+            "gpsValidationResult": null
+          },
+          "evidence": [
+            {
+              "id": "ev-uuid-001",
+              "fileStoreId": "fs-dog-001-abc123def456",
+              "evidenceType": "DOG_PHOTO",
+              "fileName": "IMG_20241214_123045.jpg",
+              "mimeType": "image/jpeg",
+              "fileSize": 2456789,
+              "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+              "captureTime": 1734176145000,
+              "latitude": 11.5886,
+              "longitude": 43.1456,
+              "deviceInfo": "Samsung SM-A525F",
+              "uploadedAt": 1734176200000,
+              "uploadedBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f"
+            },
+            {
+              "id": "ev-uuid-002",
+              "fileStoreId": "fs-selfie-001-xyz789ghi012",
+              "evidenceType": "REPORTER_SELFIE",
+              "fileName": "SELFIE_20241214_123112.jpg",
+              "mimeType": "image/jpeg",
+              "fileSize": 1234567,
+              "imageHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234",
+              "captureTime": 1734176172000,
+              "latitude": 11.5886,
+              "longitude": 43.1456,
+              "deviceInfo": "Samsung SM-A525F",
+              "uploadedAt": 1734176200000,
+              "uploadedBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f"
+            }
+          ],
+          "reporterId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "reporterName": "Ravi Kumar",
+          "reporterPhone": "9876543210",
+          "reporterSchool": "Govt High School Djibouti",
+          "payoutEligible": null,
+          "payoutAmount": null,
+          "payoutStatus": null,
+          "auditDetails": {
+            "createdBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+            "createdTime": 1734176201000,
+            "lastModifiedBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+            "lastModifiedTime": 1734176201000
+          }
+        }
+      ],
+      "TotalCount": 1
+    }
+  }
+}

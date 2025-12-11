@@ -1,0 +1,151 @@
+# Modified PGR Persister Configuration for SDCRS Fork
+# Adds SDCRS-specific columns to INSERT/UPDATE statements
+# Version: 2.0
+
+serviceMaps:
+  serviceName: pgr-services
+  mappings:
+    - version: 1.0
+      description: Persists pgr service create
+      fromTopic: save-pgr-service
+      isTransaction: true
+      queryMaps:
+        - query: >
+            INSERT INTO eg_pgr_service_v2 (
+              id, tenantid, servicecode, servicerequestid, description,
+              accountid, rating, active, createdby, createdtime,
+              lastmodifiedby, lastmodifiedtime, additionaldetail,
+              dog_count, is_aggressive, breed, estimated_age, distinctive_marks,
+              photo_file_store_id, selfie_file_store_id, image_hash, photo_timestamp,
+              exif_gps_latitude, exif_gps_longitude,
+              reporter_type, school_code, school_name,
+              assigned_officer_id, assigned_officer_name, assigned_time,
+              resolution_type, resolution_notes, resolution_time, capture_photo_file_store_id,
+              payout_eligible, payout_amount, payout_demand_id, payout_status,
+              rejection_reason, validation_result, tracking_id
+            ) VALUES (
+              :id, :tenantid, :servicecode, :servicerequestid, :description,
+              :accountid, :rating, :active, :createdby, :createdtime,
+              :lastmodifiedby, :lastmodifiedtime, :additionaldetail::JSONB,
+              :dog_count, :is_aggressive, :breed, :estimated_age, :distinctive_marks,
+              :photo_file_store_id, :selfie_file_store_id, :image_hash, :photo_timestamp,
+              :exif_gps_latitude, :exif_gps_longitude,
+              :reporter_type, :school_code, :school_name,
+              :assigned_officer_id, :assigned_officer_name, :assigned_time,
+              :resolution_type, :resolution_notes, :resolution_time, :capture_photo_file_store_id,
+              :payout_eligible, :payout_amount, :payout_demand_id, :payout_status,
+              :rejection_reason, :validation_result::JSONB, :tracking_id
+            )
+          basePath: $.service
+          jsonMaps:
+            - jsonPath: $.id
+            - jsonPath: $.tenantId
+            - jsonPath: $.serviceCode
+            - jsonPath: $.serviceRequestId
+            - jsonPath: $.description
+            - jsonPath: $.accountId
+            - jsonPath: $.rating
+            - jsonPath: $.active
+            - jsonPath: $.auditDetails.createdBy
+            - jsonPath: $.auditDetails.createdTime
+            - jsonPath: $.auditDetails.lastModifiedBy
+            - jsonPath: $.auditDetails.lastModifiedTime
+            - jsonPath: $.additionalDetail
+              type: JSON
+              dbType: JSONB
+            # SDCRS-specific fields
+            - jsonPath: $.dogCount
+            - jsonPath: $.isAggressive
+            - jsonPath: $.breed
+            - jsonPath: $.estimatedAge
+            - jsonPath: $.distinctiveMarks
+            - jsonPath: $.photoFileStoreId
+            - jsonPath: $.selfieFileStoreId
+            - jsonPath: $.imageHash
+            - jsonPath: $.photoTimestamp
+            - jsonPath: $.exifGpsLatitude
+            - jsonPath: $.exifGpsLongitude
+            - jsonPath: $.reporterType
+            - jsonPath: $.schoolCode
+            - jsonPath: $.schoolName
+            - jsonPath: $.assignedOfficerId
+            - jsonPath: $.assignedOfficerName
+            - jsonPath: $.assignedTime
+            - jsonPath: $.resolutionType
+            - jsonPath: $.resolutionNotes
+            - jsonPath: $.resolutionTime
+            - jsonPath: $.capturePhotoFileStoreId
+            - jsonPath: $.payoutEligible
+            - jsonPath: $.payoutAmount
+            - jsonPath: $.payoutDemandId
+            - jsonPath: $.payoutStatus
+            - jsonPath: $.rejectionReason
+            - jsonPath: $.validationResult
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.trackingId
+
+    - version: 1.0
+      description: Persists pgr service update
+      fromTopic: update-pgr-service
+      isTransaction: true
+      queryMaps:
+        - query: >
+            UPDATE eg_pgr_service_v2 SET
+              description = :description,
+              rating = :rating,
+              active = :active,
+              lastmodifiedby = :lastmodifiedby,
+              lastmodifiedtime = :lastmodifiedtime,
+              additionaldetail = :additionaldetail::JSONB,
+              dog_count = :dog_count,
+              is_aggressive = :is_aggressive,
+              breed = :breed,
+              estimated_age = :estimated_age,
+              distinctive_marks = :distinctive_marks,
+              assigned_officer_id = :assigned_officer_id,
+              assigned_officer_name = :assigned_officer_name,
+              assigned_time = :assigned_time,
+              resolution_type = :resolution_type,
+              resolution_notes = :resolution_notes,
+              resolution_time = :resolution_time,
+              capture_photo_file_store_id = :capture_photo_file_store_id,
+              payout_eligible = :payout_eligible,
+              payout_amount = :payout_amount,
+              payout_demand_id = :payout_demand_id,
+              payout_status = :payout_status,
+              rejection_reason = :rejection_reason,
+              validation_result = :validation_result::JSONB
+            WHERE id = :id
+          basePath: $.service
+          jsonMaps:
+            - jsonPath: $.id
+            - jsonPath: $.description
+            - jsonPath: $.rating
+            - jsonPath: $.active
+            - jsonPath: $.auditDetails.lastModifiedBy
+            - jsonPath: $.auditDetails.lastModifiedTime
+            - jsonPath: $.additionalDetail
+              type: JSON
+              dbType: JSONB
+            # SDCRS-specific fields
+            - jsonPath: $.dogCount
+            - jsonPath: $.isAggressive
+            - jsonPath: $.breed
+            - jsonPath: $.estimatedAge
+            - jsonPath: $.distinctiveMarks
+            - jsonPath: $.assignedOfficerId
+            - jsonPath: $.assignedOfficerName
+            - jsonPath: $.assignedTime
+            - jsonPath: $.resolutionType
+            - jsonPath: $.resolutionNotes
+            - jsonPath: $.resolutionTime
+            - jsonPath: $.capturePhotoFileStoreId
+            - jsonPath: $.payoutEligible
+            - jsonPath: $.payoutAmount
+            - jsonPath: $.payoutDemandId
+            - jsonPath: $.payoutStatus
+            - jsonPath: $.rejectionReason
+            - jsonPath: $.validationResult
+              type: JSON
+              dbType: JSONB

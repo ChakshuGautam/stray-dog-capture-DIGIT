@@ -1,0 +1,178 @@
+{
+  "tenantId": "dj",
+  "moduleName": "DSS",
+  "DashboardConfig": [
+    {
+      "name": "SDCRS_OVERVIEW",
+      "id": "sdcrs-overview",
+      "isActive": true,
+      "style": "linear",
+      "visualizations": [
+        {
+          "row": 1,
+          "name": "SDCRS_TOTAL_REPORTS",
+          "vizArray": [
+            { "id": "sdcrsTotalReports", "name": "SDCRS_TOTAL_REPORTS", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 1,
+          "name": "SDCRS_RESOLVED_REPORTS",
+          "vizArray": [
+            { "id": "sdcrsResolvedReports", "name": "SDCRS_RESOLVED_REPORTS", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 1,
+          "name": "SDCRS_CAPTURE_RATE",
+          "vizArray": [
+            { "id": "sdcrsCaptureRate", "name": "SDCRS_CAPTURE_RATE", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_REPORTS_BY_STATUS",
+          "vizArray": [
+            { "id": "sdcrsReportsByStatus", "name": "SDCRS_REPORTS_BY_STATUS", "dimensions": { "height": 350, "width": 6 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_REPORTS_BY_TYPE",
+          "vizArray": [
+            { "id": "sdcrsReportsByType", "name": "SDCRS_REPORTS_BY_TYPE", "dimensions": { "height": 350, "width": 6 } }
+          ]
+        },
+        {
+          "row": 3,
+          "name": "SDCRS_DAILY_REPORT_TREND",
+          "vizArray": [
+            { "id": "sdcrsDailyReportTrend", "name": "SDCRS_DAILY_REPORT_TREND", "dimensions": { "height": 350, "width": 12 } }
+          ]
+        },
+        {
+          "row": 4,
+          "name": "SDCRS_REPORTS_BY_DISTRICT",
+          "vizArray": [
+            { "id": "sdcrsReportsByDistrict", "name": "SDCRS_REPORTS_BY_DISTRICT", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SDCRS_PAYOUT",
+      "id": "sdcrs-payout",
+      "isActive": true,
+      "style": "linear",
+      "visualizations": [
+        {
+          "row": 1,
+          "name": "SDCRS_TOTAL_PAYOUTS",
+          "vizArray": [
+            { "id": "sdcrsTotalPayouts", "name": "SDCRS_TOTAL_PAYOUTS", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 1,
+          "name": "SDCRS_PENDING_PAYOUTS",
+          "vizArray": [
+            { "id": "sdcrsPendingPayouts", "name": "SDCRS_PENDING_PAYOUTS", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_PAYOUTS_BY_DISTRICT",
+          "vizArray": [
+            { "id": "sdcrsPayoutsByDistrict", "name": "SDCRS_PAYOUTS_BY_DISTRICT", "dimensions": { "height": 400, "width": 6 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_MONTHLY_PAYOUT_TREND",
+          "vizArray": [
+            { "id": "sdcrsMonthlyPayoutTrend", "name": "SDCRS_MONTHLY_PAYOUT_TREND", "dimensions": { "height": 400, "width": 6 } }
+          ]
+        },
+        {
+          "row": 3,
+          "name": "SDCRS_TOP_EARNERS",
+          "vizArray": [
+            { "id": "sdcrsTopEarners", "name": "SDCRS_TOP_EARNERS", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SDCRS_SLA",
+      "id": "sdcrs-sla",
+      "isActive": true,
+      "style": "linear",
+      "visualizations": [
+        {
+          "row": 1,
+          "name": "SDCRS_SLA_COMPLIANCE_RATE",
+          "vizArray": [
+            { "id": "sdcrsSlaComplianceRate", "name": "SDCRS_SLA_COMPLIANCE_RATE", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 1,
+          "name": "SDCRS_SLA_BREACHED_REPORTS",
+          "vizArray": [
+            { "id": "sdcrsSlaBreachedReports", "name": "SDCRS_SLA_BREACHED_REPORTS", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 1,
+          "name": "SDCRS_AVG_RESOLUTION_TIME",
+          "vizArray": [
+            { "id": "sdcrsAvgResolutionTime", "name": "SDCRS_AVG_RESOLUTION_TIME", "dimensions": { "height": 250, "width": 4 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_AVG_TIME_BY_STAGE",
+          "vizArray": [
+            { "id": "sdcrsAvgTimeByStage", "name": "SDCRS_AVG_TIME_BY_STAGE", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        },
+        {
+          "row": 3,
+          "name": "SDCRS_AGING_REPORT",
+          "vizArray": [
+            { "id": "sdcrsAgingReport", "name": "SDCRS_AGING_REPORT", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SDCRS_PERFORMANCE",
+      "id": "sdcrs-performance",
+      "isActive": true,
+      "style": "linear",
+      "visualizations": [
+        {
+          "row": 1,
+          "name": "SDCRS_TOP_REPORTERS",
+          "vizArray": [
+            { "id": "sdcrsTopReporters", "name": "SDCRS_TOP_REPORTERS", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        },
+        {
+          "row": 2,
+          "name": "SDCRS_VERIFIER_PERFORMANCE",
+          "vizArray": [
+            { "id": "sdcrsVerifierPerformance", "name": "SDCRS_VERIFIER_PERFORMANCE", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        },
+        {
+          "row": 3,
+          "name": "SDCRS_MC_OFFICER_PERFORMANCE",
+          "vizArray": [
+            { "id": "sdcrsMcOfficerPerformance", "name": "SDCRS_MC_OFFICER_PERFORMANCE", "dimensions": { "height": 400, "width": 12 } }
+          ]
+        }
+      ]
+    }
+  ]
+}

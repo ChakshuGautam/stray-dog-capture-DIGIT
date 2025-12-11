@@ -1,0 +1,108 @@
+@startuml SDCRS_Create
+title Stray Dog Reports - Backend Creation Flow (with Fraud Detection)
+
+participant "ReportUI" as UI
+participant "Gateway" as GW
+participant "User" as US
+participant "SDCRSService" as SS
+participant "FraudDetectionService" as FDS
+participant "MDMS" as MDMS
+participant "IDGen" as IDG
+participant "FileStore" as FS
+participant "Workflow" as WF
+participant "Kafka" as KF
+participant "Persister" as PS
+participant "Indexer" as IX
+database "PostgreSQL" as DB
+database "ElasticSearch" as ES
+
+UI -> GW: 1 Call Report _create API with request payload\n& auth token. Includes photo & selfie fileStoreIds.
+GW -> US: 2 Validate auth token in the request payload
+US --> GW: 3 User info
+
+alt "Token valid"
+    GW -> GW: 4 Enrich UserInfo in request payload
+    GW -> SS: 5 Route request to relevant service
+else "Token expired or invalid"
+    GW --> UI: 6 401 Unauthorized
+end
+
+SS -> MDMS: 7 Request service specific master data\nfor the tenant (ServiceType, PayoutConfig)
+MDMS --> SS: 8 masters
+
+SS -> SS: 9 Validate if master data codes sent in the\nrequest payload match the response from MDMS
+
+alt "Master data code(s) invalid"
+    SS --> UI: 10 400 error
+end
+
+SS -> SS: 11 Validate request payload (business logic)\nto ensure data integrity
+
+SS -> FS: 12 Fetch files for photo & selfie
+FS --> SS: 13 File bytes and metadata
+
+note over SS: Evidence Enrichment\n(computed once at submission)
+
+SS -> SS: 14 Compute evidence metadata:\n- pHash (64-bit perceptual hash)\n- SHA-256 hex (exact match)\n- Extract EXIF GPS & timestamp\n- Capture device info
+
+SS -> SS: 15 Build FraudEvaluationRequest with\nlocation, evidence hashes, applicant data
+
+note over SS, FDS: Real-time fraud validation (INTERNAL rules only)
+
+SS -> FDS: 16 POST /fraud/v1/_evaluateSync\n(GPS, timestamp, duplicate, velocity checks)
+FDS -> MDMS: 17 Fetch FraudRules (ruleType=INTERNAL)
+MDMS --> FDS: 18 enabled fraud rules
+
+note over FDS, DB: Database queries for cross-reporter duplicate detection
+
+FDS -> DB: 19 Query eg_sdcrs_report_evidence:\nSELECT WHERE image_hash_hex = ?\n(exact duplicate check, O(log n), <1ms)
+DB --> FDS: 20 matching reports (if any)
+
+FDS -> DB: 21 Query eg_sdcrs_report_evidence:\nSELECT WHERE bit_count(phash # ?) <= 10\n(near-duplicate check, 5-20ms)
+DB --> FDS: 22 similar images with hamming distance
+
+FDS -> DB: 23 Query eg_sdcrs_report_evidence:\nSELECT WHERE ST_DWithin(location, ?, 50m)\nAND reporter_id != ?\n(geo-temporal duplicate, 2-5ms)
+DB --> FDS: 24 nearby reports from other reporters
+
+FDS -> DB: 25 Query eg_sdcrs_report_evidence:\nSELECT device_id, COUNT(DISTINCT reporter_id)\n(device sharing check, <1ms)
+DB --> FDS: 26 device collusion results
+
+FDS -> FDS: 27 Evaluate remaining INTERNAL rules:\n- GEO_DISTANCE (EXIF vs submitted)\n- GEO_BOUNDARY (within tenant)\n- TIMESTAMP_AGE (photo freshness)\n- VELOCITY (daily submission limit)
+FDS --> SS: 28 FraudEvaluationResponse\n(passed, riskLevel, primaryAction)
+
+alt "primaryAction = AUTO_REJECT"
+    SS --> UI: 29 400 error - Fraud detected\n(GPS_MISMATCH, DUPLICATE, etc.)
+end
+
+SS -> IDG: 30 Generate ID(s) for report based on\nformat defined in masters (DJ-SDCRS-YYYY-NNNNNN)
+IDG --> SS: 31 List of IDs
+
+SS -> SS: 32 Enrich request payload with ID,\nfraud score, evidence hashes, & audit details
+
+SS -> US: 33 Retrieve reporter (teacher) user details
+US --> SS: 34 user
+SS -> SS: 35 Enrich user details (name, phone, school)
+
+SS -> WF: 36 Search for business service
+WF --> SS: 37 business service
+
+SS -> SS: 38 Create new workflow process instance\n& enrich with action from request payload
+
+SS -> WF: 39 Call transition API to trigger workflow\n(action: SUBMIT, status: PENDING_VALIDATION)
+WF --> SS: 40 workflow status
+
+SS -> SS: 41 Enrich workflow status in request payload
+
+SS -> KF: 42 Push report payload to save topic
+
+SS --> UI: 43 Return report created response\n(reportNumber, status: PENDING_VALIDATION)
+
+KF -> PS: 44 Read payload
+PS -> DB: 45 Persist data as per configuration\n(eg_sdcrs_report + eg_sdcrs_report_evidence tables)
+
+KF -> IX: 46 Read payload
+IX -> ES: 47 Push data to indexes as per configuration
+
+KF -> SS: 48 Trigger async validation\n(sdcrs-async-validation topic)
+
+@enduml

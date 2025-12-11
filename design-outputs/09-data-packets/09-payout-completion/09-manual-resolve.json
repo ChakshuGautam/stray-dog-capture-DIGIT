@@ -1,0 +1,87 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 9,
+    "description": "Admin manually resolves report after max retries exhausted",
+    "sender": "Admin Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Admin decides to resolve without payout OR alternate payment made",
+    "previousPacket": "05-update-report-payout-failed.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - MANUAL_RESOLVE action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer admin-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000000,
+        "userInfo": {
+          "uuid": "admin-uuid-001",
+          "userName": "ADMIN001",
+          "name": "State Admin",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "STATE_ADMIN"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "MANUAL_RESOLVE",
+            "comment": "Resolved manually - payout made via bank transfer. Reference: BT-2024-001234"
+          },
+          "payoutDetails": {
+            "payoutStatus": "MANUAL_PAYOUT",
+            "manualPaymentReference": "BT-2024-001234",
+            "manualPaymentMethod": "Bank Transfer",
+            "resolvedBy": "admin-uuid-001"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "RESOLVED",
+          "payoutDetails": {
+            "payoutStatus": "MANUAL_PAYOUT",
+            "manualPaymentReference": "BT-2024-001234"
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PAYOUT_FAILED",
+    "action": "MANUAL_RESOLVE",
+    "nextState": "RESOLVED",
+    "isTerminal": true,
+    "allowedRoles": ["STATE_ADMIN"]
+  },
+  "useCase": {
+    "_comment": "Used when UPI continuously fails and admin arranges alternate payment",
+    "scenarios": [
+      "Teacher's UPI ID cannot be validated despite corrections",
+      "UPI service provider has extended outage",
+      "Teacher requests bank transfer instead",
+      "Max retry attempts (3) exhausted"
+    ]
+  }
+}

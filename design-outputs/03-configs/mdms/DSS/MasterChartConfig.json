@@ -1,0 +1,414 @@
+{
+  "tenantId": "dj",
+  "moduleName": "DSS",
+  "MasterChartConfig": [
+    {
+      "id": "sdcrsTotalReports",
+      "chartName": "SDCRS_TOTAL_REPORTS",
+      "chartType": "metric",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Reports"],
+      "insight": {
+        "chartResponseMap": "sdcrsTotalReports",
+        "action": "differenceOfNumbers",
+        "upwardIndicator": "positive",
+        "downwardIndicator": "negative",
+        "textMessage": "$value% than last $interval",
+        "colorCode": "#228B22"
+      },
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Reports\":{\"value_count\":{\"field\":\"id.keyword\"}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsResolvedReports",
+      "chartName": "SDCRS_RESOLVED_REPORTS",
+      "chartType": "metric",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Reports"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Reports\":{\"filter\":{\"term\":{\"status.keyword\":\"RESOLVED\"}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsCaptureRate",
+      "chartName": "SDCRS_CAPTURE_RATE",
+      "chartType": "metric",
+      "valueType": "percentage",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["CaptureRate"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Total\":{\"filter\":{\"terms\":{\"status.keyword\":[\"ASSIGNED\",\"IN_PROGRESS\",\"CAPTURED\",\"RESOLVED\",\"UNABLE_TO_LOCATE\"]}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}},\"Captured\":{\"filter\":{\"terms\":{\"status.keyword\":[\"CAPTURED\",\"RESOLVED\"]}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ],
+      "postAggregationTheory": "CaptureRate = (Captured / Total) * 100"
+    },
+    {
+      "id": "sdcrsAvgResolutionTime",
+      "chartName": "SDCRS_AVG_RESOLUTION_TIME",
+      "chartType": "metric",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["AvgTime"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"AvgTime\":{\"filter\":{\"exists\":{\"field\":\"resolutionTime\"}},\"aggs\":{\"avg_ms\":{\"avg\":{\"field\":\"timeToResolution\"}}}}}}"
+        }
+      ],
+      "postAggregationTheory": "Convert milliseconds to hours: value / 3600000"
+    },
+    {
+      "id": "sdcrsReportsByStatus",
+      "chartName": "SDCRS_REPORTS_BY_STATUS",
+      "chartType": "pie",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["StatusBreakdown"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"StatusBreakdown\":{\"terms\":{\"field\":\"status.keyword\",\"size\":15}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsReportsByType",
+      "chartName": "SDCRS_REPORTS_BY_TYPE",
+      "chartType": "pie",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["TypeBreakdown"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"TypeBreakdown\":{\"terms\":{\"field\":\"reportType.keyword\",\"size\":10}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsDailyReportTrend",
+      "chartName": "SDCRS_DAILY_REPORT_TREND",
+      "chartType": "line",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["DailyTrend"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"DailyTrend\":{\"date_histogram\":{\"field\":\"createdTime\",\"calendar_interval\":\"day\"},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsReportsByDistrict",
+      "chartName": "SDCRS_REPORTS_BY_DISTRICT",
+      "chartType": "bar",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "sdcrsReportsByWard",
+      "aggregationPaths": ["DistrictBreakdown"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"DistrictBreakdown\":{\"terms\":{\"field\":\"districtName.keyword\",\"size\":50},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsReportsByWard",
+      "chartName": "SDCRS_REPORTS_BY_WARD",
+      "chartType": "bar",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["WardBreakdown"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"WardBreakdown\":{\"terms\":{\"field\":\"wardName.keyword\",\"size\":100},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsTopReporters",
+      "chartName": "SDCRS_TOP_REPORTERS",
+      "chartType": "table",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Reporters"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Reporters\":{\"terms\":{\"field\":\"reporterId.keyword\",\"size\":10,\"order\":{\"resolved\":\"desc\"}},\"aggs\":{\"reporterName\":{\"terms\":{\"field\":\"reporterName.keyword\",\"size\":1}},\"total\":{\"value_count\":{\"field\":\"id.keyword\"}},\"resolved\":{\"filter\":{\"term\":{\"status.keyword\":\"RESOLVED\"}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsSlaBreachedReports",
+      "chartName": "SDCRS_SLA_BREACHED_REPORTS",
+      "chartType": "metric",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Breached"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Breached\":{\"filter\":{\"term\":{\"slaBreached\":true}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsSlaComplianceRate",
+      "chartName": "SDCRS_SLA_COMPLIANCE_RATE",
+      "chartType": "metric",
+      "valueType": "percentage",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Compliance"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"Total\":{\"filter\":{\"terms\":{\"status.keyword\":[\"RESOLVED\",\"UNABLE_TO_LOCATE\",\"REJECTED\"]}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}},\"Compliant\":{\"filter\":{\"bool\":{\"must\":[{\"terms\":{\"status.keyword\":[\"RESOLVED\",\"UNABLE_TO_LOCATE\",\"REJECTED\"]}},{\"term\":{\"slaBreached\":false}}]}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ],
+      "postAggregationTheory": "Compliance = (Compliant / Total) * 100"
+    },
+    {
+      "id": "sdcrsTotalPayouts",
+      "chartName": "SDCRS_TOTAL_PAYOUTS",
+      "chartType": "metric",
+      "valueType": "amount",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["TotalAmount"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"TotalAmount\":{\"filter\":{\"term\":{\"payoutStatus.keyword\":\"COMPLETED\"}},\"aggs\":{\"sum\":{\"sum\":{\"field\":\"payoutAmount\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsPendingPayouts",
+      "chartName": "SDCRS_PENDING_PAYOUTS",
+      "chartType": "metric",
+      "valueType": "amount",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["PendingAmount"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"PendingAmount\":{\"filter\":{\"term\":{\"payoutStatus.keyword\":\"PENDING\"}},\"aggs\":{\"sum\":{\"sum\":{\"field\":\"payoutAmount\"}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsPayoutsByDistrict",
+      "chartName": "SDCRS_PAYOUTS_BY_DISTRICT",
+      "chartType": "bar",
+      "valueType": "amount",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["DistrictPayouts"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"DistrictPayouts\":{\"filter\":{\"term\":{\"payoutStatus.keyword\":\"COMPLETED\"}},\"aggs\":{\"byDistrict\":{\"terms\":{\"field\":\"districtName.keyword\",\"size\":50},\"aggs\":{\"amount\":{\"sum\":{\"field\":\"payoutAmount\"}}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsMonthlyPayoutTrend",
+      "chartName": "SDCRS_MONTHLY_PAYOUT_TREND",
+      "chartType": "line",
+      "valueType": "amount",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["MonthlyTrend"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "payoutTime",
+          "aggrQuery": "{\"aggs\":{\"MonthlyTrend\":{\"filter\":{\"term\":{\"payoutStatus.keyword\":\"COMPLETED\"}},\"aggs\":{\"monthly\":{\"date_histogram\":{\"field\":\"payoutTime\",\"calendar_interval\":\"month\"},\"aggs\":{\"amount\":{\"sum\":{\"field\":\"payoutAmount\"}}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsTopEarners",
+      "chartName": "SDCRS_TOP_EARNERS",
+      "chartType": "table",
+      "valueType": "amount",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Earners"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "payoutTime",
+          "aggrQuery": "{\"aggs\":{\"Earners\":{\"filter\":{\"term\":{\"payoutStatus.keyword\":\"COMPLETED\"}},\"aggs\":{\"byReporter\":{\"terms\":{\"field\":\"reporterId.keyword\",\"size\":10,\"order\":{\"earnings\":\"desc\"}},\"aggs\":{\"reporterName\":{\"terms\":{\"field\":\"reporterName.keyword\",\"size\":1}},\"earnings\":{\"sum\":{\"field\":\"payoutAmount\"}},\"reportCount\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsAvgTimeByStage",
+      "chartName": "SDCRS_AVG_TIME_BY_STAGE",
+      "chartType": "bar",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Stages"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"AvgToVerification\":{\"filter\":{\"exists\":{\"field\":\"verifiedTime\"}},\"aggs\":{\"avg\":{\"avg\":{\"field\":\"timeToVerification\"}}}},\"AvgToAssignment\":{\"filter\":{\"exists\":{\"field\":\"assignedTime\"}},\"aggs\":{\"avg\":{\"avg\":{\"field\":\"timeToAssignment\"}}}},\"AvgToFieldVisit\":{\"filter\":{\"exists\":{\"field\":\"fieldVisitStartTime\"}},\"aggs\":{\"avg\":{\"avg\":{\"field\":\"timeToFieldVisit\"}}}},\"AvgToResolution\":{\"filter\":{\"exists\":{\"field\":\"resolutionTime\"}},\"aggs\":{\"avg\":{\"avg\":{\"field\":\"timeToResolution\"}}}}}}"
+        }
+      ],
+      "postAggregationTheory": "Convert each value from milliseconds to hours"
+    },
+    {
+      "id": "sdcrsAgingReport",
+      "chartName": "SDCRS_AGING_REPORT",
+      "chartType": "table",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["AgingBuckets"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"OpenReports\":{\"filter\":{\"terms\":{\"status.keyword\":[\"PENDING_VALIDATION\",\"PENDING_VERIFICATION\",\"VERIFIED\",\"ASSIGNED\",\"IN_PROGRESS\"]}},\"aggs\":{\"ByAge\":{\"range\":{\"field\":\"createdTime\",\"ranges\":[{\"key\":\"0-24h\",\"from\":\"now-24h\",\"to\":\"now\"},{\"key\":\"24-48h\",\"from\":\"now-48h\",\"to\":\"now-24h\"},{\"key\":\"48-72h\",\"from\":\"now-72h\",\"to\":\"now-48h\"},{\"key\":\">72h\",\"to\":\"now-72h\"}]}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsVerifierPerformance",
+      "chartName": "SDCRS_VERIFIER_PERFORMANCE",
+      "chartType": "table",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Verifiers"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "verifiedTime",
+          "aggrQuery": "{\"aggs\":{\"Verifiers\":{\"filter\":{\"exists\":{\"field\":\"verifierId\"}},\"aggs\":{\"byVerifier\":{\"terms\":{\"field\":\"verifierId.keyword\",\"size\":20},\"aggs\":{\"verifierName\":{\"terms\":{\"field\":\"verifierName.keyword\",\"size\":1}},\"verified\":{\"value_count\":{\"field\":\"id.keyword\"}},\"avgTime\":{\"avg\":{\"field\":\"timeToVerification\"}}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsMcOfficerPerformance",
+      "chartName": "SDCRS_MC_OFFICER_PERFORMANCE",
+      "chartType": "table",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["Officers"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "assignedTime",
+          "aggrQuery": "{\"aggs\":{\"Officers\":{\"filter\":{\"exists\":{\"field\":\"assignedMcId\"}},\"aggs\":{\"byOfficer\":{\"terms\":{\"field\":\"assignedMcId.keyword\",\"size\":20},\"aggs\":{\"officerName\":{\"terms\":{\"field\":\"assignedMcName.keyword\",\"size\":1}},\"assigned\":{\"value_count\":{\"field\":\"id.keyword\"}},\"captured\":{\"filter\":{\"terms\":{\"status.keyword\":[\"CAPTURED\",\"RESOLVED\"]}}},\"unableToLocate\":{\"filter\":{\"term\":{\"status.keyword\":\"UNABLE_TO_LOCATE\"}}}}}}}}}"
+        }
+      ]
+    },
+    {
+      "id": "sdcrsFraudMetrics",
+      "chartName": "SDCRS_FRAUD_METRICS",
+      "chartType": "metric",
+      "valueType": "number",
+      "action": "",
+      "drillChart": "none",
+      "aggregationPaths": ["FraudCount"],
+      "queries": [
+        {
+          "module": "SDCRS",
+          "indexName": "sdcrs-report-index",
+          "requestQueryMap": "{\"ward\" : \"wardCode.keyword\", \"district\" : \"districtCode.keyword\"}",
+          "dateRefField": "createdTime",
+          "aggrQuery": "{\"aggs\":{\"FraudCount\":{\"filter\":{\"exists\":{\"field\":\"fraudFlags\"}},\"aggs\":{\"count\":{\"value_count\":{\"field\":\"id.keyword\"}}}}}}"
+        }
+      ]
+    }
+  ]
+}

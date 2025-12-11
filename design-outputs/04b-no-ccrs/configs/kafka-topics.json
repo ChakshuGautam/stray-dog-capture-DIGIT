@@ -1,0 +1,41 @@
+{
+  "description": "Kafka topics used by SDCRS custom service",
+  "topics": [
+    {
+      "name": "save-sdcrs-report",
+      "producer": "sdcrs-services",
+      "consumer": "persister",
+      "purpose": "Persists new dog reports to database"
+    },
+    {
+      "name": "update-sdcrs-report",
+      "producer": "sdcrs-services",
+      "consumer": "persister",
+      "purpose": "Persists updates to dog reports"
+    },
+    {
+      "name": "sdcrs-report-index",
+      "producer": "sdcrs-services",
+      "consumer": "indexer",
+      "purpose": "Indexes dog reports to Elasticsearch"
+    },
+    {
+      "name": "sdcrs-notification",
+      "producer": "sdcrs-services",
+      "consumer": "notification-service",
+      "purpose": "Triggers SMS/Email notifications"
+    },
+    {
+      "name": "sdcrs-payout-trigger",
+      "producer": "sdcrs-services",
+      "consumer": "sdcrs-services",
+      "purpose": "Triggers payout processing via Collection Service"
+    },
+    {
+      "name": "sdcrs-validation",
+      "producer": "sdcrs-services",
+      "consumer": "sdcrs-services",
+      "purpose": "Triggers auto-validation (GPS, boundary, duplicate)"
+    }
+  ]
+}

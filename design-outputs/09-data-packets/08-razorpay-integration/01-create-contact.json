@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 1,
+    "description": "UPI Payout Adapter creates contact in Razorpay X",
+    "sender": "UPI Payout Adapter",
+    "receiver": "Razorpay X API",
+    "trigger": "Payout create message consumed from Kafka",
+    "previousPacket": "../07-payout-initiation/03-payout-pending-notification.json",
+    "nextPacket": "02-create-fund-account.json",
+    "verified": true,
+    "source": "RazorpayService.java - createContact(), upi-payout-adapter/README.md"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.razorpay.com/v1/contacts",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Basic {base64(key_id:key_secret)}"
+    },
+    "body": {
+      "name": "Amina Hassan",
+      "email": null,
+      "contact": "9876543210",
+      "type": "employee",
+      "reference_id": "teacher-uuid-001-abcd-efgh",
+      "notes": {
+        "tenant_id": "dj.djibouti-ville",
+        "user_type": "TEACHER",
+        "created_by": "SDCRS"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "cont_NhY2KwLfKc4n7G",
+      "entity": "contact",
+      "name": "Amina Hassan",
+      "contact": "9876543210",
+      "email": null,
+      "type": "employee",
+      "reference_id": "teacher-uuid-001-abcd-efgh",
+      "batch_id": null,
+      "active": true,
+      "created_at": 1734188420
+    }
+  },
+  "caching": {
+    "_comment": "Contact ID is cached for reuse in future payouts",
+    "cacheKey": "razorpay:contact:teacher-uuid-001-abcd-efgh",
+    "cacheValue": "cont_NhY2KwLfKc4n7G",
+    "ttl": "30 days"
+  }
+}

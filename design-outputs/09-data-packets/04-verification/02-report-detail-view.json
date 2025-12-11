@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 2,
+    "description": "Verifier clicks report to see full details including photos",
+    "sender": "Verifier Web Portal",
+    "receiver": "SDCRS Service + File Store",
+    "trigger": "Verifier clicks on a report in inbox",
+    "previousPacket": "01-verifier-inbox.json",
+    "nextPacket": "03-verify-action.json or 04-reject-action.json or 05-mark-duplicate-action.json",
+    "verified": true,
+    "source": "DogReport.java - full entity with evidence array"
+  },
+  "reportDetailRequest": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734180100000,
+        "msgId": "20241214133100|en_IN",
+        "userInfo": {
+          "uuid": "ver-uuid-001-abcd-efgh",
+          "roles": [{"code": "VERIFIER"}]
+        }
+      },
+      "searchCriteria": {
+        "ids": ["dr-uuid-001-abcd-efgh-ijkl-mnop"]
+      }
+    }
+  },
+  "reportDetailResponse": {
+    "DogReports": [
+      {
+        "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "tenantId": "dj.djibouti-ville",
+        "reportNumber": "DR-DJ-2024-000123",
+        "trackingId": "ABC12345",
+        "serviceType": "StrayDogAggressive",
+        "description": "Pack of 3 aggressive dogs near school gate. They chase students during morning assembly.",
+        "status": "PENDING_VERIFICATION",
+        "location": {
+          "latitude": 11.5886,
+          "longitude": 43.1456,
+          "address": "Near Govt High School Main Gate, Djibouti-Ville",
+          "locality": "Djibouti Centre",
+          "gpsValidated": true,
+          "gpsValidationResult": "MATCH"
+        },
+        "evidence": [
+          {
+            "id": "ev-uuid-001",
+            "fileStoreId": "fs-dog-001-abc123def456",
+            "evidenceType": "DOG_PHOTO",
+            "fileName": "IMG_20241214_123045.jpg",
+            "captureTime": 1734176145000
+          },
+          {
+            "id": "ev-uuid-002",
+            "fileStoreId": "fs-selfie-001-xyz789ghi012",
+            "evidenceType": "REPORTER_SELFIE",
+            "fileName": "SELFIE_20241214_123112.jpg",
+            "captureTime": 1734176172000
+          }
+        ],
+        "reporterId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "reporterName": "Ravi Kumar",
+        "reporterPhone": "9876543210",
+        "reporterSchool": "Govt High School Djibouti",
+        "auditDetails": {
+          "createdTime": 1734176201000
+        }
+      }
+    ]
+  },
+  "imageUrls": {
+    "_comment": "UI fetches images from File Store",
+    "dogPhoto": "https://filestore.djibouti.gov.dj/filestore/v1/files/fs-dog-001-abc123def456?tenantId=dj.djibouti-ville",
+    "selfie": "https://filestore.djibouti.gov.dj/filestore/v1/files/fs-selfie-001-xyz789ghi012?tenantId=dj.djibouti-ville"
+  }
+}

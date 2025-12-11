@@ -1,0 +1,95 @@
+@startuml SDCRS_Update
+title Stray Dog Reports - Update Report Flow
+
+participant "ReportUI" as UI
+participant "Gateway" as GW
+participant "User" as US
+participant "SDCRSService" as SS
+participant "MDMS" as MDMS
+participant "FileStore" as FS
+participant "Workflow" as WF
+participant "Kafka" as KF
+participant "Persister" as PS
+participant "Indexer" as IX
+database "PostgreSQL" as DB
+database "ElasticSearch" as ES
+actor "User" as USR
+
+UI -> GW: 1 Call Report _update API with request payload\n& auth token. Used for verification, assignment,\nand resolution updates.
+GW -> US: 2 Validate auth token in the request payload
+US --> GW: 3 User info
+
+alt "Token valid"
+    GW -> GW: 4 Enrich UserInfo in request payload
+    GW -> SS: 5 Route request to relevant service
+else "Token expired or invalid"
+    GW --> UI: 6 401 Unauthorized
+end
+
+SS -> MDMS: 7 Request service specific master data\nfor the tenant
+MDMS --> SS: 8 masters
+
+SS -> SS: 9 Validate if master data codes sent in the\nrequest payload match the response from MDMS
+
+alt "Master data code(s) invalid"
+    SS --> UI: 10 400 error
+end
+
+SS -> SS: 11 Validate request payload (business logic)\nto ensure data integrity
+
+SS -> DB: 12 Fetch existing report by reportNumber
+DB --> SS: 13 existing report
+
+alt "Report not found"
+    SS --> UI: 14 404 Not Found
+end
+
+SS -> SS: 15 Validate user has permission for\nrequested action on current status
+
+alt "User not authorized for action"
+    SS --> UI: 16 403 Forbidden
+end
+
+alt "Action requires file upload (MARK_CAPTURED)"
+    SS -> FS: 17 Validate capture photo fileStoreId exists
+    FS --> SS: 18 File metadata
+end
+
+SS -> SS: 19 Enrich request payload with audit details
+
+SS -> US: 20 Retrieve actor user details
+US --> SS: 21 user
+SS -> SS: 22 Enrich user details
+
+SS -> WF: 23 Call transition API based on\naction in the request payload
+WF --> SS: 24 workflow status
+
+SS -> SS: 25 Enrich workflow status in request payload
+
+alt "Action is MARK_CAPTURED"
+    SS -> SS: 26 Set payoutEligible = true\nCalculate payout amount from config
+end
+
+alt "Action is ASSIGN_MC"
+    SS -> US: 27 Validate assignee exists and has MC_OFFICER role
+    US --> SS: 28 assignee details
+    SS -> SS: 29 Enrich assignment details
+end
+
+SS -> KF: 30 Push report payload to update topic
+
+SS --> UI: 31 Return report updated response
+
+KF -> PS: 32 Read payload
+PS -> DB: 33 Persist data as per configuration
+
+KF -> IX: 34 Read payload
+IX -> ES: 35 Update ES doc (idempotency) in index
+
+alt "Status changed to CAPTURED"
+    KF -> SS: 36 Trigger payout processing\n(sdcrs-payout-trigger topic)
+end
+
+KF -> SS: 37 Trigger notification\n(sdcrs-notification topic)
+
+@enduml

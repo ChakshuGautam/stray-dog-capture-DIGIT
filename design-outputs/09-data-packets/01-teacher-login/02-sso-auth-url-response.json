@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 2,
+    "description": "Backend returns OAuth2 authorization URL with PKCE challenge",
+    "sender": "SSO Adapter Service",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "Response to auth-url request",
+    "previousPacket": "01-sso-auth-url-request.json",
+    "nextPacket": "03-hrms-login-redirect.json",
+    "verified": false,
+    "assumption": "PKCE code_challenge generated server-side, code_verifier stored in Redis with state as key"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "authUrl": "https://hrms.state.gov.in/oauth2/authorize?client_id=sdcrs-mobile&response_type=code&scope=openid%20profile%20employee&state=csrf_abc123xyz&redirect_uri=sdcrs%3A%2F%2Fcallback&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256",
+      "state": "csrf_abc123xyz",
+      "expiresIn": 600
+    }
+  },
+  "authUrlParsed": {
+    "_comment": "Breakdown of the authorization URL parameters",
+    "baseUrl": "https://hrms.state.gov.in/oauth2/authorize",
+    "params": {
+      "client_id": "sdcrs-mobile",
+      "response_type": "code",
+      "scope": "openid profile employee",
+      "state": "csrf_abc123xyz",
+      "redirect_uri": "sdcrs://callback",
+      "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+      "code_challenge_method": "S256"
+    }
+  }
+}

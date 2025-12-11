@@ -1,0 +1,51 @@
+[
+  {
+    "name": "sdcrs.report.submitted",
+    "channel": "SMS",
+    "templateId": "SDCRS_SUBMITTED",
+    "locale": "en_IN",
+    "content": "Your stray dog report {serviceRequestId} has been submitted. Track at {trackingUrl}"
+  },
+  {
+    "name": "sdcrs.report.verified",
+    "channel": "SMS",
+    "templateId": "SDCRS_VERIFIED",
+    "locale": "en_IN",
+    "content": "Your report {serviceRequestId} has been verified and assigned to Municipal Corporation."
+  },
+  {
+    "name": "sdcrs.report.captured",
+    "channel": "SMS",
+    "templateId": "SDCRS_CAPTURED",
+    "locale": "en_IN",
+    "content": "Good news! The dog in your report {serviceRequestId} has been captured. Payout of {amount} will be processed."
+  },
+  {
+    "name": "sdcrs.report.rejected",
+    "channel": "SMS",
+    "templateId": "SDCRS_REJECTED",
+    "locale": "en_IN",
+    "content": "Your report {serviceRequestId} could not be verified. Reason: {rejectionReason}"
+  },
+  {
+    "name": "sdcrs.report.unable_to_locate",
+    "channel": "SMS",
+    "templateId": "SDCRS_UNABLE",
+    "locale": "en_IN",
+    "content": "MC Officer could not locate the dog in report {serviceRequestId}. No payout applicable."
+  },
+  {
+    "name": "sdcrs.report.assigned",
+    "channel": "SMS",
+    "templateId": "SDCRS_ASSIGNED",
+    "locale": "en_IN",
+    "content": "You have been assigned report {serviceRequestId}. Location: {address}. Please visit within SLA."
+  },
+  {
+    "name": "sdcrs.payout.completed",
+    "channel": "SMS",
+    "templateId": "SDCRS_PAYOUT",
+    "locale": "en_IN",
+    "content": "Payout of {amount} {currency} for report {serviceRequestId} has been processed to your registered account."
+  }
+]

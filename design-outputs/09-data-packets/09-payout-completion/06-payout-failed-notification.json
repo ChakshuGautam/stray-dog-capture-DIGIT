@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 6,
+    "description": "SMS notification sent to teacher about payout failure",
+    "sender": "egov-notification-sms Service",
+    "receiver": "Teacher's Phone",
+    "trigger": "Report enters PAYOUT_FAILED state",
+    "previousPacket": "05-update-report-payout-failed.json",
+    "nextPacket": "07-retry-payout-request.json",
+    "verified": false,
+    "assumption": "SMS template for payout failure notification"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Payout failed for your stray dog report (Tracking ID: ABC12345). Reason: Invalid UPI ID. Please verify your UPI ID in the app or contact helpdesk at 8000-123-456 for assistance.",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_PAYOUT_FAILED_TEACHER",
+      "category": "TRANSACTION"
+    }
+  }
+}

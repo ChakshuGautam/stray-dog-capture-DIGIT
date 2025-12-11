@@ -1,0 +1,101 @@
+serviceMaps:
+  serviceName: sdcrs-services
+  mappings:
+    - version: 1.0
+      description: Persists dog report
+      fromTopic: save-sdcrs-report
+      isTransaction: true
+      queryMaps:
+        - query: >
+            INSERT INTO eg_sdcrs_report
+            (id, tenant_id, report_number, service_code, description, status,
+             reporter_id, reporter_name, reporter_phone, reporter_type, school_code,
+             latitude, longitude, address, landmark, locality_code, ward_code, district_code,
+             dog_count, is_aggressive,
+             photo_file_store_id, selfie_file_store_id, image_hash, photo_timestamp,
+             additional_details,
+             created_by, created_time, last_modified_by, last_modified_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?);
+          basePath: DogReport
+          jsonMaps:
+            - jsonPath: $.DogReport.id
+            - jsonPath: $.DogReport.tenantId
+            - jsonPath: $.DogReport.reportNumber
+            - jsonPath: $.DogReport.serviceCode
+            - jsonPath: $.DogReport.description
+            - jsonPath: $.DogReport.status
+            - jsonPath: $.DogReport.reporter.id
+            - jsonPath: $.DogReport.reporter.name
+            - jsonPath: $.DogReport.reporter.phone
+            - jsonPath: $.DogReport.reporter.type
+            - jsonPath: $.DogReport.reporter.schoolCode
+            - jsonPath: $.DogReport.location.latitude
+            - jsonPath: $.DogReport.location.longitude
+            - jsonPath: $.DogReport.location.address
+            - jsonPath: $.DogReport.location.landmark
+            - jsonPath: $.DogReport.location.localityCode
+            - jsonPath: $.DogReport.location.wardCode
+            - jsonPath: $.DogReport.location.districtCode
+            - jsonPath: $.DogReport.dogDetails.count
+            - jsonPath: $.DogReport.dogDetails.isAggressive
+            - jsonPath: $.DogReport.evidence.photoFileStoreId
+            - jsonPath: $.DogReport.evidence.selfieFileStoreId
+            - jsonPath: $.DogReport.evidence.imageHash
+            - jsonPath: $.DogReport.evidence.photoTimestamp
+            - jsonPath: $.DogReport.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.auditDetails.createdBy
+            - jsonPath: $.DogReport.auditDetails.createdTime
+            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
+            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+
+    - version: 1.0
+      description: Updates dog report
+      fromTopic: update-sdcrs-report
+      isTransaction: true
+      queryMaps:
+        - query: >
+            UPDATE eg_sdcrs_report SET
+              status = ?,
+              assigned_officer_id = ?,
+              assigned_officer_name = ?,
+              assigned_time = ?,
+              resolution_type = ?,
+              resolution_notes = ?,
+              resolution_time = ?,
+              capture_photo_file_store_id = ?,
+              payout_eligible = ?,
+              payout_amount = ?,
+              payout_demand_id = ?,
+              payout_status = ?,
+              rejection_reason = ?,
+              validation_result = ?::jsonb,
+              additional_details = ?::jsonb,
+              last_modified_by = ?,
+              last_modified_time = ?
+            WHERE id = ?;
+          basePath: DogReport
+          jsonMaps:
+            - jsonPath: $.DogReport.status
+            - jsonPath: $.DogReport.assignment.officerId
+            - jsonPath: $.DogReport.assignment.officerName
+            - jsonPath: $.DogReport.assignment.assignedTime
+            - jsonPath: $.DogReport.resolution.type
+            - jsonPath: $.DogReport.resolution.notes
+            - jsonPath: $.DogReport.resolution.time
+            - jsonPath: $.DogReport.resolution.capturePhotoFileStoreId
+            - jsonPath: $.DogReport.payout.eligible
+            - jsonPath: $.DogReport.payout.amount
+            - jsonPath: $.DogReport.payout.demandId
+            - jsonPath: $.DogReport.payout.status
+            - jsonPath: $.DogReport.rejectionReason
+            - jsonPath: $.DogReport.validationResult
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
+            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+            - jsonPath: $.DogReport.id

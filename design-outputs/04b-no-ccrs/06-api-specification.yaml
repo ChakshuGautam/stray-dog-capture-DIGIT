@@ -1,0 +1,1223 @@
+openapi: 3.0.3
+info:
+  title: SDCRS - Stray Dog Capture & Reporting System API
+  description: |
+    API specification for the SDCRS (Stray Dog Capture & Reporting System) service.
+
+    This is **Option B** - a custom DIGIT service inspired by CCRS/PGR patterns.
+
+    ## Overview
+    SDCRS enables teachers to report stray dog sightings with photo evidence and GPS location.
+    Reports go through verification, MC officer assignment, and field capture, with payouts
+    issued upon successful resolution.
+
+    ## Authentication
+    All endpoints except `/_track` require JWT authentication via the `auth-token` header.
+    The `/_track` endpoint is public (whitelisted in gateway) for anonymous report tracking.
+
+    ## Workflow States
+    ```
+    PENDING_VALIDATION → PENDING_VERIFICATION → VERIFIED → ASSIGNED → IN_PROGRESS → CAPTURED → RESOLVED
+                      ↘ AUTO_REJECTED        ↘ REJECTED/DUPLICATE          ↘ UNABLE_TO_LOCATE
+    ```
+
+    ## Payout Rules
+    - Amount: ₹500 per successful capture
+    - Monthly cap: ₹5,000 per teacher
+    - Eligibility: Only RESOLVED status triggers payout
+
+  version: 1.0.0
+  contact:
+    name: SDCRS Development Team
+    email: sdcrs-support@digit.org
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.ncr.digit.org/sdcrs-services/v1
+    description: Production server
+  - url: https://staging.ncr.digit.org/sdcrs-services/v1
+    description: Staging server
+  - url: http://localhost:8080/sdcrs-services/v1
+    description: Local development
+
+tags:
+  - name: Report
+    description: Dog report management endpoints
+  - name: Track
+    description: Public tracking endpoint (no authentication required)
+
+paths:
+  # ============================================================================
+  # CREATE REPORT
+  # ============================================================================
+  /report/_create:
+    post:
+      tags:
+        - Report
+      summary: Create a new dog report
+      description: |
+        Submit a new stray dog sighting report with photo evidence and GPS location.
+
+        **Roles:** TEACHER, CITIZEN
+
+        **Workflow:** Creates report in `PENDING_VALIDATION` state, triggers async auto-validation.
+
+        **Daily Limit:** Maximum 5 reports per teacher per day.
+      operationId: createReport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DogReportRequest'
+            examples:
+              teacherReport:
+                summary: Teacher submitting a report
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    ver: "1.0"
+                    ts: 1702000000000
+                    action: "_create"
+                    did: "1"
+                    key: ""
+                    msgId: "create-report-001"
+                    authToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    userInfo:
+                      id: 12345
+                      uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      userName: "teacher@school.edu"
+                      name: "Ramesh Kumar"
+                      mobileNumber: "9876543210"
+                      type: "EMPLOYEE"
+                      roles:
+                        - code: "TEACHER"
+                          name: "Teacher"
+                          tenantId: "ncr"
+                  dogReports:
+                    - tenantId: "ncr"
+                      dogDescription: "Medium sized brown dog, appears aggressive"
+                      dogBehavior: "AGGRESSIVE"
+                      dogCount: 1
+                      location:
+                        latitude: 11.5890
+                        longitude: 43.1456
+                        address: "Near Government School, Sector 15"
+                        landmark: "Opposite Water Tank"
+                        localityCode: "LOC001"
+                        localityName: "Sector 15"
+                        wardCode: "WARD007"
+                        wardName: "Ward 7"
+                        districtCode: "DJ001"
+                        districtName: "Djibouti City"
+                        pincode: "12345"
+                        gpsAccuracy: 10.5
+                      evidence:
+                        - fileStoreId: "fs-abc123-dog-photo"
+                          evidenceType: "DOG_PHOTO"
+                          latitude: 11.5891
+                          longitude: 43.1457
+                          captureTime: 1701999000000
+                        - fileStoreId: "fs-xyz789-selfie"
+                          evidenceType: "REPORTER_SELFIE"
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DogReportResponse'
+              example:
+                ResponseInfo:
+                  apiId: "sdcrs"
+                  ver: "1.0"
+                  ts: 1702000001000
+                  resMsgId: "resp-001"
+                  msgId: "create-report-001"
+                  status: "successful"
+                dogReports:
+                  - id: "rpt-uuid-12345"
+                    tenantId: "ncr"
+                    reportNumber: "NCR-SDCRS-2024-000001"
+                    trackingId: "ABC123"
+                    trackingUrl: "https://sdcrs.ncr.digit.org/t/ABC123"
+                    status: "PENDING_VALIDATION"
+                    reporterId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    reporterName: "Ramesh Kumar"
+                    reporterPhone: "9876543210"
+                    reporterType: "TEACHER"
+                    dogDescription: "Medium sized brown dog, appears aggressive"
+                    dogBehavior: "AGGRESSIVE"
+                    dogCount: 1
+                    auditDetails:
+                      createdBy: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      createdTime: 1702000001000
+                      lastModifiedBy: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      lastModifiedTime: 1702000001000
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          description: Daily report limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                ResponseInfo:
+                  status: "failed"
+                Errors:
+                  - code: "DAILY_LIMIT_EXCEEDED"
+                    message: "Maximum 5 reports per day allowed"
+
+  # ============================================================================
+  # UPDATE REPORT
+  # ============================================================================
+  /report/_update:
+    post:
+      tags:
+        - Report
+      summary: Update a dog report (workflow transition)
+      description: |
+        Update report status through workflow actions.
+
+        **Available Actions by Role:**
+
+        | Role | Actions |
+        |------|---------|
+        | SYSTEM | AUTO_VALIDATE_PASS, AUTO_VALIDATE_FAIL |
+        | VERIFIER | VERIFY, REJECT, MARK_DUPLICATE |
+        | MC_SUPERVISOR | ASSIGN_MC, REASSIGN |
+        | MC_OFFICER | START_FIELD_VISIT, MARK_CAPTURED, MARK_UNABLE_TO_LOCATE |
+
+      operationId: updateReport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DogReportRequest'
+            examples:
+              verifyReport:
+                summary: Verifier approving a report
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    ver: "1.0"
+                    ts: 1702100000000
+                    action: "_update"
+                    msgId: "verify-report-001"
+                    authToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    userInfo:
+                      uuid: "verifier-uuid-001"
+                      roles:
+                        - code: "VERIFIER"
+                  dogReports:
+                    - id: "rpt-uuid-12345"
+                      tenantId: "ncr"
+                      workflow:
+                        action: "VERIFY"
+                        comments: "Evidence verified, location confirmed"
+              assignMC:
+                summary: Supervisor assigning MC officer
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    ver: "1.0"
+                    ts: 1702200000000
+                    action: "_update"
+                    msgId: "assign-mc-001"
+                    authToken: "..."
+                    userInfo:
+                      uuid: "supervisor-uuid-001"
+                      roles:
+                        - code: "MC_SUPERVISOR"
+                  dogReports:
+                    - id: "rpt-uuid-12345"
+                      tenantId: "ncr"
+                      assignedOfficerId: "mc-officer-uuid-001"
+                      assignedOfficerName: "Ahmed Ibrahim"
+                      workflow:
+                        action: "ASSIGN_MC"
+                        assignees:
+                          - "mc-officer-uuid-001"
+                        comments: "Assigned to nearby officer"
+              markCaptured:
+                summary: MC Officer marking dog as captured
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    ver: "1.0"
+                    ts: 1702300000000
+                    action: "_update"
+                    msgId: "capture-001"
+                    authToken: "..."
+                    userInfo:
+                      uuid: "mc-officer-uuid-001"
+                      roles:
+                        - code: "MC_OFFICER"
+                  dogReports:
+                    - id: "rpt-uuid-12345"
+                      tenantId: "ncr"
+                      resolutionType: "CAPTURED"
+                      resolutionRemarks: "Dog captured and transported to shelter"
+                      evidence:
+                        - fileStoreId: "fs-capture-photo-001"
+                          evidenceType: "CAPTURE_PHOTO"
+                      workflow:
+                        action: "MARK_CAPTURED"
+                        comments: "Successfully captured"
+      responses:
+        '200':
+          description: Report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DogReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # SEARCH REPORTS
+  # ============================================================================
+  /report/_search:
+    post:
+      tags:
+        - Report
+      summary: Search dog reports
+      description: |
+        Search reports with filters. Results are filtered based on user role:
+
+        | Role | Visible Reports |
+        |------|-----------------|
+        | TEACHER | Own reports only |
+        | VERIFIER | All reports in PENDING_VERIFICATION |
+        | MC_OFFICER | Reports assigned to self |
+        | MC_SUPERVISOR | All reports in their jurisdiction |
+        | DISTRICT_ADMIN | All reports in district |
+        | STATE_ADMIN | All reports in state |
+
+      operationId: searchReports
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DogReportSearchRequest'
+            examples:
+              searchByStatus:
+                summary: Verifier searching pending reports
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    ver: "1.0"
+                    ts: 1702000000000
+                    action: "_search"
+                    msgId: "search-001"
+                    authToken: "..."
+                  criteria:
+                    tenantId: "ncr"
+                    status:
+                      - "PENDING_VERIFICATION"
+                    limit: 10
+                    offset: 0
+              searchByReportNumber:
+                summary: Search by report number
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    msgId: "search-002"
+                    authToken: "..."
+                  criteria:
+                    tenantId: "ncr"
+                    reportNumber: "NCR-SDCRS-2024-000001"
+              searchByDateRange:
+                summary: Search by date range
+                value:
+                  RequestInfo:
+                    apiId: "sdcrs"
+                    msgId: "search-003"
+                    authToken: "..."
+                  criteria:
+                    tenantId: "ncr"
+                    fromDate: 1701388800000
+                    toDate: 1702000000000
+                    status:
+                      - "VERIFIED"
+                      - "ASSIGNED"
+                    sortBy: "createdTime"
+                    sortOrder: "DESC"
+                    limit: 20
+                    offset: 0
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DogReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # TRACK REPORT (PUBLIC - NO AUTH)
+  # ============================================================================
+  /report/_track:
+    post:
+      tags:
+        - Track
+      summary: Track report status (public endpoint)
+      description: |
+        **PUBLIC ENDPOINT - No authentication required**
+
+        This endpoint is whitelisted in the API gateway for anonymous access.
+        Returns sanitized report status without exposing PII.
+
+        **Rate Limit:** 100 requests per minute per IP
+
+        **Lookup Methods:**
+        - By `trackingId` (6-character alphanumeric code)
+        - By `reportNumber` (full report number)
+
+        **Response includes:**
+        - Current status with localized description
+        - Timeline of status changes
+        - Location (locality/ward level only, no full address)
+        - Resolution information (if resolved)
+
+        **Response excludes (PII protection):**
+        - Reporter name, phone, ID
+        - Assigned officer details
+        - Full address
+        - Internal system IDs
+
+      operationId: trackReport
+      # Note: No security requirement - this is a public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackRequest'
+            examples:
+              trackByTrackingId:
+                summary: Track by 6-character tracking ID
+                value:
+                  trackingId: "ABC123"
+                  tenantId: "ncr"
+              trackByReportNumber:
+                summary: Track by full report number
+                value:
+                  reportNumber: "NCR-SDCRS-2024-000001"
+                  tenantId: "ncr"
+      responses:
+        '200':
+          description: Tracking information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackResponse'
+              examples:
+                inProgress:
+                  summary: Report in progress
+                  value:
+                    ResponseInfo:
+                      apiId: "sdcrs"
+                      ver: "1.0"
+                      ts: 1702000000000
+                      status: "successful"
+                    tracking:
+                      reportNumber: "NCR-SDCRS-2024-000001"
+                      trackingId: "ABC123"
+                      status: "ASSIGNED"
+                      statusDescription: "A Municipal Corporation officer has been assigned to your report"
+                      isTerminal: false
+                      reportedDate: 1701900000000
+                      location:
+                        localityName: "Sector 15"
+                        wardName: "Ward 7"
+                        city: "Djibouti City"
+                      timeline:
+                        - status: "PENDING_VALIDATION"
+                          description: "Report received"
+                          timestamp: 1701900000000
+                        - status: "PENDING_VERIFICATION"
+                          description: "Under review"
+                          timestamp: 1701900300000
+                        - status: "VERIFIED"
+                          description: "Report verified"
+                          timestamp: 1701910000000
+                        - status: "ASSIGNED"
+                          description: "Officer assigned"
+                          timestamp: 1701920000000
+                    found: true
+                resolved:
+                  summary: Report resolved with payout
+                  value:
+                    ResponseInfo:
+                      apiId: "sdcrs"
+                      ver: "1.0"
+                      ts: 1702000000000
+                      status: "successful"
+                    tracking:
+                      reportNumber: "NCR-SDCRS-2024-000001"
+                      trackingId: "ABC123"
+                      status: "RESOLVED"
+                      statusDescription: "Your report has been resolved. Thank you for reporting!"
+                      isTerminal: true
+                      reportedDate: 1701900000000
+                      resolvedDate: 1702000000000
+                      location:
+                        localityName: "Sector 15"
+                        wardName: "Ward 7"
+                      resolution:
+                        outcome: "CAPTURED"
+                        description: "The stray dog was successfully captured"
+                        payoutEligible: true
+                      timeline:
+                        - status: "PENDING_VALIDATION"
+                          description: "Report received"
+                          timestamp: 1701900000000
+                        - status: "VERIFIED"
+                          description: "Report verified"
+                          timestamp: 1701910000000
+                        - status: "ASSIGNED"
+                          description: "Officer assigned"
+                          timestamp: 1701920000000
+                        - status: "IN_PROGRESS"
+                          description: "Field visit started"
+                          timestamp: 1701950000000
+                        - status: "CAPTURED"
+                          description: "Dog captured"
+                          timestamp: 1701980000000
+                        - status: "RESOLVED"
+                          description: "Report resolved"
+                          timestamp: 1702000000000
+                    found: true
+                notFound:
+                  summary: Report not found
+                  value:
+                    ResponseInfo:
+                      apiId: "sdcrs"
+                      ver: "1.0"
+                      ts: 1702000000000
+                      status: "successful"
+                    tracking: null
+                    found: false
+                    message: "No report found with the provided tracking ID"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+# ==============================================================================
+# COMPONENTS
+# ==============================================================================
+components:
+  # ============================================================================
+  # SECURITY SCHEMES
+  # ============================================================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from DIGIT User Service
+
+  # ============================================================================
+  # SCHEMAS
+  # ============================================================================
+  schemas:
+    # --------------------------------------------------------------------------
+    # Request/Response Wrappers
+    # --------------------------------------------------------------------------
+    RequestInfo:
+      type: object
+      description: DIGIT standard request metadata
+      required:
+        - apiId
+        - ver
+        - ts
+        - action
+        - msgId
+      properties:
+        apiId:
+          type: string
+          example: "sdcrs"
+        ver:
+          type: string
+          example: "1.0"
+        ts:
+          type: integer
+          format: int64
+          description: Timestamp in epoch milliseconds
+          example: 1702000000000
+        action:
+          type: string
+          example: "_create"
+        did:
+          type: string
+          example: "1"
+        key:
+          type: string
+        msgId:
+          type: string
+          example: "msg-001"
+        authToken:
+          type: string
+          description: JWT authentication token
+        userInfo:
+          $ref: '#/components/schemas/UserInfo'
+
+    ResponseInfo:
+      type: object
+      description: DIGIT standard response metadata
+      properties:
+        apiId:
+          type: string
+        ver:
+          type: string
+        ts:
+          type: integer
+          format: int64
+        resMsgId:
+          type: string
+        msgId:
+          type: string
+        status:
+          type: string
+          enum: [successful, failed]
+
+    UserInfo:
+      type: object
+      description: Authenticated user information
+      properties:
+        id:
+          type: integer
+        uuid:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        name:
+          type: string
+        mobileNumber:
+          type: string
+        emailId:
+          type: string
+        type:
+          type: string
+          enum: [CITIZEN, EMPLOYEE]
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        tenantId:
+          type: string
+
+    Role:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [TEACHER, CITIZEN, VERIFIER, MC_OFFICER, MC_SUPERVISOR, DISTRICT_ADMIN, STATE_ADMIN]
+        name:
+          type: string
+        tenantId:
+          type: string
+
+    # --------------------------------------------------------------------------
+    # Dog Report Models
+    # --------------------------------------------------------------------------
+    DogReportRequest:
+      type: object
+      required:
+        - RequestInfo
+        - dogReports
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        dogReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/DogReport'
+
+    DogReportResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        dogReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/DogReport'
+        totalCount:
+          type: integer
+          description: Total count for pagination
+
+    DogReport:
+      type: object
+      description: Dog sighting report
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+          example: "ncr"
+        reportNumber:
+          type: string
+          readOnly: true
+          description: System-generated report number
+          example: "NCR-SDCRS-2024-000001"
+        trackingId:
+          type: string
+          readOnly: true
+          description: 6-character alphanumeric tracking code
+          example: "ABC123"
+        trackingUrl:
+          type: string
+          format: uri
+          readOnly: true
+          description: Short URL for public tracking
+          example: "https://sdcrs.ncr.digit.org/t/ABC123"
+        status:
+          type: string
+          readOnly: true
+          enum:
+            - PENDING_VALIDATION
+            - PENDING_VERIFICATION
+            - AUTO_REJECTED
+            - VERIFIED
+            - REJECTED
+            - DUPLICATE
+            - ASSIGNED
+            - IN_PROGRESS
+            - CAPTURED
+            - UNABLE_TO_LOCATE
+            - RESOLVED
+        reporterId:
+          type: string
+          format: uuid
+          readOnly: true
+        reporterName:
+          type: string
+          readOnly: true
+        reporterPhone:
+          type: string
+          readOnly: true
+        reporterType:
+          type: string
+          enum: [TEACHER, CITIZEN]
+          readOnly: true
+        dogDescription:
+          type: string
+          description: Description of the dog
+          maxLength: 500
+          example: "Medium sized brown dog, appears aggressive"
+        dogBehavior:
+          type: string
+          enum: [AGGRESSIVE, INJURED, NORMAL, PACK]
+          example: "AGGRESSIVE"
+        dogCount:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+        imageHash:
+          type: string
+          readOnly: true
+          description: Perceptual hash for duplicate detection
+        location:
+          $ref: '#/components/schemas/Location'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+          minItems: 1
+          maxItems: 5
+        assignedOfficerId:
+          type: string
+          format: uuid
+        assignedOfficerName:
+          type: string
+        verifiedBy:
+          type: string
+          format: uuid
+          readOnly: true
+        verifiedDate:
+          type: integer
+          format: int64
+          readOnly: true
+        verificationRemarks:
+          type: string
+        resolvedBy:
+          type: string
+          format: uuid
+          readOnly: true
+        resolvedDate:
+          type: integer
+          format: int64
+          readOnly: true
+        resolutionType:
+          type: string
+          enum: [CAPTURED, UNABLE_TO_LOCATE]
+        resolutionRemarks:
+          type: string
+        rejectionReason:
+          type: string
+          enum:
+            - AUTO_VALIDATION_FAILED
+            - INVALID_EVIDENCE
+            - NOT_A_STRAY_DOG
+            - INAPPROPRIATE_CONTENT
+            - INSUFFICIENT_DETAILS
+            - DUPLICATE
+        rejectionRemarks:
+          type: string
+        payoutStatus:
+          type: string
+          readOnly: true
+          enum: [PENDING, PROCESSED, COMPLETED, CAPPED]
+        payoutAmount:
+          type: number
+          format: double
+          readOnly: true
+        payoutReference:
+          type: string
+          readOnly: true
+          description: Billing service demand ID
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+          readOnly: true
+
+    Location:
+      type: object
+      description: GPS location and address details
+      required:
+        - latitude
+        - longitude
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 11.5890
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: 43.1456
+        address:
+          type: string
+          maxLength: 500
+          example: "Near Government School, Sector 15"
+        landmark:
+          type: string
+          maxLength: 200
+          example: "Opposite Water Tank"
+        localityCode:
+          type: string
+          example: "LOC001"
+        localityName:
+          type: string
+          example: "Sector 15"
+        wardCode:
+          type: string
+          example: "WARD007"
+        wardName:
+          type: string
+          example: "Ward 7"
+        districtCode:
+          type: string
+          example: "NCR001"
+        districtName:
+          type: string
+          example: "Delhi"
+        pincode:
+          type: string
+          pattern: "^[0-9]{5,6}$"
+          example: "12345"
+        gpsAccuracy:
+          type: number
+          format: double
+          description: GPS accuracy in meters
+          example: 10.5
+        gpsValidated:
+          type: boolean
+          readOnly: true
+          description: Whether EXIF GPS matches submitted GPS
+
+    Evidence:
+      type: object
+      description: Photo evidence linked to report
+      required:
+        - fileStoreId
+        - evidenceType
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        fileStoreId:
+          type: string
+          description: Reference to DIGIT File Store
+          example: "fs-abc123-dog-photo"
+        evidenceType:
+          type: string
+          enum:
+            - DOG_PHOTO
+            - REPORTER_SELFIE
+            - CAPTURE_PHOTO
+        latitude:
+          type: number
+          format: double
+          description: EXIF GPS latitude (if available)
+        longitude:
+          type: number
+          format: double
+          description: EXIF GPS longitude (if available)
+        captureTime:
+          type: integer
+          format: int64
+          description: EXIF timestamp in epoch milliseconds
+        fileHash:
+          type: string
+          readOnly: true
+          description: Perceptual hash of image
+        createdTime:
+          type: integer
+          format: int64
+          readOnly: true
+
+    Workflow:
+      type: object
+      description: Workflow action for state transition
+      properties:
+        action:
+          type: string
+          description: Workflow action to perform
+          enum:
+            - SUBMIT
+            - AUTO_VALIDATE_PASS
+            - AUTO_VALIDATE_FAIL
+            - VERIFY
+            - REJECT
+            - MARK_DUPLICATE
+            - ASSIGN_MC
+            - REASSIGN
+            - START_FIELD_VISIT
+            - MARK_CAPTURED
+            - MARK_UNABLE_TO_LOCATE
+            - PROCESS_PAYOUT
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: User UUIDs to assign (for ASSIGN_MC action)
+        comments:
+          type: string
+          maxLength: 1000
+
+    AuditDetails:
+      type: object
+      description: Audit trail information
+      readOnly: true
+      properties:
+        createdBy:
+          type: string
+          format: uuid
+        createdTime:
+          type: integer
+          format: int64
+        lastModifiedBy:
+          type: string
+          format: uuid
+        lastModifiedTime:
+          type: integer
+          format: int64
+
+    # --------------------------------------------------------------------------
+    # Search Models
+    # --------------------------------------------------------------------------
+    DogReportSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+        - criteria
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/DogReportSearchCriteria'
+
+    DogReportSearchCriteria:
+      type: object
+      required:
+        - tenantId
+      properties:
+        tenantId:
+          type: string
+          example: "ncr"
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reportNumber:
+          type: string
+          example: "NCR-SDCRS-2024-000001"
+        trackingId:
+          type: string
+          example: "ABC123"
+        status:
+          type: array
+          items:
+            type: string
+          example: ["PENDING_VERIFICATION", "VERIFIED"]
+        reporterId:
+          type: string
+          format: uuid
+        assignedOfficerId:
+          type: string
+          format: uuid
+        localityCode:
+          type: string
+        wardCode:
+          type: string
+        fromDate:
+          type: integer
+          format: int64
+          description: Start date filter (epoch ms)
+        toDate:
+          type: integer
+          format: int64
+          description: End date filter (epoch ms)
+        sortBy:
+          type: string
+          enum: [createdTime, lastModifiedTime, reportNumber]
+          default: createdTime
+        sortOrder:
+          type: string
+          enum: [ASC, DESC]
+          default: DESC
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+    # --------------------------------------------------------------------------
+    # Track Models (Public API)
+    # --------------------------------------------------------------------------
+    TrackRequest:
+      type: object
+      description: Public tracking request (no auth required)
+      properties:
+        trackingId:
+          type: string
+          pattern: "^[A-Z0-9]{6}$"
+          description: 6-character tracking code
+          example: "ABC123"
+        reportNumber:
+          type: string
+          description: Full report number
+          example: "NCR-SDCRS-2024-000001"
+        tenantId:
+          type: string
+          default: "ncr"
+          example: "ncr"
+
+    TrackResponse:
+      type: object
+      description: Public tracking response (PII sanitized)
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        tracking:
+          $ref: '#/components/schemas/TrackingInfo'
+        found:
+          type: boolean
+        message:
+          type: string
+          description: Message when report not found
+
+    TrackingInfo:
+      type: object
+      description: Sanitized tracking information (no PII)
+      properties:
+        reportNumber:
+          type: string
+        trackingId:
+          type: string
+        status:
+          type: string
+        statusDescription:
+          type: string
+          description: User-friendly localized status
+        isTerminal:
+          type: boolean
+          description: Whether this is a final state
+        reportedDate:
+          type: integer
+          format: int64
+        resolvedDate:
+          type: integer
+          format: int64
+        location:
+          type: object
+          description: Sanitized location (locality/ward only)
+          properties:
+            localityName:
+              type: string
+            wardName:
+              type: string
+            city:
+              type: string
+            landmark:
+              type: string
+        resolution:
+          type: object
+          description: Resolution details (if resolved)
+          properties:
+            outcome:
+              type: string
+              enum: [CAPTURED, NOT_FOUND, REJECTED, DUPLICATE]
+            description:
+              type: string
+            payoutEligible:
+              type: boolean
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              description:
+                type: string
+              timestamp:
+                type: integer
+                format: int64
+
+    # --------------------------------------------------------------------------
+    # Error Models
+    # --------------------------------------------------------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        Errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Invalid input"
+        description:
+          type: string
+        params:
+          type: array
+          items:
+            type: string
+
+  # ============================================================================
+  # RESPONSES
+  # ============================================================================
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "VALIDATION_ERROR"
+                message: "tenantId is required"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "UNAUTHORIZED"
+                message: "Invalid or missing authentication token"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "FORBIDDEN"
+                message: "You don't have permission to perform this action"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "NOT_FOUND"
+                message: "Report not found"

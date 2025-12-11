@@ -1,0 +1,77 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 3,
+    "description": "MC Officer starts field visit - transitions to IN_PROGRESS",
+    "sender": "MC Officer Mobile App",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Officer clicks 'Start Field Visit' button",
+    "previousPacket": "02-report-detail-with-location.json",
+    "nextPacket": "04-field-visit-in-progress.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - START_FIELD_VISIT action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer officer-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734187500000,
+        "action": "_update",
+        "msgId": "20241214153500|en_IN",
+        "userInfo": {
+          "id": 24500,
+          "uuid": "mco-uuid-001",
+          "userName": "MCO001",
+          "name": "Ibrahim Ali",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_OFFICER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "START_FIELD_VISIT",
+            "comment": "En route to location"
+          },
+          "fieldVisitStartedAt": 1734187500000,
+          "fieldVisitLocation": {
+            "_comment": "Officer's location when starting visit",
+            "latitude": 11.5900,
+            "longitude": 43.1400
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "IN_PROGRESS",
+          "fieldVisitStartedAt": 1734187500000
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "ASSIGNED",
+    "action": "START_FIELD_VISIT",
+    "nextState": "IN_PROGRESS",
+    "allowedRoles": ["MC_OFFICER"]
+  }
+}

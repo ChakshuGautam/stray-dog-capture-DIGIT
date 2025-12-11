@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "stage": "10-search-and-track",
+    "step": 5,
+    "description": "Full-text search via Elasticsearch (for DSS/Analytics)",
+    "sender": "Dashboard Backend (DSS)",
+    "receiver": "Elasticsearch",
+    "trigger": "Dashboard needs aggregated data or full-text search",
+    "previousPacket": null,
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "Elasticsearch index structure based on indexer config"
+  },
+  "elasticsearchQuery": {
+    "method": "POST",
+    "url": "http://elasticsearch.egov:9200/sdcrs-report-index/_search",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "query": {
+        "bool": {
+          "must": [
+            {"term": {"Data.tenantId.keyword": "dj.djibouti-ville"}},
+            {"range": {"Data.auditDetails.createdTime": {"gte": 1733961600000, "lte": 1734220800000}}}
+          ],
+          "filter": [
+            {"terms": {"Data.status.keyword": ["RESOLVED", "CAPTURED"]}}
+          ]
+        }
+      },
+      "aggs": {
+        "by_status": {
+          "terms": {"field": "Data.status.keyword"}
+        },
+        "by_locality": {
+          "terms": {"field": "Data.location.locality.keyword"}
+        },
+        "total_payout": {
+          "sum": {"field": "Data.payoutDetails.payoutAmount"}
+        },
+        "reports_per_day": {
+          "date_histogram": {
+            "field": "Data.auditDetails.createdTime",
+            "calendar_interval": "day"
+          }
+        }
+      },
+      "size": 0
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "hits": {
+        "total": {"value": 150}
+      },
+      "aggregations": {
+        "by_status": {
+          "buckets": [
+            {"key": "RESOLVED", "doc_count": 120},
+            {"key": "CAPTURED", "doc_count": 30}
+          ]
+        },
+        "by_locality": {
+          "buckets": [
+            {"key": "Djibouti Centre", "doc_count": 80},
+            {"key": "Boulaos", "doc_count": 45},
+            {"key": "Ambouli", "doc_count": 25}
+          ]
+        },
+        "total_payout": {
+          "value": 60000
+        },
+        "reports_per_day": {
+          "buckets": [
+            {"key_as_string": "2024-12-12", "doc_count": 45},
+            {"key_as_string": "2024-12-13", "doc_count": 55},
+            {"key_as_string": "2024-12-14", "doc_count": 50}
+          ]
+        }
+      }
+    }
+  },
+  "indexMapping": {
+    "_comment": "Based on sdcrs-indexer-config.json",
+    "index": "sdcrs-report-index",
+    "fields": [
+      "Data.id", "Data.reportNumber", "Data.trackingId", "Data.status",
+      "Data.serviceType", "Data.tenantId", "Data.location.*",
+      "Data.payoutDetails.*", "Data.auditDetails.*"
+    ]
+  }
+}

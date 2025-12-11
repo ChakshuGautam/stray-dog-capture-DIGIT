@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "stage": "10-search-and-track",
+    "step": 2,
+    "description": "Teacher views detailed status of a specific report",
+    "sender": "Teacher Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Teacher taps on a report in list",
+    "previousPacket": "01-teacher-my-reports.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "DogReport.java - full entity"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "userInfo": {
+          "uuid": "teacher-uuid-001-abcd-efgh",
+          "roles": [{"code": "TEACHER"}]
+        }
+      },
+      "searchCriteria": {
+        "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "tenantId": "dj.djibouti-ville",
+          "serviceType": "StrayDogAggressive",
+          "status": "RESOLVED",
+          "description": "Large brown dog with white spots, aggressive behavior near school entrance.",
+          "location": {
+            "latitude": 11.5886,
+            "longitude": 43.1456,
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "wardCode": "W005",
+            "address": "Near Govt High School Main Gate",
+            "landmark": "Main entrance gate"
+          },
+          "evidence": {
+            "photoUrl": "https://filestore.dj.digit.org/filestore/v1/files/id?fileStoreId=fs-photo-uuid-001",
+            "capturedAt": 1734176100000
+          },
+          "workflow": {
+            "state": "RESOLVED"
+          },
+          "payoutDetails": {
+            "payoutStatus": "SUCCESS",
+            "payoutAmount": 500,
+            "utr": "423456789012",
+            "payoutCompletedAt": 1734188435000
+          },
+          "resolutionType": "CAPTURED",
+          "resolutionRemarks": "Dog captured successfully, transported to shelter",
+          "auditDetails": {
+            "createdTime": 1734176201000,
+            "lastModifiedTime": 1734188440000
+          }
+        }
+      ]
+    }
+  },
+  "statusTimeline": {
+    "_comment": "App shows timeline of status changes to teacher",
+    "steps": [
+      {"status": "SUBMITTED", "label": "Report Submitted", "timestamp": 1734176201000, "completed": true},
+      {"status": "PENDING_VERIFICATION", "label": "Under Review", "timestamp": 1734176210000, "completed": true},
+      {"status": "VERIFIED", "label": "Verified", "timestamp": 1734180200000, "completed": true},
+      {"status": "ASSIGNED", "label": "Team Assigned", "timestamp": 1734183800000, "completed": true},
+      {"status": "IN_PROGRESS", "label": "Field Visit", "timestamp": 1734187500000, "completed": true},
+      {"status": "CAPTURED", "label": "Dog Captured", "timestamp": 1734188400000, "completed": true},
+      {"status": "RESOLVED", "label": "Payout Complete", "timestamp": 1734188440000, "completed": true}
+    ]
+  }
+}

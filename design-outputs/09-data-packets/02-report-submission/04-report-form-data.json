@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 4,
+    "description": "Teacher fills report details form",
+    "sender": "SDCRS Mobile App (UI)",
+    "receiver": "N/A (local state)",
+    "trigger": "Photos captured, form displayed",
+    "previousPacket": "03-selfie-capture.json",
+    "nextPacket": "05-filestore-upload-request.json",
+    "verified": true,
+    "source": "DogReport.java - serviceType, description fields; ReportType.json MDMS"
+  },
+  "formData": {
+    "serviceType": "StrayDogAggressive",
+    "description": "Pack of 3 aggressive dogs near school gate. They chase students during morning assembly.",
+    "address": "Near Govt High School Main Gate, Djibouti-Ville",
+    "landmark": "Opposite to Municipal Park"
+  },
+  "serviceTypeOptions": {
+    "_comment": "From MDMS ReportType.json",
+    "StrayDogAggressive": {
+      "name": "Aggressive Stray Dog",
+      "description": "Dogs showing aggressive behavior",
+      "priority": "HIGH",
+      "slaHours": 24
+    },
+    "StrayDogInjured": {
+      "name": "Injured Stray Dog",
+      "description": "Dog appears to be injured or sick",
+      "priority": "HIGH",
+      "slaHours": 12
+    },
+    "StrayDogPack": {
+      "name": "Stray Dog Pack",
+      "description": "Group of 3+ stray dogs",
+      "priority": "MEDIUM",
+      "slaHours": 48
+    },
+    "StrayDogStandard": {
+      "name": "Standard Stray Dog",
+      "description": "Single non-aggressive stray dog",
+      "priority": "LOW",
+      "slaHours": 72
+    }
+  },
+  "validation": {
+    "descriptionMinLength": 20,
+    "descriptionMaxLength": 512,
+    "serviceTypeRequired": true
+  }
+}

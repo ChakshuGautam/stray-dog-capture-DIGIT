@@ -1,0 +1,97 @@
+@startuml SDCRS_AsyncValidationKafka
+title Async Fraud Validation Flow (Kafka Event-Driven)
+
+participant "Kafka" as KF
+participant "SDCRSService" as SS
+participant "FraudDetectionService" as FDS
+participant "MDMS" as MDMS
+participant "External AI/ML APIs" as EXT
+participant "Workflow" as WF
+participant "Persister" as PS
+participant "NotificationService" as NS
+database "PostgreSQL" as DB
+actor "Teacher" as TCH
+
+== Phase 1: SDCRSService publishes evaluation request ==
+
+KF -> SS: 1 Consume from sdcrs-async-validation topic\n(reportId, tenantId)
+
+SS -> DB: 2 Fetch report details with evidence
+DB --> SS: 3 report (with fileStoreIds, location, etc.)
+
+SS -> SS: 4 Build FraudEvaluationRequest\n(businessId, sourceModule=SDCRS,\nlocation, evidence, applicant data)
+
+SS -> KF: 5 Publish to fraud-evaluation-request topic\n(FraudEvaluationRequest payload)
+
+note over SS: SDCRSService continues with other work\n(fully async, no blocking)
+
+== Phase 2: FraudDetectionService processes request ==
+
+KF -> FDS: 6 Consume from fraud-evaluation-request topic
+
+FDS -> MDMS: 7 Fetch FraudRules (ruleType=EXTERNAL)\n& ExternalValidators config
+MDMS --> FDS: 8 enabled rules & validator configs
+
+loop For each EXTERNAL rule
+    FDS -> FDS: 9 Get validator config for rule.validatorId
+
+    alt Validator: DOG_BREED_CLASSIFIER
+        FDS -> EXT: 10a POST to AI breed classifier API
+        EXT --> FDS: 11a {is_dog: true, breed: "stray", confidence: 0.92}
+    else Validator: OBJECT_DETECTOR
+        FDS -> EXT: 10b POST to YOLO object detection API
+        EXT --> FDS: 11b {dog_count: 1, person_present: false}
+    else Validator: IMAGE_QUALITY_ANALYZER
+        FDS -> EXT: 10c POST to IQA API
+        EXT --> FDS: 11c {blur_score: 0.1, acceptable: true}
+    else Validator: GPS_SPOOFING_DETECTOR
+        FDS -> EXT: 10d POST to GPS spoofing detector
+        EXT --> FDS: 11d {is_spoofed: false, confidence: 0.95}
+    end
+
+    FDS -> FDS: 12 Build RuleResult from API response
+end
+
+FDS -> FDS: 13 Aggregate results, calculate total score\nDetermine overallRisk & primaryAction
+
+FDS -> KF: 14 Publish to fraud-evaluation-result topic\n(businessId, passed, totalScore,\nprimaryAction, ruleResults[])
+
+== Phase 3: SDCRSService processes result ==
+
+KF -> SS: 15 Consume from fraud-evaluation-result topic\n(FraudEvaluationResponse)
+
+SS -> DB: 16 Fetch report by businessId
+DB --> SS: 17 report
+
+SS -> SS: 18 Update report with fraud assessment\n(fraudScore, fraudRisk, ruleResults)
+
+alt primaryAction = AUTO_REJECT
+    SS -> WF: 19a Transition to AUTO_REJECTED\n(action: AUTO_VALIDATE_FAIL)
+    WF --> SS: 20a workflow status
+
+    SS -> KF: 21a Push update to persister topic
+    KF -> PS: 22a Read payload
+    PS -> DB: 23a Update report status & fraud details
+
+    SS -> NS: 24a Notify teacher (rejection reason)
+    NS -> TCH: 25a SMS: Report rejected - {reason}
+
+else primaryAction = MANUAL_REVIEW
+    SS -> SS: 19b Flag for manual verification\n(HIGH priority in verifier queue)
+
+    SS -> KF: 20b Push update to persister topic
+    KF -> PS: 21b Read payload
+    PS -> DB: 22b Update report with manual review flag
+
+else primaryAction = APPROVE
+    SS -> WF: 19c Transition to PENDING_VERIFICATION\n(action: AUTO_VALIDATE_PASS)
+    WF --> SS: 20c workflow status
+
+    SS -> KF: 21c Push update to persister topic
+    KF -> PS: 22c Read payload
+    PS -> DB: 23c Update report status
+
+    SS -> NS: 24c Notify verifier (new report for review)
+end
+
+@enduml

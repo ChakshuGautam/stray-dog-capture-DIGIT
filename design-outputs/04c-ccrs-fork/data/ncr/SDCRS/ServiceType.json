@@ -1,0 +1,42 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "ServiceType": [
+    {
+      "code": "StrayDogAggressive",
+      "name": "Aggressive Stray Dog",
+      "description": "Stray dog showing aggressive behavior",
+      "priority": "HIGH",
+      "slaHours": 24,
+      "department": "ANIMAL_CONTROL",
+      "active": true
+    },
+    {
+      "code": "StrayDogInjured",
+      "name": "Injured Stray Dog",
+      "description": "Stray dog that appears injured",
+      "priority": "HIGH",
+      "slaHours": 24,
+      "department": "ANIMAL_CONTROL",
+      "active": true
+    },
+    {
+      "code": "StrayDogPack",
+      "name": "Stray Dog Pack",
+      "description": "Group of 3+ stray dogs",
+      "priority": "MEDIUM",
+      "slaHours": 48,
+      "department": "ANIMAL_CONTROL",
+      "active": true
+    },
+    {
+      "code": "StrayDogStandard",
+      "name": "Standard Stray Dog Sighting",
+      "description": "Single stray dog sighting",
+      "priority": "LOW",
+      "slaHours": 72,
+      "department": "ANIMAL_CONTROL",
+      "active": true
+    }
+  ]
+}

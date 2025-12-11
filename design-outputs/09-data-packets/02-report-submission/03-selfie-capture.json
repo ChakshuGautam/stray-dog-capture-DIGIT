@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 3,
+    "description": "Teacher captures selfie at location (verification photo)",
+    "sender": "Mobile Front Camera",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "App prompts for location selfie after dog photo",
+    "previousPacket": "02-photo-exif-extracted.json",
+    "nextPacket": "04-report-form-data.json",
+    "verified": true,
+    "source": "Evidence.java - evidenceType enum includes REPORTER_SELFIE"
+  },
+  "selfieCapture": {
+    "fileName": "SELFIE_20241214_123112.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 1234567,
+    "dimensions": {
+      "width": 2448,
+      "height": 3264
+    }
+  },
+  "extractedEvidence": {
+    "evidenceType": "REPORTER_SELFIE",
+    "fileName": "SELFIE_20241214_123112.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 1234567,
+    "imageHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234",
+    "captureTime": 1734176172000,
+    "latitude": 11.5886,
+    "longitude": 43.1456,
+    "deviceInfo": "Samsung SM-A525F"
+  }
+}

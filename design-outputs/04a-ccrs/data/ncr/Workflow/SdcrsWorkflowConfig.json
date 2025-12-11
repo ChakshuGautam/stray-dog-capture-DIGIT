@@ -1,0 +1,276 @@
+{
+  "RequestInfo": {
+    "apiId": "Rainmaker",
+    "ver": ".01",
+    "ts": null,
+    "action": "",
+    "did": 1,
+    "key": "",
+    "msgId": "20170310130900|en_IN",
+    "requesterId": "",
+    "userInfo": {
+      "id": 1,
+      "type": "EMPLOYEE",
+      "roles": [{ "code": "ADMIN" }]
+    }
+  },
+  "BusinessServices": [
+    {
+      "tenantId": "ncr",
+      "businessService": "SDCRS",
+      "business": "pgr-services",
+      "businessServiceSla": 259200000,
+      "states": [
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "SUBMIT",
+              "nextState": "PENDING_VALIDATION",
+              "roles": ["CITIZEN", "TEACHER"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 3600000,
+          "state": "PENDING_VALIDATION",
+          "applicationStatus": "PENDING_VALIDATION",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "AUTO_VALIDATE_PASS",
+              "nextState": "PENDING_VERIFICATION",
+              "roles": ["SYSTEM"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "AUTO_VALIDATE_FAIL",
+              "nextState": "AUTO_REJECTED",
+              "roles": ["SYSTEM"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "AUTO_REJECTED",
+          "applicationStatus": "AUTO_REJECTED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": []
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 86400000,
+          "state": "PENDING_VERIFICATION",
+          "applicationStatus": "PENDING_VERIFICATION",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "VERIFY",
+              "nextState": "VERIFIED",
+              "roles": ["GRO", "VERIFIER"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "REJECT",
+              "nextState": "REJECTED",
+              "roles": ["GRO", "VERIFIER"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "MARK_DUPLICATE",
+              "nextState": "DUPLICATE",
+              "roles": ["GRO", "VERIFIER"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "COMMENT",
+              "nextState": "PENDING_VERIFICATION",
+              "roles": ["CITIZEN", "TEACHER"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "REJECTED",
+          "applicationStatus": "REJECTED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": []
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "DUPLICATE",
+          "applicationStatus": "DUPLICATE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": []
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 3600000,
+          "state": "VERIFIED",
+          "applicationStatus": "VERIFIED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "ASSIGN",
+              "nextState": "ASSIGNED",
+              "roles": ["GRO", "MC_SUPERVISOR"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 172800000,
+          "state": "ASSIGNED",
+          "applicationStatus": "ASSIGNED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "START_FIELD_VISIT",
+              "nextState": "IN_PROGRESS",
+              "roles": ["PGR_LME", "MC_OFFICER"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "REASSIGN",
+              "nextState": "VERIFIED",
+              "roles": ["GRO", "MC_SUPERVISOR"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 86400000,
+          "state": "IN_PROGRESS",
+          "applicationStatus": "IN_PROGRESS",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "MARK_CAPTURED",
+              "nextState": "CAPTURED",
+              "roles": ["PGR_LME", "MC_OFFICER"],
+              "active": true
+            },
+            {
+              "tenantId": "ncr",
+              "action": "MARK_UNABLE_TO_LOCATE",
+              "nextState": "UNABLE_TO_LOCATE",
+              "roles": ["PGR_LME", "MC_OFFICER"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": 3600000,
+          "state": "CAPTURED",
+          "applicationStatus": "CAPTURED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "PROCESS_PAYOUT",
+              "nextState": "RESOLVED",
+              "roles": ["SYSTEM"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "RESOLVED",
+          "applicationStatus": "RESOLVED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "ncr",
+              "action": "RATE",
+              "nextState": "CLOSED",
+              "roles": ["CITIZEN", "TEACHER"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "UNABLE_TO_LOCATE",
+          "applicationStatus": "UNABLE_TO_LOCATE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": []
+        },
+        {
+          "tenantId": "ncr",
+          "sla": null,
+          "state": "CLOSED",
+          "applicationStatus": "CLOSED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": []
+        }
+      ]
+    }
+  ]
+}

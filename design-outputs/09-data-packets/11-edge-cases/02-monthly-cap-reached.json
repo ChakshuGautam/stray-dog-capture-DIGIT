@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 2,
+    "description": "Teacher's payout skipped because monthly cap reached",
+    "sender": "SDCRS Service (System)",
+    "receiver": "Workflow Service",
+    "trigger": "Dog captured but teacher already earned ₹5000 this month",
+    "previousPacket": "../06-field-visit/05-mark-captured.json",
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "Monthly cap enforcement during payout initiation"
+  },
+  "context": {
+    "monthlyCap": 5000,
+    "teacherEarningsThisMonth": 5000,
+    "attemptedPayout": 500,
+    "wouldExceedBy": 500
+  },
+  "payoutSkipped": {
+    "_comment": "Report still resolved, but no additional payout",
+    "workflowAction": "MARK_CAPTURED triggers different flow",
+    "payoutInitiated": false,
+    "reason": "MONTHLY_CAP_EXCEEDED"
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "RequestInfo": {
+        "userInfo": {
+          "uuid": "system-uuid",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-010-abcd",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "RESOLVE_NO_PAYOUT",
+            "comment": "Monthly payout cap of ₹5000 already reached. Report resolved without additional payout."
+          },
+          "payoutDetails": {
+            "payoutStatus": "SKIPPED_CAP_REACHED",
+            "payoutAmount": 0,
+            "reason": "Teacher monthly cap of ₹5000 already reached"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-010-abcd",
+          "status": "RESOLVED",
+          "payoutDetails": {
+            "payoutStatus": "SKIPPED_CAP_REACHED"
+          }
+        }
+      ]
+    }
+  },
+  "teacherNotification": {
+    "sms": "Your stray dog report has been successfully resolved. Note: No payout issued as you have already earned the maximum ₹5000 this month. Keep reporting - rewards reset next month!"
+  }
+}

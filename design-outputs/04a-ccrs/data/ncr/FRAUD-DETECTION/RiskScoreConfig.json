@@ -1,0 +1,39 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "FRAUD-DETECTION",
+  "RiskScoreConfig": {
+    "weights": {
+      "DQ": 10,
+      "DUP": 30,
+      "LOC": 40,
+      "VEL": 20,
+      "TMP": 25,
+      "IDN": 50,
+      "COL": 60,
+      "EVD": 35
+    },
+    "categoryDescriptions": {
+      "DQ": "Data Quality - Missing or malformed data",
+      "DUP": "Duplicate - Same or similar submission exists",
+      "LOC": "Location - GPS spoofing or boundary violations",
+      "VEL": "Velocity - Abnormal submission rate",
+      "TMP": "Temporal - Timestamp manipulation or stale data",
+      "IDN": "Identity - Account anomalies or impersonation",
+      "COL": "Collusion - Coordinated fraud by multiple users",
+      "EVD": "Evidence - Manipulated photos or metadata stripping"
+    },
+    "thresholds": {
+      "LOW": { "min": 0, "max": 25, "color": "#28a745", "action": "ALLOW" },
+      "MEDIUM": { "min": 26, "max": 50, "color": "#ffc107", "action": "FLAG" },
+      "HIGH": { "min": 51, "max": 75, "color": "#fd7e14", "action": "HOLD" },
+      "CRITICAL": { "min": 76, "max": 100, "color": "#dc3545", "action": "BLOCK" }
+    },
+    "autoRejectThreshold": 80,
+    "escalationThreshold": 60,
+    "manualReviewThreshold": 40,
+    "scoringDecay": {
+      "enabled": true,
+      "halfLifeDays": 30
+    }
+  }
+}

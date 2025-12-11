@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 12,
+    "description": "Backend generates DIGIT JWT tokens and returns to mobile app",
+    "sender": "SSO Adapter Service",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "User provisioned/updated successfully",
+    "previousPacket": "10-digit-user-create-request.json or 11-digit-user-update-request.json",
+    "nextPacket": "13-login-complete-app-state.json",
+    "verified": true,
+    "source": "DIGIT egov-user OAuth token generation"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200002000,
+        "resMsgId": "res-msg-002",
+        "msgId": "20241214120000|en_IN",
+        "status": "successful"
+      },
+      "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTF0MGUwMmItNGY4YS00YzZlLTlkM2YtMmExYjBjOWQ4ZTdmIiwidXNlcl9uYW1lIjoiVDEyMzQ1IiwidGVuYW50X2lkIjoiZGouZGppYm91dGktdmlsbGUiLCJyb2xlcyI6WyJURUFDSEVSIl0sImV4cCI6MTczNDIwMzYwMCwiaWF0IjoxNzM0MjAwMDAwfQ.signature",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "refresh_token": "digit_refresh_x1y2z3a4b5c6d7e8f9g0",
+      "scope": "read write",
+      "userInfo": {
+        "id": 24226,
+        "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "userName": "T12345",
+        "name": "Ravi Kumar",
+        "mobileNumber": "9876543210",
+        "emailId": "ravi@edu.gov.in",
+        "type": "EMPLOYEE",
+        "tenantId": "dj.djibouti-ville",
+        "roles": [
+          {
+            "code": "TEACHER",
+            "name": "Teacher",
+            "tenantId": "dj.djibouti-ville"
+          }
+        ],
+        "additionalDetails": {
+          "hrmsEmpId": "T12345",
+          "schoolCode": "DJGHS001",
+          "schoolName": "Govt High School Djibouti",
+          "designation": "TGT"
+        }
+      }
+    }
+  },
+  "accessTokenDecoded": {
+    "header": {
+      "alg": "RS256",
+      "typ": "JWT"
+    },
+    "payload": {
+      "user_id": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+      "user_name": "T12345",
+      "tenant_id": "dj.djibouti-ville",
+      "roles": ["TEACHER"],
+      "exp": 1734203600,
+      "iat": 1734200000
+    }
+  },
+  "_notes": {
+    "upi_not_included": "UPI VPA is stored in user profile but NOT returned to client for security",
+    "token_storage": "Mobile app stores tokens in secure storage (iOS Keychain / Android Keystore)"
+  }
+}

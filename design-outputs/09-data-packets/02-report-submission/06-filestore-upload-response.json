@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 6,
+    "description": "File Store returns file store IDs for uploaded photos",
+    "sender": "egov-filestore Service",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "Files uploaded successfully",
+    "previousPacket": "05-filestore-upload-request.json",
+    "nextPacket": "07-report-create-request.json",
+    "verified": true,
+    "source": "DIGIT File Store Service response format"
+  },
+  "response": {
+    "status": 201,
+    "body": {
+      "files": [
+        {
+          "fileStoreId": "fs-dog-001-abc123def456",
+          "tenantId": "dj.djibouti-ville",
+          "contentType": "image/jpeg",
+          "fileName": "IMG_20241214_123045.jpg",
+          "fileSize": 2456789,
+          "url": "/filestore/v1/files/fs-dog-001-abc123def456?tenantId=dj.djibouti-ville"
+        },
+        {
+          "fileStoreId": "fs-selfie-001-xyz789ghi012",
+          "tenantId": "dj.djibouti-ville",
+          "contentType": "image/jpeg",
+          "fileName": "SELFIE_20241214_123112.jpg",
+          "fileSize": 1234567,
+          "url": "/filestore/v1/files/fs-selfie-001-xyz789ghi012?tenantId=dj.djibouti-ville"
+        }
+      ]
+    }
+  }
+}

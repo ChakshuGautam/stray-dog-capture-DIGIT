@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 11,
+    "description": "SMS notification sent to teacher confirming submission",
+    "sender": "egov-notification-sms Service",
+    "receiver": "SMS Gateway → Teacher's Phone",
+    "trigger": "Workflow transition complete",
+    "previousPacket": "10-workflow-transition-request.json",
+    "nextPacket": "../03-auto-validation/01-validation-trigger.json",
+    "verified": false,
+    "assumption": "SMS notification format based on DIGIT notification service pattern"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Your stray dog report has been submitted successfully. Tracking ID: ABC12345. Track status at: https://sdcrs.djibouti.gov.dj/track/ABC12345",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_SUBMIT_TEACHER",
+      "category": "TRANSACTION"
+    }
+  },
+  "smsGatewayRequest": {
+    "_comment": "Actual SMS gateway call (varies by provider)",
+    "to": "+253976543210",
+    "message": "Your stray dog report has been submitted successfully. Tracking ID: ABC12345. Track status at: https://sdcrs.djibouti.gov.dj/track/ABC12345",
+    "sender": "DJGOV"
+  }
+}

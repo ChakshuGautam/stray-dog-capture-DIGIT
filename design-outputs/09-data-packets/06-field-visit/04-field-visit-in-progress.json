@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 4,
+    "description": "Officer at location - app shows options to mark outcome",
+    "sender": "MC Officer Mobile App",
+    "receiver": "UI State Only",
+    "trigger": "Officer arrives at reported location",
+    "previousPacket": "03-start-field-visit.json",
+    "nextPacket": "05-mark-captured.json OR 06-mark-unable-to-locate.json",
+    "verified": false,
+    "assumption": "App UI state showing resolution options"
+  },
+  "appState": {
+    "currentReport": {
+      "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "status": "IN_PROGRESS"
+    },
+    "availableActions": [
+      {
+        "action": "MARK_CAPTURED",
+        "label": "Dog Captured",
+        "description": "Mark as captured - triggers teacher payout",
+        "requiresEvidence": true,
+        "evidenceType": "CAPTURE_PHOTO"
+      },
+      {
+        "action": "MARK_UNABLE_TO_LOCATE",
+        "label": "Unable to Locate",
+        "description": "Dog not found at location - no payout",
+        "requiresEvidence": false,
+        "requiresReason": true
+      }
+    ],
+    "fieldVisitTimer": {
+      "_comment": "Time since field visit started",
+      "startedAt": 1734187500000,
+      "elapsedMinutes": 15
+    },
+    "locationCheck": {
+      "_comment": "App validates officer is near reported location",
+      "reportedLocation": {
+        "latitude": 11.5886,
+        "longitude": 43.1456
+      },
+      "officerCurrentLocation": {
+        "latitude": 11.5888,
+        "longitude": 43.1454
+      },
+      "distanceMeters": 28,
+      "withinRange": true,
+      "maxAllowedDistanceMeters": 100
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 1,
+    "description": "Teacher tries to submit 6th report when daily limit is 5",
+    "sender": "Teacher Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Teacher submits report after reaching daily limit",
+    "previousPacket": null,
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "Daily limit enforcement based on PayoutConfig.json"
+  },
+  "context": {
+    "dailyLimit": 5,
+    "teacherSubmissionsToday": 5,
+    "attemptedSubmission": 6
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_create",
+    "body": {
+      "RequestInfo": {
+        "userInfo": {
+          "uuid": "teacher-uuid-001-abcd-efgh",
+          "roles": [{"code": "TEACHER"}]
+        }
+      },
+      "DogReport": {
+        "tenantId": "dj.djibouti-ville",
+        "serviceType": "StrayDogStandard"
+      }
+    }
+  },
+  "response": {
+    "status": 400,
+    "body": {
+      "ResponseInfo": {
+        "status": "failed"
+      },
+      "Errors": [
+        {
+          "code": "SDCRS_DAILY_LIMIT_EXCEEDED",
+          "message": "You have reached your daily report limit of 5 reports. Please try again tomorrow.",
+          "description": "Teachers can submit maximum 5 reports per day to prevent fraud.",
+          "params": {
+            "dailyLimit": 5,
+            "submittedToday": 5,
+            "nextAvailableTime": "2024-12-15T00:00:00Z"
+          }
+        }
+      ]
+    }
+  },
+  "fraudPrevention": {
+    "_comment": "Daily limits prevent bulk fraudulent submissions",
+    "configSource": "MDMS SDCRS/PayoutConfig.json",
+    "resetTime": "00:00 local time"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 8,
+    "description": "Backend searches for existing DIGIT user with HRMS employee ID",
+    "sender": "SSO Adapter Service",
+    "receiver": "egov-user Service",
+    "trigger": "After validating HRMS id_token",
+    "previousPacket": "07-hrms-id-token-decoded.json",
+    "nextPacket": "09-digit-user-search-response.json",
+    "verified": true,
+    "source": "DIGIT egov-user service API - standard user search"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-user.egov:8107/user/v1/_search",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000000,
+        "action": "_search",
+        "did": "1",
+        "key": "",
+        "msgId": "20241214120000|en_IN",
+        "authToken": "system-auth-token"
+      },
+      "tenantId": "dj.djibouti-ville",
+      "userName": "T12345"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 4,
+    "description": "Razorpay X returns payout in 'queued' status",
+    "sender": "Razorpay X API",
+    "receiver": "UPI Payout Adapter",
+    "trigger": "Payout request submitted",
+    "previousPacket": "03-create-payout.json",
+    "nextPacket": "05-persist-payout-record.json",
+    "verified": true,
+    "source": "Razorpay X API documentation, Payout.java"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "pout_NhY2MnOpKc4n9I",
+      "entity": "payout",
+      "fund_account_id": "fa_NhY2LmVnKc4n8H",
+      "amount": 50000,
+      "currency": "INR",
+      "notes": {
+        "report_id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "report_number": "DR-DJ-2024-000123",
+        "tenant_id": "dj.djibouti-ville",
+        "service_type": "StrayDogAggressive"
+      },
+      "fees": 0,
+      "tax": 0,
+      "status": "queued",
+      "utr": null,
+      "mode": "UPI",
+      "purpose": "payout",
+      "reference_id": "SDCRS-DR-DJ-2024-000123",
+      "narration": "SDCRS Teacher Payout",
+      "batch_id": null,
+      "failure_reason": null,
+      "created_at": 1734188430,
+      "fee_type": null
+    }
+  },
+  "statusNote": {
+    "_comment": "Payout lifecycle: queued → processing → processed/reversed/failed",
+    "queuedMeans": "Payout request accepted, awaiting processing",
+    "expectedProcessingTime": "Usually within seconds for UPI"
+  }
+}

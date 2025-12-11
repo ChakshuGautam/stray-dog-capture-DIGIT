@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 4,
+    "description": "Validate GPS coordinates fall within tenant boundary",
+    "sender": "SDCRS Validator",
+    "receiver": "egov-location Service",
+    "trigger": "Timestamp validation complete",
+    "previousPacket": "03-timestamp-validation.json",
+    "nextPacket": "05-duplicate-check.json",
+    "verified": false,
+    "assumption": "Location service provides boundary polygon for tenant"
+  },
+  "boundaryCheckRequest": {
+    "method": "POST",
+    "url": "http://egov-location.egov:8088/location/v1/_boundary",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176204000,
+        "msgId": "20241214123644|en_IN"
+      },
+      "tenantId": "dj.djibouti-ville",
+      "latitude": 11.5886,
+      "longitude": 43.1456
+    }
+  },
+  "boundaryCheckResponse": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "boundary": {
+        "tenantId": "dj.djibouti-ville",
+        "name": "Djibouti-Ville",
+        "isWithinBoundary": true,
+        "locality": {
+          "code": "DJC001",
+          "name": "Djibouti Centre"
+        },
+        "ward": {
+          "code": "W005",
+          "name": "Ward 5"
+        }
+      }
+    }
+  },
+  "result": {
+    "passed": true,
+    "reason": "Location is within dj.djibouti-ville boundary"
+  },
+  "failureScenario": {
+    "_comment": "Location outside tenant boundary",
+    "response": {
+      "isWithinBoundary": false,
+      "nearestTenant": "dj.ali-sabieh"
+    },
+    "result": {
+      "passed": false,
+      "reason": "Location outside dj.djibouti-ville boundary"
+    },
+    "rejectionReason": "OUTSIDE_BOUNDARY"
+  }
+}

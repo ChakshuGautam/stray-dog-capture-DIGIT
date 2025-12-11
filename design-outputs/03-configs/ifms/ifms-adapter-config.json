@@ -1,0 +1,80 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "ifms-adapter",
+  "IFMSAdapterConfig": {
+    "enabled": true,
+    "jitIntegration": {
+      "baseUrl": "${IFMS_JIT_HOST}",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelayMs": 5000
+    },
+    "authentication": {
+      "type": "OAUTH2",
+      "tokenUrl": "${IFMS_TOKEN_URL}",
+      "clientId": "${IFMS_CLIENT_ID}",
+      "clientSecret": "${IFMS_CLIENT_SECRET}",
+      "scope": "payment.create payment.read"
+    },
+    "schemeConfig": {
+      "SDCRS": {
+        "schemeCode": "SDCRS001",
+        "ssuCode": "${IFMS_SSU_CODE}",
+        "ddoCode": "${IFMS_DDO_CODE}",
+        "hoaCode": "2202-01-102-00-00-V-01",
+        "sanctionNumber": "${IFMS_SANCTION_NUMBER}",
+        "description": "Stray Dog Capture Reporting System Payouts"
+      }
+    },
+    "paymentInstruction": {
+      "piNumberFormat": "SDCRS/PI/[fy:yyyy-yy]/[SEQ_SDCRS_PI]",
+      "piType": "ORIGINAL",
+      "validityDays": 30
+    },
+    "beneficiaryConfig": {
+      "identifierType": "TEACHER_ID",
+      "bankAccountSource": "INDIVIDUAL_SERVICE",
+      "ifscValidation": true,
+      "accountValidation": true
+    },
+    "kafka": {
+      "topics": {
+        "piCreate": "ifms-pi-create",
+        "piStatusUpdate": "ifms-pi-status-update",
+        "piError": "ifms-pi-error"
+      }
+    },
+    "statusMapping": {
+      "INITIATED": {
+        "jitStatus": ["PI_CREATED", "PI_SUBMITTED"],
+        "sdcrsAction": "none"
+      },
+      "INPROCESS": {
+        "jitStatus": ["COR_RECEIVED", "PAYMENT_PROCESSING"],
+        "sdcrsAction": "none"
+      },
+      "COMPLETED": {
+        "jitStatus": ["PAYMENT_SUCCESS", "CREDITED"],
+        "sdcrsAction": "transitionToResolved"
+      },
+      "REJECTED": {
+        "jitStatus": ["PI_DECLINED", "PAYMENT_FAILED", "ACCOUNT_INVALID"],
+        "sdcrsAction": "markPayoutFailed"
+      }
+    },
+    "notifications": {
+      "onInitiated": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_PAYOUT_INITIATED"
+      },
+      "onCompleted": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_PAYOUT_SUCCESS"
+      },
+      "onRejected": {
+        "enabled": true,
+        "smsTemplate": "SDCRS_PAYOUT_FAILED"
+      }
+    }
+  }
+}

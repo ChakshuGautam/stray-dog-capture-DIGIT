@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 3,
+    "description": "Report auto-rejected due to high fraud risk score",
+    "sender": "Fraud Detection Service",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Fraud score exceeds rejection threshold",
+    "previousPacket": "../03-auto-validation/05-fraud-score-calculation.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "FraudScoreService.java, RiskScoreConfig.json"
+  },
+  "context": {
+    "fraudScoreThresholds": {
+      "low": {"min": 0, "max": 30, "action": "ALLOW"},
+      "medium": {"min": 31, "max": 60, "action": "FLAG_FOR_REVIEW"},
+      "high": {"min": 61, "max": 100, "action": "AUTO_REJECT"}
+    },
+    "calculatedScore": 85
+  },
+  "fraudDetectionResult": {
+    "reportId": "dr-uuid-011-abcd",
+    "score": 85,
+    "riskLevel": "HIGH",
+    "action": "AUTO_REJECT",
+    "factors": [
+      {"rule": "SAME_LOCATION_MULTIPLE_REPORTS", "weight": 25, "triggered": true},
+      {"rule": "IMAGE_SIMILARITY_HIGH", "weight": 30, "triggered": true},
+      {"rule": "TEACHER_PREVIOUS_REJECTIONS", "weight": 15, "triggered": true},
+      {"rule": "UNUSUAL_SUBMISSION_PATTERN", "weight": 15, "triggered": true}
+    ]
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-011-abcd",
+          "workflow": {
+            "action": "AUTO_VALIDATE_FAIL",
+            "comment": "High fraud risk detected (score: 85). Auto-rejected."
+          },
+          "rejectionReason": "FRAUD_DETECTED",
+          "rejectionRemarks": "Multiple risk factors detected: same location, similar images, submission pattern anomaly.",
+          "fraudDetails": {
+            "score": 85,
+            "riskLevel": "HIGH",
+            "autoRejected": true
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-011-abcd",
+          "status": "AUTO_REJECTED",
+          "rejectionReason": "FRAUD_DETECTED",
+          "payoutEligible": false
+        }
+      ]
+    }
+  },
+  "penaltyApplied": {
+    "_comment": "Teacher may receive penalty based on fraud detection config",
+    "action": "INCREMENT_WARNING_COUNT",
+    "currentWarnings": 2,
+    "maxWarningsBeforeCooldown": 3
+  }
+}

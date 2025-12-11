@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 4,
+    "description": "Mobile app sends authorization code to backend for token exchange",
+    "sender": "SDCRS Mobile App",
+    "receiver": "SSO Adapter Service",
+    "trigger": "App receives callback with authorization code",
+    "previousPacket": "03-hrms-login-redirect.json",
+    "nextPacket": "05-hrms-token-request.json",
+    "verified": false,
+    "assumption": "Backend retrieves code_verifier from Redis using state as key"
+  },
+  "request": {
+    "method": "POST",
+    "url": "/sso/v1/token-exchange",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Correlation-Id": "mob-1734200000001"
+    },
+    "body": {
+      "code": "AUTH_CODE_hrms_7f8g9h0i1j2k3l4m",
+      "state": "csrf_abc123xyz",
+      "redirect_uri": "sdcrs://callback"
+    }
+  }
+}

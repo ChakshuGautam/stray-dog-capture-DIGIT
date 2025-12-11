@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDCRS - Teacher Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(240 10% 3.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(240 10% 3.9%);
+            --muted: hsl(240 4.8% 95.9%);
+            --muted-foreground: hsl(240 3.8% 46.1%);
+            --border: hsl(240 5.9% 90%);
+            --primary: hsl(221 83% 53%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(240 4.8% 95.9%);
+            --accent: hsl(240 4.8% 95.9%);
+            --radius: 0.5rem;
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 60px;
+            /* Chart colors */
+            --chart-1: hsl(221 83% 53%);
+            --chart-2: hsl(160 60% 45%);
+            --chart-3: hsl(30 80% 55%);
+            --chart-4: hsl(280 65% 60%);
+            --chart-5: hsl(340 75% 55%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--muted);
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: width 0.2s ease;
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed); }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--foreground);
+        }
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .sidebar-logo span { white-space: nowrap; }
+        .sidebar.collapsed .sidebar-logo span { display: none; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            color: var(--muted-foreground);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-toggle:hover { background: var(--secondary); }
+        .sidebar.collapsed .sidebar-toggle { margin: 0 auto; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0.75rem;
+            overflow-y: auto;
+        }
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted-foreground);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar.collapsed .nav-section-title { display: none; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            border-radius: var(--radius);
+            color: var(--muted-foreground);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.15s;
+            margin-bottom: 0.125rem;
+        }
+        .nav-item:hover {
+            background: var(--secondary);
+            color: var(--foreground);
+        }
+        .nav-item.active {
+            background: hsl(221 83% 53% / 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .nav-label { white-space: nowrap; }
+        .sidebar.collapsed .nav-label { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem; }
+
+        /* Main content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.2s ease;
+        }
+        .sidebar.collapsed + .main-wrapper { margin-left: var(--sidebar-collapsed); }
+
+        .header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .header-meta { font-size: 0.875rem; color: var(--muted-foreground); }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; }
+        .avatar {
+            width: 36px; height: 36px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 500; font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: var(--card);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        .filter-bar h2 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .date-filter { display: flex; gap: 0.25rem; }
+        .date-btn {
+            padding: 0.5rem 0.875rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .date-btn:hover { background: var(--secondary); color: var(--foreground); }
+        .date-btn.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border-color: var(--primary);
+        }
+        .custom-date-picker {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .custom-date-picker.show { display: flex; }
+        .custom-date-picker input {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+        }
+        .custom-date-picker span { color: var(--muted-foreground); font-size: 0.875rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--foreground);
+            letter-spacing: -0.025em;
+        }
+        .stat-change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .stat-change.positive { color: hsl(160 60% 45%); }
+        .stat-change.negative { color: hsl(0 72% 51%); }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .card-body { padding: 1.25rem; }
+        .chart-container { position: relative; height: 240px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+        th {
+            font-weight: 500;
+            color: var(--muted-foreground);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td { color: var(--foreground); }
+
+        .status-badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-resolved { background: hsl(160 60% 90%); color: hsl(160 60% 30%); }
+        .status-pending { background: hsl(45 90% 90%); color: hsl(30 80% 35%); }
+        .status-verified { background: hsl(221 83% 93%); color: hsl(221 83% 40%); }
+        .status-rejected { background: hsl(0 72% 93%); color: hsl(0 72% 40%); }
+
+        .earnings-card {
+            background: linear-gradient(135deg, hsl(160 60% 45%), hsl(160 60% 38%));
+            color: white;
+            border: none;
+        }
+        .earnings-card .stat-label { color: hsla(0, 0%, 100%, 0.8); }
+        .earnings-card .stat-value { color: white; }
+        .earnings-card .stat-change { color: hsla(0, 0%, 100%, 0.9); }
+
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: var(--sidebar-collapsed); }
+            .sidebar .nav-label, .sidebar .nav-section-title, .sidebar .sidebar-logo span { display: none; }
+            .sidebar .nav-item { justify-content: center; padding: 0.75rem; }
+            .main-wrapper { margin-left: var(--sidebar-collapsed); }
+            .stats-grid { grid-template-columns: 1fr; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">🐕</div>
+                <span>SDCRS</span>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Dashboards</div>
+                <a href="01-teacher-dashboard.html" class="nav-item active">
+                    <span class="nav-icon"><i data-lucide="graduation-cap"></i></span>
+                    <span class="nav-label">Teacher</span>
+                </a>
+                <a href="02-verifier-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="shield-check"></i></span>
+                    <span class="nav-label">Verifier</span>
+                </a>
+                <a href="03-mc-officer-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="truck"></i></span>
+                    <span class="nav-label">MC Officer</span>
+                </a>
+                <a href="04-mc-supervisor-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="users"></i></span>
+                    <span class="nav-label">MC Supervisor</span>
+                </a>
+                <a href="05-district-admin-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span>
+                    <span class="nav-label">District Admin</span>
+                </a>
+                <a href="06-state-admin-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="landmark"></i></span>
+                    <span class="nav-label">State Admin</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="header">
+            <div>
+                <h1>Teacher Dashboard</h1>
+                <div class="header-meta">Reporter Portal • South Delhi</div>
+            </div>
+            <div class="user-info">
+                <span style="font-size: 0.875rem; color: var(--muted-foreground);">Priya Sharma</span>
+                <div class="avatar">PS</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="filter-bar">
+                <h2>Overview</h2>
+                <div style="display: flex; align-items: center;">
+                    <div class="date-filter">
+                        <button class="date-btn" onclick="setDateRange('today')">Today</button>
+                        <button class="date-btn" onclick="setDateRange('week')">Week</button>
+                        <button class="date-btn active" onclick="setDateRange('month')">Month</button>
+                        <button class="date-btn" onclick="setDateRange('custom')">Custom</button>
+                    </div>
+                    <div class="custom-date-picker" id="customDatePicker">
+                        <input type="date" id="startDate">
+                        <span>to</span>
+                        <input type="date" id="endDate">
+                        <button class="date-btn" onclick="applyCustomDate()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Reports</div>
+                    <div class="stat-value">24</div>
+                    <div class="stat-change positive">↑ 12% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-value">83%</div>
+                    <div class="stat-change positive">↑ 5% improvement</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Review</div>
+                    <div class="stat-value">3</div>
+                    <div class="stat-change">Avg. 4 hrs wait time</div>
+                </div>
+                <div class="stat-card earnings-card">
+                    <div class="stat-label">Total Earnings</div>
+                    <div class="stat-value">₹10,000</div>
+                    <div class="stat-change">20 successful captures</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Submission Trend</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Report Status Distribution</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Reports</h3>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Report ID</th>
+                                    <th>Location</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight: 500;">SDC-2024-1847</td>
+                                    <td>Near Govt. School, Dwarka</td>
+                                    <td>Aggressive</td>
+                                    <td><span class="status-badge status-resolved">Resolved</span></td>
+                                    <td>2 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 500;">SDC-2024-1832</td>
+                                    <td>Market Road, Vasant Kunj</td>
+                                    <td>Standard</td>
+                                    <td><span class="status-badge status-verified">Verified</span></td>
+                                    <td>Yesterday</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 500;">SDC-2024-1820</td>
+                                    <td>Sarai Rohilla, Delhi</td>
+                                    <td>Pack</td>
+                                    <td><span class="status-badge status-pending">Pending</span></td>
+                                    <td>2 days ago</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 500;">SDC-2024-1815</td>
+                                    <td>India Gate Circle</td>
+                                    <td>Standard</td>
+                                    <td><span class="status-badge status-resolved">Resolved</span></td>
+                                    <td>3 days ago</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 500;">SDC-2024-1798</td>
+                                    <td>Malviya Nagar</td>
+                                    <td>Injured</td>
+                                    <td><span class="status-badge status-rejected">Rejected</span></td>
+                                    <td>5 days ago</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Earnings Breakdown</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="earningsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        // Date Range Functions
+        function setDateRange(range) {
+            document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            const customPicker = document.getElementById('customDatePicker');
+            if (range === 'custom') {
+                customPicker.classList.add('show');
+            } else {
+                customPicker.classList.remove('show');
+            }
+        }
+        function applyCustomDate() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate && endDate) {
+                console.log('Custom date range:', startDate, 'to', endDate);
+            }
+        }
+
+        // Shadcn-inspired chart colors
+        const chartColors = {
+            primary: 'hsl(221, 83%, 53%)',
+            secondary: 'hsl(160, 60%, 45%)',
+            tertiary: 'hsl(30, 80%, 55%)',
+            quaternary: 'hsl(280, 65%, 60%)',
+            quinary: 'hsl(340, 75%, 55%)',
+            muted: 'hsl(240, 4.8%, 95.9%)',
+            border: 'hsl(240, 5.9%, 90%)'
+        };
+
+        // Chart.js defaults
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = 'hsl(240, 3.8%, 46.1%)';
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.boxWidth = 6;
+        Chart.defaults.plugins.tooltip.backgroundColor = 'hsl(240, 10%, 3.9%)';
+        Chart.defaults.plugins.tooltip.titleFont = { weight: '500' };
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 6;
+        Chart.defaults.elements.bar.borderRadius = 4;
+        Chart.defaults.elements.line.tension = 0.3;
+
+        // Trend Chart
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Submissions',
+                    data: [5, 8, 4, 7],
+                    borderColor: chartColors.primary,
+                    backgroundColor: 'hsla(221, 83%, 53%, 0.1)',
+                    fill: true,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: chartColors.primary,
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        border: { display: false },
+                        grid: { color: chartColors.border },
+                        ticks: { stepSize: 2 }
+                    },
+                    x: {
+                        border: { display: false },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Status Chart
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Resolved', 'Verified', 'Pending', 'Rejected'],
+                datasets: [{
+                    data: [20, 2, 3, 1],
+                    backgroundColor: [
+                        chartColors.secondary,
+                        chartColors.primary,
+                        chartColors.tertiary,
+                        chartColors.quinary
+                    ],
+                    borderWidth: 0,
+                    spacing: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 16 }
+                    }
+                }
+            }
+        });
+
+        // Earnings Chart
+        new Chart(document.getElementById('earningsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Earnings (₹)',
+                    data: [2500, 3500, 1500, 2500],
+                    backgroundColor: chartColors.secondary,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        border: { display: false },
+                        grid: { color: chartColors.border },
+                        ticks: {
+                            callback: function(value) { return '₹' + value; }
+                        }
+                    },
+                    x: {
+                        border: { display: false },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

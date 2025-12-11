@@ -1,0 +1,96 @@
+{
+  "_meta": {
+    "stage": "05-assignment",
+    "step": 2,
+    "description": "Supervisor fetches list of MC Officers available for assignment",
+    "sender": "MC Supervisor Web Portal",
+    "receiver": "egov-user Service",
+    "trigger": "Supervisor clicks 'Assign' on a report",
+    "previousPacket": "01-supervisor-inbox.json",
+    "nextPacket": "03-assign-action.json",
+    "verified": true,
+    "source": "DIGIT egov-user service - search by role"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-user.egov:8107/user/v1/_search",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734183700000,
+        "msgId": "20241214143100|en_IN",
+        "userInfo": {
+          "uuid": "sup-uuid-001",
+          "roles": [{"code": "MC_SUPERVISOR"}]
+        }
+      },
+      "tenantId": "dj.djibouti-ville",
+      "roleCodes": ["MC_OFFICER"],
+      "active": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "user": [
+        {
+          "id": 24500,
+          "uuid": "mco-uuid-001",
+          "userName": "MCO001",
+          "name": "Ibrahim Ali",
+          "mobileNumber": "9876500001",
+          "tenantId": "dj.djibouti-ville",
+          "active": true,
+          "roles": [{"code": "MC_OFFICER"}],
+          "additionalDetails": {
+            "assignedWards": ["W005", "W006"],
+            "currentWorkload": 3,
+            "maxWorkload": 10
+          }
+        },
+        {
+          "id": 24501,
+          "uuid": "mco-uuid-002",
+          "userName": "MCO002",
+          "name": "Yusuf Mohammed",
+          "mobileNumber": "9876500002",
+          "tenantId": "dj.djibouti-ville",
+          "active": true,
+          "roles": [{"code": "MC_OFFICER"}],
+          "additionalDetails": {
+            "assignedWards": ["W005", "W007"],
+            "currentWorkload": 5,
+            "maxWorkload": 10
+          }
+        },
+        {
+          "id": 24502,
+          "uuid": "mco-uuid-003",
+          "userName": "MCO003",
+          "name": "Hassan Omar",
+          "mobileNumber": "9876500003",
+          "tenantId": "dj.djibouti-ville",
+          "active": true,
+          "roles": [{"code": "MC_OFFICER"}],
+          "additionalDetails": {
+            "assignedWards": ["W008", "W009"],
+            "currentWorkload": 8,
+            "maxWorkload": 10
+          }
+        }
+      ]
+    }
+  },
+  "assignmentRecommendation": {
+    "_comment": "Supervisor sees officers covering Ward W005 with lowest workload",
+    "recommendedOfficer": "mco-uuid-001",
+    "reason": "Covers Ward W005, lowest current workload (3/10)"
+  }
+}

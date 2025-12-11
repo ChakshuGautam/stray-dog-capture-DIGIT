@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 3,
+    "description": "HRMS SSO redirects back to app with authorization code after successful login",
+    "sender": "State HRMS SSO",
+    "receiver": "SDCRS Mobile App (deep link)",
+    "trigger": "Teacher successfully authenticates with Employee ID + OTP/Password",
+    "previousPacket": "02-sso-auth-url-response.json",
+    "nextPacket": "04-token-exchange-request.json",
+    "verified": false,
+    "assumption": "HRMS SSO follows standard OAuth2 authorization code flow"
+  },
+  "redirect": {
+    "url": "sdcrs://callback?code=AUTH_CODE_hrms_7f8g9h0i1j2k3l4m&state=csrf_abc123xyz",
+    "parsed": {
+      "scheme": "sdcrs",
+      "host": "callback",
+      "queryParams": {
+        "code": "AUTH_CODE_hrms_7f8g9h0i1j2k3l4m",
+        "state": "csrf_abc123xyz"
+      }
+    }
+  },
+  "appValidation": {
+    "_comment": "App must verify state matches the original request to prevent CSRF",
+    "expectedState": "csrf_abc123xyz",
+    "receivedState": "csrf_abc123xyz",
+    "stateValid": true
+  }
+}

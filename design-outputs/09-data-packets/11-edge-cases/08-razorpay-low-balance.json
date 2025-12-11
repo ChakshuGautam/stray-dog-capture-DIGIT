@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 8,
+    "description": "Payout queued due to low RazorpayX account balance",
+    "sender": "Razorpay X API",
+    "receiver": "UPI Payout Adapter",
+    "trigger": "Payout request made with queue_if_low_balance=true",
+    "previousPacket": "../08-razorpay-integration/03-create-payout.json",
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "Based on Razorpay X low balance handling"
+  },
+  "context": {
+    "payoutAmount": 50000,
+    "accountBalance": 30000,
+    "balanceShortfall": 20000,
+    "queueIfLowBalance": true
+  },
+  "razorpayResponse": {
+    "status": 200,
+    "body": {
+      "id": "pout_NhY2MnOpKc4n9I",
+      "entity": "payout",
+      "amount": 50000,
+      "currency": "INR",
+      "status": "queued",
+      "queued_reason": "low_balance",
+      "utr": null,
+      "mode": "UPI",
+      "reference_id": "SDCRS-DR-DJ-2024-000123",
+      "failure_reason": null
+    }
+  },
+  "adapterBehavior": {
+    "_comment": "Adapter handles queued state, waits for balance addition",
+    "action": "WAIT_FOR_PROCESSING",
+    "sdcrsStatus": "PAYOUT_PENDING",
+    "alertTriggered": true
+  },
+  "adminAlert": {
+    "_comment": "Alert sent to finance admin about low balance",
+    "alertType": "RAZORPAY_LOW_BALANCE",
+    "message": "RazorpayX account balance is low. Pending payouts may be delayed. Current balance: ₹300. Required: ₹500.",
+    "recipient": "finance-admin@example.gov"
+  },
+  "resolutionPath": {
+    "steps": [
+      "Finance admin tops up RazorpayX account",
+      "Razorpay automatically processes queued payouts",
+      "Webhook callback sent with processed status",
+      "Normal flow resumes"
+    ]
+  }
+}

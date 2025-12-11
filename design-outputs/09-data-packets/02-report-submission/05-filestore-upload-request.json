@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 5,
+    "description": "Upload photos to DIGIT File Store Service",
+    "sender": "SDCRS Mobile App",
+    "receiver": "egov-filestore Service",
+    "trigger": "Teacher taps 'Submit Report'",
+    "previousPacket": "04-report-form-data.json",
+    "nextPacket": "06-filestore-upload-response.json",
+    "verified": true,
+    "source": "DIGIT File Store Service - standard multipart upload"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-filestore.egov:8083/filestore/v1/files?tenantId=dj.djibouti-ville&module=SDCRS",
+    "headers": {
+      "Content-Type": "multipart/form-data",
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+    },
+    "formData": {
+      "file": [
+        {
+          "fieldName": "file",
+          "fileName": "IMG_20241214_123045.jpg",
+          "contentType": "image/jpeg",
+          "size": 2456789
+        },
+        {
+          "fieldName": "file",
+          "fileName": "SELFIE_20241214_123112.jpg",
+          "contentType": "image/jpeg",
+          "size": 1234567
+        }
+      ]
+    }
+  }
+}

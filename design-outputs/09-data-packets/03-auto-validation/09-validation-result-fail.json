@@ -1,0 +1,69 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 9,
+    "description": "Validation failed - trigger workflow transition to AUTO_REJECTED",
+    "sender": "SDCRS Validator",
+    "receiver": "egov-workflow-v2 Service",
+    "trigger": "One or more validation checks failed OR high fraud score",
+    "previousPacket": "07-fraud-score-response.json",
+    "nextPacket": "10-rejection-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - AUTO_VALIDATE_FAIL action"
+  },
+  "validationSummary": {
+    "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "reportNumber": "DR-DJ-2024-000123",
+    "overallResult": "FAIL",
+    "checks": [
+      {"check": "GPS_LOCATION", "result": "FAIL", "details": "EXIF GPS 5km from device GPS"},
+      {"check": "TIMESTAMP_FRESHNESS", "result": "PASS", "details": "Photo 56 seconds old"},
+      {"check": "BOUNDARY_CHECK", "result": "PASS", "details": "Within dj.djibouti-ville"},
+      {"check": "DUPLICATE_IMAGE", "result": "FAIL", "details": "95% similar to DR-DJ-2024-000100"},
+      {"check": "FRAUD_SCORE", "result": "FAIL", "details": "Risk score 85 (HIGH)"}
+    ],
+    "fraudScore": 85,
+    "fraudRiskLevel": "HIGH",
+    "primaryRejectionReason": "INVALID_GPS"
+  },
+  "workflowTransition": {
+    "method": "POST",
+    "url": "http://egov-workflow-v2.egov:8109/egov-workflow-v2/egov-wf/process/_transition",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176210000,
+        "action": "_transition",
+        "msgId": "20241214123650|en_IN",
+        "authToken": "system-auth-token",
+        "userInfo": {
+          "uuid": "system-user-uuid",
+          "userName": "SYSTEM",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "ProcessInstances": [
+        {
+          "tenantId": "dj.djibouti-ville",
+          "businessService": "SDCRS",
+          "businessId": "DR-DJ-2024-000123",
+          "moduleName": "sdcrs-services",
+          "action": "AUTO_VALIDATE_FAIL",
+          "comment": "Auto-validation failed: INVALID_GPS - Photo EXIF location does not match device GPS. Fraud score: 85 (HIGH)"
+        }
+      ]
+    }
+  },
+  "reportUpdate": {
+    "rejectionReason": "INVALID_GPS",
+    "rejectionRemarks": "Photo EXIF GPS coordinates (11.5886, 43.1456) are 5km from device location (11.6320, 43.1890). Possible photo from different location.",
+    "payoutEligible": false
+  },
+  "resultingState": {
+    "currentState": "PENDING_VALIDATION",
+    "action": "AUTO_VALIDATE_FAIL",
+    "nextState": "AUTO_REJECTED",
+    "isTerminal": true
+  }
+}

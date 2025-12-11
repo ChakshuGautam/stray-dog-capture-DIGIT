@@ -1,0 +1,97 @@
+# ==============================================================================
+# SDCRS Indexer Configuration
+# ==============================================================================
+# This file defines Kafka topics and Elasticsearch mappings for the DIGIT Indexer.
+# Indexer consumes messages from Kafka and writes to Elasticsearch for search.
+# ==============================================================================
+
+ServiceMaps:
+  serviceName: sdcrs-services
+  mappings:
+
+    # ==============================================================================
+    # Dog Report Indexing - Create
+    # ==============================================================================
+    - version: 1.0
+      name: sdcrs-report-create
+      description: Indexes new dog reports to Elasticsearch
+      fromTopic: save-sdcrs-report
+      toIndex: sdcrs-report
+      indexType: _doc
+      isBulk: true
+      isCustom: false
+      id: $.dogReports.*.id
+      fieldsToBeRemoved:
+        - auditDetails
+      fieldsToBeFlatten:
+        - location
+      fieldMap:
+        - inJsonPath: $.dogReports[*]
+          outJsonPath: $
+
+    # ==============================================================================
+    # Dog Report Indexing - Update
+    # ==============================================================================
+    - version: 1.0
+      name: sdcrs-report-update
+      description: Updates dog reports in Elasticsearch
+      fromTopic: update-sdcrs-report
+      toIndex: sdcrs-report
+      indexType: _doc
+      isBulk: true
+      isCustom: false
+      id: $.dogReports.*.id
+      fieldsToBeRemoved:
+        - auditDetails
+      fieldsToBeFlatten:
+        - location
+      fieldMap:
+        - inJsonPath: $.dogReports[*]
+          outJsonPath: $
+
+# ==============================================================================
+# Elasticsearch Index Mapping (for reference)
+# ==============================================================================
+# PUT sdcrs-report
+# {
+#   "mappings": {
+#     "properties": {
+#       "id": { "type": "keyword" },
+#       "tenantId": { "type": "keyword" },
+#       "reportNumber": { "type": "keyword" },
+#       "trackingId": { "type": "keyword" },
+#       "status": { "type": "keyword" },
+#       "reporterId": { "type": "keyword" },
+#       "reporterName": { "type": "text" },
+#       "reporterPhone": { "type": "keyword" },
+#       "reporterType": { "type": "keyword" },
+#       "dogDescription": { "type": "text" },
+#       "dogBehavior": { "type": "keyword" },
+#       "dogCount": { "type": "integer" },
+#       "location": {
+#         "properties": {
+#           "latitude": { "type": "double" },
+#           "longitude": { "type": "double" },
+#           "geoPoint": { "type": "geo_point" },
+#           "address": { "type": "text" },
+#           "localityCode": { "type": "keyword" },
+#           "localityName": { "type": "text" },
+#           "wardCode": { "type": "keyword" },
+#           "wardName": { "type": "text" },
+#           "districtCode": { "type": "keyword" }
+#         }
+#       },
+#       "assignedOfficerId": { "type": "keyword" },
+#       "assignedOfficerName": { "type": "text" },
+#       "verifiedBy": { "type": "keyword" },
+#       "verifiedDate": { "type": "date" },
+#       "resolvedBy": { "type": "keyword" },
+#       "resolvedDate": { "type": "date" },
+#       "resolutionType": { "type": "keyword" },
+#       "payoutStatus": { "type": "keyword" },
+#       "payoutAmount": { "type": "double" },
+#       "createdTime": { "type": "date" },
+#       "lastModifiedTime": { "type": "date" }
+#     }
+#   }
+# }

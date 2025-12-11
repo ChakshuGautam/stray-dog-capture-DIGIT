@@ -1,0 +1,88 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 2,
+    "description": "Officer views full report details with map/directions",
+    "sender": "MC Officer Mobile App",
+    "receiver": "SDCRS Service + Map API",
+    "trigger": "Officer taps on assigned report",
+    "previousPacket": "01-officer-app-inbox.json",
+    "nextPacket": "03-start-field-visit.json",
+    "verified": true,
+    "source": "DogReport.java - full entity with location"
+  },
+  "reportDetailRequest": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "userInfo": {
+          "uuid": "mco-uuid-001",
+          "roles": [{"code": "MC_OFFICER"}]
+        }
+      },
+      "searchCriteria": {
+        "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "tenantId": "dj.djibouti-ville",
+          "serviceType": "StrayDogAggressive",
+          "status": "ASSIGNED",
+          "description": "Large brown dog with white spots, aggressive behavior near school entrance. Seen during morning hours.",
+          "location": {
+            "latitude": 11.5886,
+            "longitude": 43.1456,
+            "accuracy": 10.5,
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "wardCode": "W005",
+            "address": "Near Govt High School Main Gate",
+            "landmark": "Main entrance gate, opposite to tea stall"
+          },
+          "evidence": {
+            "photoFileStoreId": "fs-photo-uuid-001",
+            "photoUrl": "https://filestore.dj.digit.org/filestore/v1/files/id?fileStoreId=fs-photo-uuid-001",
+            "selfieFileStoreId": "fs-selfie-uuid-001",
+            "selfieUrl": "https://filestore.dj.digit.org/filestore/v1/files/id?fileStoreId=fs-selfie-uuid-001",
+            "capturedAt": 1734176100000
+          },
+          "reporter": {
+            "_comment": "Minimal reporter info shown to officer",
+            "name": "Amina Hassan",
+            "phone": "987654****"
+          },
+          "assignedOfficerId": "mco-uuid-001",
+          "assignedOfficerName": "Ibrahim Ali",
+          "assignedAt": 1734183800000,
+          "verifiedAt": 1734180200000,
+          "auditDetails": {
+            "createdTime": 1734176201000
+          }
+        }
+      ]
+    }
+  },
+  "mapIntegration": {
+    "_comment": "App uses device GPS to show directions",
+    "currentLocation": {
+      "latitude": 11.5900,
+      "longitude": 43.1400
+    },
+    "destination": {
+      "latitude": 11.5886,
+      "longitude": 43.1456
+    },
+    "estimatedDistance": "0.8 km",
+    "estimatedTime": "3 min by vehicle"
+  }
+}

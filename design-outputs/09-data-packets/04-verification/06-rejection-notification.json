@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 6,
+    "description": "SMS notification sent to teacher about rejection",
+    "sender": "egov-notification-sms Service",
+    "receiver": "Teacher's Phone",
+    "trigger": "Report rejected or marked as duplicate",
+    "previousPacket": "04-reject-action.json or 05-mark-duplicate-action.json",
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "SMS template for rejections"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Your stray dog report (Tracking ID: ABC12345) has been rejected. Reason: Photo does not show a stray dog. For queries, contact helpdesk at 8000-123-456.",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_REJECT_TEACHER",
+      "category": "TRANSACTION"
+    }
+  },
+  "rejectionMessages": {
+    "_comment": "Different messages based on rejection type",
+    "NOT_A_DOG": "Reason: Photo does not show a dog",
+    "DOMESTIC_DOG": "Reason: Photo shows a pet dog, not a stray",
+    "DUPLICATE": "Reason: This dog was already reported by another teacher",
+    "POOR_QUALITY": "Reason: Photo quality too poor for verification",
+    "FRAUDULENT": "Reason: Evidence appears to be manipulated. This may affect your future reporting eligibility."
+  },
+  "noPayout": {
+    "_comment": "No payout triggered for rejected reports",
+    "payoutEligible": false
+  }
+}

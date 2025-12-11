@@ -1,0 +1,126 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 6,
+    "description": "Request fraud evaluation from Fraud Detection Service using SpEL-compatible structure",
+    "sender": "SDCRS Validator",
+    "receiver": "Fraud Detection Service",
+    "trigger": "Duplicate check complete",
+    "previousPacket": "05-duplicate-check.json",
+    "nextPacket": "07-fraud-score-response.json",
+    "verified": true,
+    "source": "08-fraud-detection-service.md - Section 2.5 SpEL Expression Evaluator"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://fraud-detection-service.egov:8097/fraud/v1/_evaluateSync",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176205000,
+        "msgId": "20241214123645|en_IN"
+      },
+      "request": {
+        "moduleCode": "SDCRS",
+        "tenantId": "dj.djibouti-ville",
+        "referenceId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "applicantInfo": {
+          "applicantId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "userUuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "name": "Ahmed Mohamed",
+          "mobileNumber": "25377012345",
+          "deviceId": "android-abc123def456",
+          "ipAddress": "192.168.1.100"
+        },
+        "locationData": {
+          "latitude": 11.5886,
+          "longitude": 43.1456,
+          "locality": "DJC001",
+          "ward": "WARD-01",
+          "district": "DJIBOUTI-VILLE"
+        },
+        "evidences": [
+          {
+            "type": "PHOTO",
+            "fileStoreId": "fs-uuid-dog-photo-001",
+            "purpose": "DOG_PHOTO",
+            "metadata": {
+              "gpsLatitude": 11.5886,
+              "gpsLongitude": 43.1456,
+              "timestamp": 1734176145000,
+              "deviceId": "android-abc123def456",
+              "exifPresent": true,
+              "contentHash": "sha256:d4c3b2a1e5f6789012345678901234567890123456789012345678901234"
+            }
+          },
+          {
+            "type": "PHOTO",
+            "fileStoreId": "fs-uuid-selfie-001",
+            "purpose": "SELFIE",
+            "metadata": {
+              "gpsLatitude": 11.5887,
+              "gpsLongitude": 43.1457,
+              "timestamp": 1734176155000,
+              "deviceId": "android-abc123def456",
+              "exifPresent": true
+            }
+          }
+        ],
+        "additionalData": {
+          "dogCount": 2,
+          "isAggressive": false,
+          "reportType": "STRAY_SIGHTING",
+          "reporterDailyCount": 2,
+          "reporterMonthlyCount": 8,
+          "lifetimeReportCount": 45,
+          "reporterTotalPayout": 3500,
+          "gpsValidationResult": "MATCH",
+          "timestampFreshness": "FRESH",
+          "boundaryCheck": "WITHIN",
+          "duplicateCheck": "NO_DUPLICATE"
+        },
+        "_spelContext": {
+          "_comment": "Variables available in SpEL expressions (Section 2.5.2)",
+          "#applicantId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "#applicantName": "Ahmed Mohamed",
+          "#deviceId": "android-abc123def456",
+          "#mobileNumber": "25377012345",
+          "#latitude": 11.5886,
+          "#longitude": 43.1456,
+          "#locality": "DJC001",
+          "#evidenceCount": 2,
+          "#additionalData['dogCount']": 2,
+          "#additionalData['lifetimeReportCount']": 45,
+          "#now": 1734176205000
+        }
+      }
+    }
+  },
+  "spelExamples": {
+    "_comment": "Example SpEL expressions that would be evaluated against this request",
+    "PACK_SIZE_CHECK": {
+      "expression": "#additionalData != null && #additionalData['dogCount'] != null && #additionalData['dogCount'] > 10",
+      "result": false,
+      "reason": "dogCount is 2, which is <= 10"
+    },
+    "INCOMPLETE_EVIDENCE": {
+      "expression": "#evidences == null || #evidenceCount < 2",
+      "result": false,
+      "reason": "evidenceCount is 2, condition not met"
+    },
+    "HIGH_VOLUME_REPORTER": {
+      "expression": "#additionalData['lifetimeReportCount'] > 50",
+      "result": false,
+      "reason": "lifetimeReportCount is 45, which is <= 50"
+    },
+    "EMULATOR_DETECTION": {
+      "expression": "#deviceId != null && (#deviceId.contains('emulator') || #deviceId.contains('sdk'))",
+      "result": false,
+      "reason": "deviceId 'android-abc123def456' does not contain 'emulator' or 'sdk'"
+    }
+  }
+}

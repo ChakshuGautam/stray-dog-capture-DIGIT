@@ -32,21 +32,29 @@ This document provides the service design for SDCRS following the DIGIT Design G
 | Conduct field visit | Update Field Status | Update | Field Visit |
 | Mark captured/resolved | Resolve Dog Report | Resolve | Dog Report |
 | Mark unable to locate | Close Dog Report | Close | Dog Report |
-| Award points | Award Points | Award | Points |
-| Process payout | Create Payout | Create | Payout |
+| Process payout | Create Payment Demand | Create | Demand/Payment |
 | Send notification | Send Notification | Send | Notification |
 | View dashboard | View Dashboard | View | Dashboard |
 | Generate report | Generate Report | Generate | Report |
 
 ### 1.2 Identified Services and Operations
 
+**New Custom Service:**
+
 | Service | Operations | Description |
 |---------|------------|-------------|
-| **Dog Report Service** | Create, Update, Search, Verify, Approve, Reject, Resolve, Close | Core registry for stray dog reports |
-| **Evidence Service** | Upload, Validate, Search, Compare | Handles photo/selfie evidence and duplicate detection |
-| **Payout Service** | Create, Process, Search, Calculate | Manages teacher payouts after successful capture |
-| **Points Service** | Award, Deduct, Search, Calculate | Gamification - leaderboards and rankings |
-| **Dashboard Service** | Aggregate, Query | Analytics and reporting aggregations |
+| **Dog Report Registry** | Create, Update, Search, Verify, Approve, Reject, Resolve, Close | Core registry for stray dog reports (includes evidence as part of the report) |
+
+**Reusing Existing DIGIT Services:**
+
+| Existing DIGIT Service | Operations Used | Purpose in SDCRS |
+|------------------------|-----------------|------------------|
+| **File Store Service** | Upload, Download, Delete | Photo and selfie storage |
+| **Expense Service** | Create Bill, Update, Search | Bill creation for teacher payouts |
+| **IFMS Adapter** | Create PI, Update Status | Payment Instruction to treasury/JIT |
+| **Dashboard Backend (DSS)** | Aggregate, Query | Analytics, dashboards, and reporting |
+
+> **Note:** Following DIGIT platform patterns, only the Dog Report Registry is a new service. Evidence (photos, selfies) are stored via File Store Service with references in the report. **Payouts use the DIGIT-native Expense Service + IFMS Adapter pattern** for direct bank transfers to teachers via JIT (Just-in-Time) treasury integration. Analytics use the Dashboard Backend (DSS).
 
 ---
 
@@ -60,15 +68,20 @@ Based on the SDCRS requirements, the following DIGIT core services will be reuse
 | **Role Service** | Role-based access control | Yes |
 | **MDMS Service** | Reference data (report types, payout rates, status codes) | Yes |
 | **Workflow Service** | Dog report state management | Yes |
-| **File Store Service** | Photo and selfie storage | Yes |
+| **File Store Service** | Photo and selfie storage (evidence management) | Yes |
 | **Location Service** | GPS validation, tenant boundary check | Yes |
 | **Notification Service** | SMS/Email alerts to teachers | Yes |
 | **Persister Service** | Async database writes via Kafka | Yes |
 | **Indexer Service** | Elasticsearch indexing for search/analytics | Yes |
 | **Localization Service** | Multi-language support | Yes |
 | **Encryption Service** | PII data protection (teacher details) | Yes |
+| **Expense Service** | Bill creation for teacher payouts | Yes |
+| **IFMS Adapter** | Payment Instruction to treasury/JIT for disbursement | Yes |
+| **URL Shortening Service** | Generate short tracking URLs for reports | Yes |
 | **PDF Service** | Report/certificate generation | Optional |
-| **Dashboard Backend** | DSS analytics integration | Yes |
+| **Dashboard Backend (DSS)** | Analytics dashboards for all user roles | Yes |
+
+> **Architecture Decision:** By leveraging existing DIGIT services for file storage, payments, and dashboards, SDCRS only requires one new custom service (Dog Report Registry). This reduces development effort and ensures consistency with the DIGIT platform.
 
 ---
 
@@ -93,202 +106,7 @@ Based on the SDCRS requirements, the following DIGIT core services will be reuse
 
 ### 3.2 DIGIT Workflow JSON Configuration
 
-```json
-{
-  "BusinessServices": [
-    {
-      "tenantId": "dj",
-      "businessService": "SDCRS",
-      "business": "sdcrs-services",
-      "businessServiceSla": 259200000,
-      "states": [
-        {
-          "sla": null,
-          "state": null,
-          "applicationStatus": null,
-          "docUploadRequired": true,
-          "isStartState": true,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "SUBMIT",
-              "nextState": "PENDING_VALIDATION",
-              "roles": ["TEACHER"]
-            }
-          ]
-        },
-        {
-          "sla": 3600000,
-          "state": "PENDING_VALIDATION",
-          "applicationStatus": "PENDING_VALIDATION",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": false,
-          "actions": [
-            {
-              "action": "AUTO_VALIDATE_PASS",
-              "nextState": "PENDING_VERIFICATION",
-              "roles": ["SYSTEM"]
-            },
-            {
-              "action": "AUTO_VALIDATE_FAIL",
-              "nextState": "AUTO_REJECTED",
-              "roles": ["SYSTEM"]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": "AUTO_REJECTED",
-          "applicationStatus": "AUTO_REJECTED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true,
-          "isStateUpdatable": false,
-          "actions": []
-        },
-        {
-          "sla": 86400000,
-          "state": "PENDING_VERIFICATION",
-          "applicationStatus": "PENDING_VERIFICATION",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": false,
-          "actions": [
-            {
-              "action": "VERIFY",
-              "nextState": "VERIFIED",
-              "roles": ["VERIFIER"]
-            },
-            {
-              "action": "REJECT",
-              "nextState": "REJECTED",
-              "roles": ["VERIFIER"]
-            },
-            {
-              "action": "MARK_DUPLICATE",
-              "nextState": "DUPLICATE",
-              "roles": ["VERIFIER"]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": "REJECTED",
-          "applicationStatus": "REJECTED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true,
-          "isStateUpdatable": false,
-          "actions": []
-        },
-        {
-          "sla": null,
-          "state": "DUPLICATE",
-          "applicationStatus": "DUPLICATE",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true,
-          "isStateUpdatable": false,
-          "actions": []
-        },
-        {
-          "sla": 3600000,
-          "state": "VERIFIED",
-          "applicationStatus": "VERIFIED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": false,
-          "actions": [
-            {
-              "action": "ASSIGN_MC",
-              "nextState": "ASSIGNED",
-              "roles": ["SYSTEM"]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "ASSIGNED",
-          "applicationStatus": "ASSIGNED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "START_FIELD_VISIT",
-              "nextState": "IN_PROGRESS",
-              "roles": ["MC_OFFICER"]
-            }
-          ]
-        },
-        {
-          "sla": 86400000,
-          "state": "IN_PROGRESS",
-          "applicationStatus": "IN_PROGRESS",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "MARK_CAPTURED",
-              "nextState": "CAPTURED",
-              "roles": ["MC_OFFICER"]
-            },
-            {
-              "action": "MARK_UNABLE_TO_LOCATE",
-              "nextState": "UNABLE_TO_LOCATE",
-              "roles": ["MC_OFFICER"]
-            }
-          ]
-        },
-        {
-          "sla": 3600000,
-          "state": "CAPTURED",
-          "applicationStatus": "CAPTURED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": false,
-          "actions": [
-            {
-              "action": "PROCESS_PAYOUT",
-              "nextState": "RESOLVED",
-              "roles": ["SYSTEM"]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": "RESOLVED",
-          "applicationStatus": "RESOLVED",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true,
-          "isStateUpdatable": false,
-          "actions": []
-        },
-        {
-          "sla": null,
-          "state": "UNABLE_TO_LOCATE",
-          "applicationStatus": "UNABLE_TO_LOCATE",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true,
-          "isStateUpdatable": false,
-          "actions": []
-        }
-      ]
-    }
-  ]
-}
-```
+> **Config File:** [`03-configs/workflow/BusinessService.json`](03-configs/workflow/BusinessService.json)
 
 ### 3.3 SLA Configuration
 
@@ -307,761 +125,104 @@ Based on the SDCRS requirements, the following DIGIT core services will be reuse
 
 ### 4.1 Module: SDCRS
 
-#### 4.1.1 Report Types (`ReportType.json`)
+#### 4.1.1 Report Types
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "SDCRS",
-  "ReportType": [
-    {
-      "code": "STRAY_DOG_AGGRESSIVE",
-      "name": "Aggressive Stray Dog",
-      "description": "Stray dog showing aggressive behavior",
-      "priority": "HIGH",
-      "basePoints": 150,
-      "active": true
-    },
-    {
-      "code": "STRAY_DOG_INJURED",
-      "name": "Injured Stray Dog",
-      "description": "Stray dog that appears injured",
-      "priority": "HIGH",
-      "basePoints": 200,
-      "active": true
-    },
-    {
-      "code": "STRAY_DOG_PACK",
-      "name": "Stray Dog Pack",
-      "description": "Group of 3+ stray dogs",
-      "priority": "MEDIUM",
-      "basePoints": 250,
-      "active": true
-    },
-    {
-      "code": "STRAY_DOG_STANDARD",
-      "name": "Standard Stray Dog",
-      "description": "Single stray dog sighting",
-      "priority": "LOW",
-      "basePoints": 100,
-      "active": true
-    }
-  ]
-}
-```
+> **Config File:** [`03-configs/mdms/SDCRS/ReportType.json`](03-configs/mdms/SDCRS/ReportType.json)
 
-#### 4.1.2 Payout Configuration (`PayoutConfig.json`)
+| Code | Name | Priority |
+|------|------|----------|
+| STRAY_DOG_AGGRESSIVE | Aggressive Stray Dog | HIGH |
+| STRAY_DOG_INJURED | Injured Stray Dog | HIGH |
+| STRAY_DOG_PACK | Stray Dog Pack (3+) | MEDIUM |
+| STRAY_DOG_STANDARD | Standard Stray Dog | LOW |
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "SDCRS",
-  "PayoutConfig": [
-    {
-      "code": "STANDARD_PAYOUT",
-      "name": "Standard Payout",
-      "amountPerReport": 500,
-      "currency": "DJF",
-      "minimumPhotos": 2,
-      "maximumDailyReports": 5,
-      "cooldownPeriodHours": 24,
-      "active": true
-    },
-    {
-      "code": "BONUS_TIER_1",
-      "name": "Bronze Tier Bonus",
-      "bonusMultiplier": 1.1,
-      "requiredReports": 10,
-      "active": true
-    },
-    {
-      "code": "BONUS_TIER_2",
-      "name": "Silver Tier Bonus",
-      "bonusMultiplier": 1.25,
-      "requiredReports": 50,
-      "active": true
-    },
-    {
-      "code": "BONUS_TIER_3",
-      "name": "Gold Tier Bonus",
-      "bonusMultiplier": 1.5,
-      "requiredReports": 100,
-      "active": true
-    }
-  ]
-}
-```
+#### 4.1.2 Payout Configuration
 
-#### 4.1.3 Rejection Reasons (`RejectionReason.json`)
+> **Config File:** [`03-configs/mdms/SDCRS/PayoutConfig.json`](03-configs/mdms/SDCRS/PayoutConfig.json)
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "SDCRS",
-  "RejectionReason": [
-    {
-      "code": "INVALID_GPS",
-      "name": "Invalid GPS Coordinates",
-      "description": "GPS data missing or invalid",
-      "isAutoRejection": true,
-      "active": true
-    },
-    {
-      "code": "OUTSIDE_BOUNDARY",
-      "name": "Outside Tenant Boundary",
-      "description": "Location is outside the service area",
-      "isAutoRejection": true,
-      "active": true
-    },
-    {
-      "code": "STALE_TIMESTAMP",
-      "name": "Stale Timestamp",
-      "description": "Photo taken more than 48 hours ago",
-      "isAutoRejection": true,
-      "active": true
-    },
-    {
-      "code": "DUPLICATE_IMAGE",
-      "name": "Duplicate Image",
-      "description": "Same image already submitted",
-      "isAutoRejection": true,
-      "active": true
-    },
-    {
-      "code": "POOR_IMAGE_QUALITY",
-      "name": "Poor Image Quality",
-      "description": "Image too blurry or dark to identify",
-      "isAutoRejection": false,
-      "active": true
-    },
-    {
-      "code": "NOT_A_DOG",
-      "name": "Not a Dog",
-      "description": "Image does not contain a dog",
-      "isAutoRejection": false,
-      "active": true
-    },
-    {
-      "code": "DOMESTIC_DOG",
-      "name": "Domestic Dog",
-      "description": "Dog appears to be a pet with collar/tag",
-      "isAutoRejection": false,
-      "active": true
-    },
-    {
-      "code": "FRAUDULENT_SUBMISSION",
-      "name": "Fraudulent Submission",
-      "description": "Evidence of fraud or manipulation",
-      "isAutoRejection": false,
-      "active": true
-    }
-  ]
-}
-```
+| Parameter | Value |
+|-----------|-------|
+| Amount Per Report | 500 DJF |
+| Minimum Photos | 2 |
+| Max Daily Reports | 5 |
+| Monthly Payout Cap | 5,000 DJF |
 
-#### 4.1.4 Resolution Types (`ResolutionType.json`)
+> **Note:** Payouts are processed through DIGIT's Collection/Billing Service. When a dog report reaches "CAPTURED/RESOLVED" status, a demand is created for the teacher and payment is processed via the existing payment workflow.
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "SDCRS",
-  "ResolutionType": [
-    {
-      "code": "CAPTURED",
-      "name": "Captured",
-      "description": "Dog was captured and taken to shelter",
-      "triggersPayout": true,
-      "active": true
-    },
-    {
-      "code": "RELOCATED",
-      "name": "Relocated",
-      "description": "Dog was relocated to safe area",
-      "triggersPayout": true,
-      "active": true
-    },
-    {
-      "code": "STERILIZED_RELEASED",
-      "name": "Sterilized and Released",
-      "description": "Dog was sterilized and released (ABC program)",
-      "triggersPayout": true,
-      "active": true
-    },
-    {
-      "code": "UNABLE_TO_LOCATE",
-      "name": "Unable to Locate",
-      "description": "Dog could not be found at location",
-      "triggersPayout": false,
-      "active": true
-    },
-    {
-      "code": "ALREADY_RESOLVED",
-      "name": "Already Resolved",
-      "description": "Another team already handled this dog",
-      "triggersPayout": false,
-      "active": true
-    }
-  ]
-}
-```
+#### 4.1.3 Rejection Reasons
+
+> **Config File:** [`03-configs/mdms/SDCRS/RejectionReason.json`](03-configs/mdms/SDCRS/RejectionReason.json)
+
+| Code | Name | Auto Rejection |
+|------|------|---------------|
+| INVALID_GPS | Invalid GPS Coordinates | Yes |
+| OUTSIDE_BOUNDARY | Outside Tenant Boundary | Yes |
+| STALE_TIMESTAMP | Stale Timestamp (48h+) | Yes |
+| DUPLICATE_IMAGE | Duplicate Image | Yes |
+| POOR_IMAGE_QUALITY | Poor Image Quality | No |
+| NOT_A_DOG | Not a Dog | No |
+| DOMESTIC_DOG | Domestic Dog | No |
+| FRAUDULENT_SUBMISSION | Fraudulent Submission | No |
+
+#### 4.1.4 Resolution Types
+
+> **Config File:** [`03-configs/mdms/SDCRS/ResolutionType.json`](03-configs/mdms/SDCRS/ResolutionType.json)
+
+| Code | Name | Triggers Payout |
+|------|------|-----------------|
+| CAPTURED | Captured | Yes |
+| RELOCATED | Relocated | Yes |
+| STERILIZED_RELEASED | Sterilized and Released | Yes |
+| UNABLE_TO_LOCATE | Unable to Locate | No |
+| ALREADY_RESOLVED | Already Resolved | No |
 
 ---
 
 ## 5. Roles & Access Control Configuration
 
-### 5.1 Roles (`ACCESSCONTROL-ROLES/roles.json`)
+### 5.1 Roles
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "ACCESSCONTROL-ROLES",
-  "roles": [
-    {
-      "code": "TEACHER",
-      "name": "Teacher",
-      "description": "School teacher who reports stray dog sightings"
-    },
-    {
-      "code": "VERIFIER",
-      "name": "Verifier",
-      "description": "Backend operator who verifies submitted reports"
-    },
-    {
-      "code": "MC_OFFICER",
-      "name": "MC Officer",
-      "description": "Municipal Corporation officer who captures stray dogs"
-    },
-    {
-      "code": "MC_SUPERVISOR",
-      "name": "MC Supervisor",
-      "description": "Supervisor for MC Officers"
-    },
-    {
-      "code": "DISTRICT_ADMIN",
-      "name": "District Admin",
-      "description": "District level administrator"
-    },
-    {
-      "code": "STATE_ADMIN",
-      "name": "State Admin",
-      "description": "State level administrator"
-    },
-    {
-      "code": "SYSTEM",
-      "name": "System",
-      "description": "Automated system operations"
-    }
-  ]
-}
-```
+> **Config File:** [`03-configs/mdms/ACCESSCONTROL-ROLES/roles.json`](03-configs/mdms/ACCESSCONTROL-ROLES/roles.json)
 
-### 5.2 Actions (`ACCESSCONTROL-ACTIONS-TEST/actions-test.json`)
+| Code | Name | Description |
+|------|------|-------------|
+| TEACHER | Teacher | School teacher who reports stray dog sightings |
+| VERIFIER | Verifier | Backend operator who verifies submitted reports |
+| MC_OFFICER | MC Officer | Municipal Corporation officer who captures stray dogs |
+| MC_SUPERVISOR | MC Supervisor | Supervisor for MC Officers |
+| DISTRICT_ADMIN | District Admin | District level administrator |
+| STATE_ADMIN | State Admin | State level administrator |
+| SYSTEM | System | Automated system operations |
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
-  "actions-test": [
-    {
-      "id": 2001,
-      "name": "Create Dog Report",
-      "url": "/sdcrs-services/v1/report/_create",
-      "parentModule": "sdcrs-services",
-      "displayName": "Create Dog Report",
-      "orderNumber": 1,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2002,
-      "name": "Update Dog Report",
-      "url": "/sdcrs-services/v1/report/_update",
-      "parentModule": "sdcrs-services",
-      "displayName": "Update Dog Report",
-      "orderNumber": 2,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2003,
-      "name": "Search Dog Reports",
-      "url": "/sdcrs-services/v1/report/_search",
-      "parentModule": "sdcrs-services",
-      "displayName": "Search Dog Reports",
-      "orderNumber": 3,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2004,
-      "name": "Verify Dog Report",
-      "url": "/sdcrs-services/v1/report/_verify",
-      "parentModule": "sdcrs-services",
-      "displayName": "Verify Dog Report",
-      "orderNumber": 4,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2005,
-      "name": "Reject Dog Report",
-      "url": "/sdcrs-services/v1/report/_reject",
-      "parentModule": "sdcrs-services",
-      "displayName": "Reject Dog Report",
-      "orderNumber": 5,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2006,
-      "name": "Resolve Dog Report",
-      "url": "/sdcrs-services/v1/report/_resolve",
-      "parentModule": "sdcrs-services",
-      "displayName": "Resolve Dog Report",
-      "orderNumber": 6,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2007,
-      "name": "Upload Evidence",
-      "url": "/sdcrs-services/v1/evidence/_upload",
-      "parentModule": "sdcrs-services",
-      "displayName": "Upload Evidence",
-      "orderNumber": 7,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2008,
-      "name": "Search Evidence",
-      "url": "/sdcrs-services/v1/evidence/_search",
-      "parentModule": "sdcrs-services",
-      "displayName": "Search Evidence",
-      "orderNumber": 8,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2009,
-      "name": "Compare Duplicates",
-      "url": "/sdcrs-services/v1/evidence/_compare",
-      "parentModule": "sdcrs-services",
-      "displayName": "Compare Duplicates",
-      "orderNumber": 9,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2010,
-      "name": "Create Payout",
-      "url": "/sdcrs-services/v1/payout/_create",
-      "parentModule": "sdcrs-services",
-      "displayName": "Create Payout",
-      "orderNumber": 10,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2011,
-      "name": "Search Payouts",
-      "url": "/sdcrs-services/v1/payout/_search",
-      "parentModule": "sdcrs-services",
-      "displayName": "Search Payouts",
-      "orderNumber": 11,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2012,
-      "name": "Process Payout",
-      "url": "/sdcrs-services/v1/payout/_process",
-      "parentModule": "sdcrs-services",
-      "displayName": "Process Payout",
-      "orderNumber": 12,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2013,
-      "name": "Award Points",
-      "url": "/sdcrs-services/v1/points/_award",
-      "parentModule": "sdcrs-services",
-      "displayName": "Award Points",
-      "orderNumber": 13,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2014,
-      "name": "Search Points",
-      "url": "/sdcrs-services/v1/points/_search",
-      "parentModule": "sdcrs-services",
-      "displayName": "Search Points",
-      "orderNumber": 14,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2015,
-      "name": "Get Leaderboard",
-      "url": "/sdcrs-services/v1/points/_leaderboard",
-      "parentModule": "sdcrs-services",
-      "displayName": "Get Leaderboard",
-      "orderNumber": 15,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2016,
-      "name": "Get Dashboard",
-      "url": "/sdcrs-services/v1/dashboard/_get",
-      "parentModule": "sdcrs-services",
-      "displayName": "Get Dashboard",
-      "orderNumber": 16,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2017,
-      "name": "Get Analytics",
-      "url": "/sdcrs-services/v1/analytics/_get",
-      "parentModule": "sdcrs-services",
-      "displayName": "Get Analytics",
-      "orderNumber": 17,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2018,
-      "name": "Generate Report",
-      "url": "/sdcrs-services/v1/report/_generate",
-      "parentModule": "sdcrs-services",
-      "displayName": "Generate Report",
-      "orderNumber": 18,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2019,
-      "name": "Assign MC Officer",
-      "url": "/sdcrs-services/v1/assignment/_assign",
-      "parentModule": "sdcrs-services",
-      "displayName": "Assign MC Officer",
-      "orderNumber": 19,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    },
-    {
-      "id": 2020,
-      "name": "Get Assignments",
-      "url": "/sdcrs-services/v1/assignment/_search",
-      "parentModule": "sdcrs-services",
-      "displayName": "Get Assignments",
-      "orderNumber": 20,
-      "enabled": true,
-      "serviceCode": "sdcrs-services",
-      "code": "null",
-      "path": ""
-    }
-  ]
-}
-```
+### 5.2 Actions
 
-### 5.3 Role-Action Mapping (`ACCESSCONTROL-ROLEACTIONS/roleactions.json`)
+> **Config File:** [`03-configs/mdms/ACCESSCONTROL-ACTIONS-TEST/actions-test.json`](03-configs/mdms/ACCESSCONTROL-ACTIONS-TEST/actions-test.json)
 
-```json
-{
-  "tenantId": "dj",
-  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
-  "roleactions": [
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2001,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2007,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2011,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2014,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "TEACHER",
-      "actionid": 2015,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2002,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2004,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2005,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2008,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2009,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "VERIFIER",
-      "actionid": 2016,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_OFFICER",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_OFFICER",
-      "actionid": 2006,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_OFFICER",
-      "actionid": 2008,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_OFFICER",
-      "actionid": 2016,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_OFFICER",
-      "actionid": 2020,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2006,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2016,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2017,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2019,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "MC_SUPERVISOR",
-      "actionid": 2020,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2011,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2012,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2016,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2017,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "DISTRICT_ADMIN",
-      "actionid": 2018,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2003,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2011,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2012,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2016,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2017,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "STATE_ADMIN",
-      "actionid": 2018,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "SYSTEM",
-      "actionid": 2002,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "SYSTEM",
-      "actionid": 2010,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "SYSTEM",
-      "actionid": 2012,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "SYSTEM",
-      "actionid": 2013,
-      "actioncode": "",
-      "tenantId": "dj"
-    },
-    {
-      "rolecode": "SYSTEM",
-      "actionid": 2019,
-      "actioncode": "",
-      "tenantId": "dj"
-    }
-  ]
-}
-```
+| ID | Name | URL |
+|----|------|-----|
+| 2001 | Create Dog Report | /sdcrs-services/v1/report/_create |
+| 2002 | Update Dog Report | /sdcrs-services/v1/report/_update |
+| 2003 | Search Dog Reports | /sdcrs-services/v1/report/_search |
+| 2004 | Verify Dog Report | /sdcrs-services/v1/report/_verify |
+| 2005 | Reject Dog Report | /sdcrs-services/v1/report/_reject |
+| 2006 | Resolve Dog Report | /sdcrs-services/v1/report/_resolve |
+| 2007 | Upload Evidence | /sdcrs-services/v1/evidence/_upload |
+| 2008 | Search Evidence | /sdcrs-services/v1/evidence/_search |
+| 2009 | Compare Duplicates | /sdcrs-services/v1/evidence/_compare |
+| 2010 | Create Payout | /sdcrs-services/v1/payout/_create |
+| 2011 | Search Payouts | /sdcrs-services/v1/payout/_search |
+| 2012 | Process Payout | /sdcrs-services/v1/payout/_process |
+| 2013 | Get Dashboard | /sdcrs-services/v1/dashboard/_get |
+| 2017 | Get Analytics | /sdcrs-services/v1/analytics/_get |
+| 2018 | Generate Report | /sdcrs-services/v1/report/_generate |
+| 2019 | Assign MC Officer | /sdcrs-services/v1/assignment/_assign |
+| 2020 | Get Assignments | /sdcrs-services/v1/assignment/_search |
+
+### 5.3 Role-Action Mapping
+
+> **Config File:** [`03-configs/mdms/ACCESSCONTROL-ROLEACTIONS/roleactions.json`](03-configs/mdms/ACCESSCONTROL-ROLEACTIONS/roleactions.json)
+
+Maps roles to actions (by action ID). See Section 5.4 for the visual summary matrix.
 
 ### 5.4 Role-Action Matrix Summary
 
@@ -1079,161 +240,96 @@ Based on the SDCRS requirements, the following DIGIT core services will be reuse
 | Create Payout | | | | | | | X |
 | Search Payouts | X | | | | X | X | |
 | Process Payout | | | | | X | X | X |
-| Award Points | | | | | | | X |
-| Search Points | X | | | | | | |
-| Get Leaderboard | X | | | | | | |
 | Get Dashboard | | X | X | X | X | X | |
 | Get Analytics | | | | X | X | X | |
 | Generate Report | | | | | X | X | |
 | Assign MC Officer | | | | X | | | X |
 | Get Assignments | | | X | X | | | |
 
+> **Note:** Dashboards and Analytics are served by DIGIT's Dashboard Backend (DSS). The actions above are for custom SDCRS endpoints; DSS has its own role-action mappings.
+
 ---
 
 ## 6. Persister Configuration
 
-### 6.1 Dog Report Persister (`sdcrs-persister.yml`)
+### 6.1 Dog Report Persister
 
-```yaml
-serviceMaps:
-  serviceName: sdcrs-services
-  mappings:
-    - version: 1.0
-      description: Persists dog report in tables
-      fromTopic: save-sdcrs-report
-      isTransaction: true
-      queryMaps:
-        - query: >
-            INSERT INTO eg_sdcrs_report
-            (id, tenant_id, report_number, report_type, status,
-             reporter_id, reporter_name, reporter_phone,
-             latitude, longitude, address, locality_code,
-             dog_description, dog_count, is_aggressive,
-             photo_file_store_id, selfie_file_store_id, image_hash,
-             assigned_mc_id, assigned_mc_name,
-             resolution_type, resolution_notes, resolution_time,
-             payout_status, payout_amount, payout_id,
-             points_awarded, rejection_reason,
-             additional_details,
-             created_by, created_time, last_modified_by, last_modified_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-          basePath: DogReport
-          jsonMaps:
-            - jsonPath: $.DogReport.id
-            - jsonPath: $.DogReport.tenantId
-            - jsonPath: $.DogReport.reportNumber
-            - jsonPath: $.DogReport.reportType
-            - jsonPath: $.DogReport.status
-            - jsonPath: $.DogReport.reporter.id
-            - jsonPath: $.DogReport.reporter.name
-            - jsonPath: $.DogReport.reporter.phone
-            - jsonPath: $.DogReport.location.latitude
-            - jsonPath: $.DogReport.location.longitude
-            - jsonPath: $.DogReport.location.address
-            - jsonPath: $.DogReport.location.localityCode
-            - jsonPath: $.DogReport.dogDetails.description
-            - jsonPath: $.DogReport.dogDetails.count
-            - jsonPath: $.DogReport.dogDetails.isAggressive
-            - jsonPath: $.DogReport.evidence.photoFileStoreId
-            - jsonPath: $.DogReport.evidence.selfieFileStoreId
-            - jsonPath: $.DogReport.evidence.imageHash
-            - jsonPath: $.DogReport.assignment.mcOfficerId
-            - jsonPath: $.DogReport.assignment.mcOfficerName
-            - jsonPath: $.DogReport.resolution.type
-            - jsonPath: $.DogReport.resolution.notes
-            - jsonPath: $.DogReport.resolution.time
-            - jsonPath: $.DogReport.payout.status
-            - jsonPath: $.DogReport.payout.amount
-            - jsonPath: $.DogReport.payout.id
-            - jsonPath: $.DogReport.pointsAwarded
-            - jsonPath: $.DogReport.rejectionReason
-            - jsonPath: $.DogReport.additionalDetails
-              type: JSON
-              dbType: JSONB
-            - jsonPath: $.DogReport.auditDetails.createdBy
-            - jsonPath: $.DogReport.auditDetails.createdTime
-            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
-            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+> **Config File:** [`03-configs/persister/sdcrs-persister.yml`](03-configs/persister/sdcrs-persister.yml)
 
-    - version: 1.0
-      description: Updates dog report in tables
-      fromTopic: update-sdcrs-report
-      isTransaction: true
-      queryMaps:
-        - query: >
-            UPDATE eg_sdcrs_report SET
-              status = ?,
-              assigned_mc_id = ?,
-              assigned_mc_name = ?,
-              resolution_type = ?,
-              resolution_notes = ?,
-              resolution_time = ?,
-              payout_status = ?,
-              payout_amount = ?,
-              payout_id = ?,
-              points_awarded = ?,
-              rejection_reason = ?,
-              additional_details = ?,
-              last_modified_by = ?,
-              last_modified_time = ?
-            WHERE id = ?;
-          basePath: DogReport
-          jsonMaps:
-            - jsonPath: $.DogReport.status
-            - jsonPath: $.DogReport.assignment.mcOfficerId
-            - jsonPath: $.DogReport.assignment.mcOfficerName
-            - jsonPath: $.DogReport.resolution.type
-            - jsonPath: $.DogReport.resolution.notes
-            - jsonPath: $.DogReport.resolution.time
-            - jsonPath: $.DogReport.payout.status
-            - jsonPath: $.DogReport.payout.amount
-            - jsonPath: $.DogReport.payout.id
-            - jsonPath: $.DogReport.pointsAwarded
-            - jsonPath: $.DogReport.rejectionReason
-            - jsonPath: $.DogReport.additionalDetails
-              type: JSON
-              dbType: JSONB
-            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
-            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
-            - jsonPath: $.DogReport.id
+| Topic | Operation | Table |
+|-------|-----------|-------|
+| `save-sdcrs-report` | INSERT | `eg_sdcrs_report` |
+| `update-sdcrs-report` | UPDATE | `eg_sdcrs_report` |
+
+### 6.2 Payout Integration with Expense Service + IFMS Adapter
+
+SDCRS uses the DIGIT-native **Expense Service + IFMS Adapter** pattern for teacher payouts. This enables direct bank transfers via JIT (Just-in-Time) treasury integration.
+
+#### Payment Flow
+
+```
+Dog CAPTURED → Create Expense Bill → IFMS Adapter creates Payment Instruction (PI) →
+PI pushed to JIT/Treasury → Direct Bank Transfer → Status updated to RESOLVED
 ```
 
-### 6.2 Payout Persister
+#### Components
 
-```yaml
-serviceMaps:
-  serviceName: sdcrs-services
-  mappings:
-    - version: 1.0
-      description: Persists payout records
-      fromTopic: save-sdcrs-payout
-      isTransaction: true
-      queryMaps:
-        - query: >
-            INSERT INTO eg_sdcrs_payout
-            (id, tenant_id, report_id, teacher_id, teacher_name,
-             amount, currency, status, payment_mode,
-             transaction_id, transaction_time,
-             created_by, created_time, last_modified_by, last_modified_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-          basePath: Payout
-          jsonMaps:
-            - jsonPath: $.Payout.id
-            - jsonPath: $.Payout.tenantId
-            - jsonPath: $.Payout.reportId
-            - jsonPath: $.Payout.teacherId
-            - jsonPath: $.Payout.teacherName
-            - jsonPath: $.Payout.amount
-            - jsonPath: $.Payout.currency
-            - jsonPath: $.Payout.status
-            - jsonPath: $.Payout.paymentMode
-            - jsonPath: $.Payout.transactionId
-            - jsonPath: $.Payout.transactionTime
-            - jsonPath: $.Payout.auditDetails.createdBy
-            - jsonPath: $.Payout.auditDetails.createdTime
-            - jsonPath: $.Payout.auditDetails.lastModifiedBy
-            - jsonPath: $.Payout.auditDetails.lastModifiedTime
-```
+| Component | Purpose | GitHub Reference |
+|-----------|---------|------------------|
+| **Expense Service** | Creates bills with payee (teacher) and amount details | [DIGIT-Works/backend/expense](https://github.com/egovernments/DIGIT-Works/tree/master/backend/expense) |
+| **IFMS Adapter** | Converts bills to Payment Instructions (PI) and posts to JIT | [DIGIT-Works/reference-adapters/ifms-adapter](https://github.com/egovernments/DIGIT-Works/tree/master/reference-adapters/ifms-adapter) |
+
+#### Payment Instruction (PI) States
+
+| Status | Description |
+|--------|-------------|
+| `INITIATED` | PI created and pushed to JIT |
+| `INPROCESS` | JIT processing the payment |
+| `COMPLETED` | Bank transfer successful |
+| `REJECTED` | Payment failed (can create revised PI) |
+
+#### Expense Bill Schema
+
+> **Config File:** [`03-configs/expense/expense-bill-config.json`](03-configs/expense/expense-bill-config.json)
+
+The expense bill links the dog report to the teacher beneficiary:
+
+| Field | Value |
+|-------|-------|
+| `businessService` | `SDCRS` |
+| `referenceId` | Dog Report ID |
+| `payee.identifier` | Teacher ID |
+| `payee.type` | `INDIVIDUAL` |
+| `billDetails.lineItems.headCode` | `SDCRS_PAYOUT` |
+| `billDetails.lineItems.amount` | 500 (from PayoutConfig) |
+
+#### IFMS Adapter Configuration
+
+> **Config File:** [`03-configs/ifms/ifms-adapter-config.json`](03-configs/ifms/ifms-adapter-config.json)
+
+Configures the JIT integration with scheme codes and treasury endpoints.
+
+### 6.3 Indexer Configuration
+
+> **Config File:** [`03-configs/indexer/sdcrs-indexer.yml`](03-configs/indexer/sdcrs-indexer.yml)
+
+The Indexer Service listens to Kafka topic `sdcrs-report-indexer` and indexes data to Elasticsearch index `sdcrs-report-index` for search and analytics (DSS dashboards).
+
+**Computed Fields for SLA Analytics:**
+- `timeToVerification` - Time from submission to verification
+- `timeToAssignment` - Time from submission to MC assignment
+- `timeToFieldVisit` - Time from assignment to field visit start
+- `timeToResolution` - Total time from submission to resolution
+
+### 6.4 Elasticsearch Index Template
+
+> **Config File:** [`03-configs/elasticsearch/sdcrs-report-index-template.json`](03-configs/elasticsearch/sdcrs-report-index-template.json)
+
+Defines field mappings for the `sdcrs-report-index`. Key features:
+- `geo_point` type for location-based queries
+- Lowercase normalizer for case-insensitive text search
+- `epoch_millis` date format for timestamps
+- Long type for computed SLA fields
 
 ---
 
@@ -1243,11 +339,15 @@ serviceMaps:
 |------------|----------|----------|---------|
 | `save-sdcrs-report` | sdcrs-services | persister | Save new dog report |
 | `update-sdcrs-report` | sdcrs-services | persister | Update dog report |
-| `save-sdcrs-payout` | sdcrs-services | persister | Save payout record |
-| `update-sdcrs-payout` | sdcrs-services | persister | Update payout status |
 | `sdcrs-report-indexer` | sdcrs-services | indexer | Index for search |
 | `sdcrs-notification` | sdcrs-services | notification | Trigger notifications |
 | `sdcrs-workflow-transition` | sdcrs-services | workflow | Workflow state changes |
+| `expense-bill-create` | sdcrs-services | expense-service | Create expense bill on capture |
+| `expense-bill-update` | expense-service | persister | Persist bill updates |
+| `ifms-pi-create` | expense-service | ifms-adapter | Create Payment Instruction |
+| `ifms-pi-status-update` | ifms-adapter | sdcrs-services | PI status callback |
+
+> **Note:** Payout processing uses DIGIT's **Expense Service + IFMS Adapter** Kafka topics. When a dog is captured, an expense bill is created which triggers the IFMS Adapter to create a Payment Instruction (PI) for JIT treasury integration.
 
 ---
 
@@ -1255,138 +355,25 @@ serviceMaps:
 
 ### 8.1 Dog Report Table
 
-```sql
-CREATE TABLE eg_sdcrs_report (
-    id VARCHAR(64) PRIMARY KEY,
-    tenant_id VARCHAR(64) NOT NULL,
-    report_number VARCHAR(64) UNIQUE NOT NULL,
-    report_type VARCHAR(64) NOT NULL,
-    status VARCHAR(64) NOT NULL,
+> **Config File:** [`03-configs/database/eg_sdcrs_report.sql`](03-configs/database/eg_sdcrs_report.sql)
 
-    -- Reporter Details
-    reporter_id VARCHAR(64) NOT NULL,
-    reporter_name VARCHAR(256),
-    reporter_phone VARCHAR(20),
+**Table:** `eg_sdcrs_report`
 
-    -- Location Details
-    latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(11, 8) NOT NULL,
-    address TEXT,
-    locality_code VARCHAR(64),
+| Field Group | Key Columns |
+|-------------|-------------|
+| Identity | `id`, `tenant_id`, `report_number`, `tracking_id` |
+| Location | `latitude`, `longitude`, `ward_code`, `district_code` |
+| Dog Details | `dog_description`, `dog_count`, `is_aggressive` |
+| Evidence | `photo_file_store_id`, `selfie_file_store_id`, `image_hash` |
+| Workflow | `status`, `verifier_id`, `assigned_mc_id`, `resolution_type` |
+| Payout | `payout_status`, `payout_amount`, `payout_demand_id` |
+| Fraud | `fraud_flags` (JSONB), `penalty_type`, `sla_breached` |
 
-    -- Dog Details
-    dog_description TEXT,
-    dog_count INTEGER DEFAULT 1,
-    is_aggressive BOOLEAN DEFAULT FALSE,
+**Performance Indexes:** tenant, status, reporter, MC, verifier, locality, ward, district, created time, image hash, tracking ID, report type, and composite indexes for common query patterns.
 
-    -- Evidence
-    photo_file_store_id VARCHAR(64),
-    selfie_file_store_id VARCHAR(64),
-    image_hash VARCHAR(256),
+### 8.2 Payout Management
 
-    -- Assignment
-    assigned_mc_id VARCHAR(64),
-    assigned_mc_name VARCHAR(256),
-
-    -- Resolution
-    resolution_type VARCHAR(64),
-    resolution_notes TEXT,
-    resolution_time BIGINT,
-
-    -- Payout
-    payout_status VARCHAR(64),
-    payout_amount DECIMAL(10, 2),
-    payout_id VARCHAR(64),
-
-    -- Points
-    points_awarded INTEGER DEFAULT 0,
-
-    -- Rejection
-    rejection_reason VARCHAR(64),
-
-    -- Additional
-    additional_details JSONB,
-
-    -- Audit
-    created_by VARCHAR(64) NOT NULL,
-    created_time BIGINT NOT NULL,
-    last_modified_by VARCHAR(64),
-    last_modified_time BIGINT,
-
-    -- Indexes
-    CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES eg_tenant(code)
-);
-
-CREATE INDEX idx_sdcrs_report_tenant ON eg_sdcrs_report(tenant_id);
-CREATE INDEX idx_sdcrs_report_status ON eg_sdcrs_report(status);
-CREATE INDEX idx_sdcrs_report_reporter ON eg_sdcrs_report(reporter_id);
-CREATE INDEX idx_sdcrs_report_mc ON eg_sdcrs_report(assigned_mc_id);
-CREATE INDEX idx_sdcrs_report_locality ON eg_sdcrs_report(locality_code);
-CREATE INDEX idx_sdcrs_report_created ON eg_sdcrs_report(created_time);
-CREATE INDEX idx_sdcrs_report_image_hash ON eg_sdcrs_report(image_hash);
-```
-
-### 8.2 Payout Table
-
-```sql
-CREATE TABLE eg_sdcrs_payout (
-    id VARCHAR(64) PRIMARY KEY,
-    tenant_id VARCHAR(64) NOT NULL,
-    report_id VARCHAR(64) NOT NULL,
-    teacher_id VARCHAR(64) NOT NULL,
-    teacher_name VARCHAR(256),
-    amount DECIMAL(10, 2) NOT NULL,
-    currency VARCHAR(10) DEFAULT 'DJF',
-    status VARCHAR(64) NOT NULL,
-    payment_mode VARCHAR(64),
-    transaction_id VARCHAR(256),
-    transaction_time BIGINT,
-
-    -- Audit
-    created_by VARCHAR(64) NOT NULL,
-    created_time BIGINT NOT NULL,
-    last_modified_by VARCHAR(64),
-    last_modified_time BIGINT,
-
-    CONSTRAINT fk_payout_report FOREIGN KEY (report_id) REFERENCES eg_sdcrs_report(id)
-);
-
-CREATE INDEX idx_sdcrs_payout_teacher ON eg_sdcrs_payout(teacher_id);
-CREATE INDEX idx_sdcrs_payout_status ON eg_sdcrs_payout(status);
-CREATE INDEX idx_sdcrs_payout_created ON eg_sdcrs_payout(created_time);
-```
-
-### 8.3 Points Table
-
-```sql
-CREATE TABLE eg_sdcrs_points (
-    id VARCHAR(64) PRIMARY KEY,
-    tenant_id VARCHAR(64) NOT NULL,
-    teacher_id VARCHAR(64) NOT NULL,
-    report_id VARCHAR(64),
-    points INTEGER NOT NULL,
-    transaction_type VARCHAR(64) NOT NULL,
-    description TEXT,
-
-    -- Audit
-    created_by VARCHAR(64) NOT NULL,
-    created_time BIGINT NOT NULL
-);
-
-CREATE INDEX idx_sdcrs_points_teacher ON eg_sdcrs_points(teacher_id);
-CREATE INDEX idx_sdcrs_points_created ON eg_sdcrs_points(created_time);
-
--- Leaderboard view
-CREATE VIEW vw_sdcrs_leaderboard AS
-SELECT
-    teacher_id,
-    tenant_id,
-    SUM(points) as total_points,
-    COUNT(DISTINCT report_id) as report_count
-FROM eg_sdcrs_points
-GROUP BY teacher_id, tenant_id
-ORDER BY total_points DESC;
-```
+> **Note:** Payout data is managed by DIGIT's Collection/Billing Service. The `eg_sdcrs_report` table only stores a reference (`payout_demand_id`) to the demand created in the Collection Service. All payment tracking, transaction history, and reconciliation are handled by the existing DIGIT payment infrastructure.
 
 ---
 
@@ -1402,12 +389,12 @@ ORDER BY total_points DESC;
         │                           │                           │
         ▼                           ▼                           ▼
 ┌───────────────┐         ┌───────────────┐         ┌───────────────┐
-│ SDCRS Service │         │ User Service  │         │ Access Control│
-│               │◄───────►│               │◄───────►│    Service    │
-│  - Reports    │         │ - Auth        │         │  - Roles      │
-│  - Evidence   │         │ - Profile     │         │  - Actions    │
-│  - Payout     │         │               │         │               │
-│  - Points     │         └───────────────┘         └───────────────┘
+│ Dog Report    │         │ User Service  │         │ Access Control│
+│ Registry      │◄───────►│               │◄───────►│    Service    │
+│ (NEW SERVICE) │         │ - Auth        │         │  - Roles      │
+│  - Reports    │         │ - Profile     │         │  - Actions    │
+│  - Evidence   │         │               │         │               │
+│    refs       │         └───────────────┘         └───────────────┘
 └───────────────┘                 │
         │                         │
         ├─────────────────────────┼─────────────────────────────┐
@@ -1416,37 +403,479 @@ ORDER BY total_points DESC;
 ┌───────────────┐         ┌───────────────┐         ┌───────────────┐
 │   Workflow    │         │  File Store   │         │   Location    │
 │   Service     │         │   Service     │         │   Service     │
-│               │         │               │         │               │
+│   (DIGIT)     │         │   (DIGIT)     │         │   (DIGIT)     │
 │ - States      │         │ - Photos      │         │ - GPS Valid   │
 │ - Actions     │         │ - Selfies     │         │ - Boundary    │
 └───────────────┘         └───────────────┘         └───────────────┘
         │                         │                             │
         └─────────────────────────┼─────────────────────────────┘
                                   │
-                                  ▼
-                        ┌───────────────┐
-                        │     Kafka     │
-                        │    Topics     │
-                        └───────────────┘
-                                  │
         ┌─────────────────────────┼─────────────────────────────┐
         │                         │                             │
         ▼                         ▼                             ▼
 ┌───────────────┐         ┌───────────────┐         ┌───────────────┐
+│   Expense     │         │   Dashboard   │         │     Kafka     │
+│   Service     │         │    Backend    │         │    Topics     │
+│   (DIGIT)     │         │   (DSS)       │         │               │
+│ - Bills       │         │ - Analytics   │         └───────────────┘
+│ - Payments    │         │ - Reports     │                 │
+└───────────────┘         └───────────────┘                 │
+        │
+        ▼
+┌───────────────┐
+│ IFMS Adapter  │
+│   (DIGIT)     │
+│ - Payment     │
+│   Instruction │
+│ - JIT/Treasury│
+└───────────────┘
+                                                            │
+        ┌───────────────────────────────────────────────────┤
+        │                         │                         │
+        ▼                         ▼                         ▼
+┌───────────────┐         ┌───────────────┐         ┌───────────────┐
 │   Persister   │         │    Indexer    │         │ Notification  │
 │   Service     │         │   Service     │         │   Service     │
-│               │         │               │         │               │
+│   (DIGIT)     │         │   (DIGIT)     │         │   (DIGIT)     │
 │ - PostgreSQL  │         │ - Elastic     │         │ - SMS         │
 │ - CRUD        │         │ - Search      │         │ - Email       │
 └───────────────┘         └───────────────┘         └───────────────┘
 ```
 
+**Architecture Highlights:**
+- **Only 1 new service** (Dog Report Registry) - follows DIGIT Registry pattern
+- **Evidence** stored via File Store Service with references in Dog Report
+- **Payouts** processed via **Expense Service + IFMS Adapter** (JIT/Treasury integration)
+- **Direct bank transfers** to teachers via Payment Instructions (PI)
+- **Dashboards** served by DSS (Dashboard Backend)
+- All other services are existing DIGIT platform services
+
 ---
 
-## 10. Next Steps
+## 10. Public Tracking API (Anonymous Access)
+
+### 10.1 Overview
+
+SDCRS provides a **public tracking endpoint** that allows anyone to check the status of a dog report without authentication. This enables:
+- Teachers to share tracking links via SMS with community members
+- Citizens to check report status without creating an account
+- Transparency in the capture/resolution process
+
+### 10.2 Tracking Identifiers
+
+Each dog report has three identifiers for tracking:
+
+| Identifier | Format | Purpose | Example |
+|------------|--------|---------|---------|
+| **Report Number** | `DJ-SDCRS-YYYY-NNNNNN` | Formal reference, used in official communications | `DJ-SDCRS-2024-000123` |
+| **Tracking ID** | `[A-Z]{3}[0-9]{3}` | Short 6-character ID for easy sharing | `ABC123` |
+| **Tracking URL** | `https://dj.gov.in/t/{shortCode}` | Clickable short URL via URL Shortener | `https://dj.gov.in/t/xY7kM` |
+
+### 10.3 IDGen Configuration for Tracking ID
+
+```json
+{
+  "idgen": {
+    "formats": [
+      {
+        "idName": "sdcrs.reportnumber",
+        "format": "DJ-SDCRS-[fy:yyyy]-[SEQ_SDCRS_REPORT]",
+        "tenantId": "dj"
+      },
+      {
+        "idName": "sdcrs.trackingid",
+        "format": "[A-Z]{3}[0-9]{3}",
+        "tenantId": "dj"
+      }
+    ]
+  }
+}
+```
+
+### 10.4 URL Shortener Integration
+
+When a report is created, SDCRS calls the DIGIT URL Shortening Service to generate a short tracking URL:
+
+```bash
+POST /egov-url-shortening/shortener
+
+{
+  "url": "https://dj.gov.in/sdcrs/track?id=DJ-SDCRS-2024-000123"
+}
+
+Response:
+{
+  "shortenedUrl": "https://dj.gov.in/t/xY7kM"
+}
+```
+
+The shortened URL is stored in `tracking_url` column and sent to the teacher via SMS.
+
+### 10.5 Track API Endpoint
+
+```
+POST /sdcrs-services/v1/report/_track
+```
+
+**Request (by Report Number):**
+```json
+{
+  "RequestInfo": {},
+  "reportNumber": "DJ-SDCRS-2024-000123"
+}
+```
+
+**Request (by Tracking ID):**
+```json
+{
+  "RequestInfo": {},
+  "trackingId": "ABC123"
+}
+```
+
+**Response (Sanitized - No PII):**
+```json
+{
+  "ResponseInfo": {
+    "apiId": "sdcrs-services",
+    "ver": "1.0",
+    "ts": 1702310400000,
+    "status": "successful"
+  },
+  "reportNumber": "DJ-SDCRS-2024-000123",
+  "trackingId": "ABC123",
+  "trackingUrl": "https://dj.gov.in/t/xY7kM",
+  "status": "ASSIGNED",
+  "statusDescription": "Assigned to Municipal Corporation team",
+  "reportType": "STRAY_DOG_AGGRESSIVE",
+  "locality": "Ward 5, Djibouti City",
+  "createdDate": "2024-12-10",
+  "lastUpdated": "2024-12-11",
+  "timeline": [
+    {
+      "status": "PENDING_VALIDATION",
+      "timestamp": 1702300400000,
+      "description": "Report submitted"
+    },
+    {
+      "status": "PENDING_VERIFICATION",
+      "timestamp": 1702304000000,
+      "description": "Auto-validation passed"
+    },
+    {
+      "status": "VERIFIED",
+      "timestamp": 1702306000000,
+      "description": "Report verified by operator"
+    },
+    {
+      "status": "ASSIGNED",
+      "timestamp": 1702308000000,
+      "description": "Assigned to Municipal Corporation team"
+    }
+  ],
+  "estimatedResolution": "Within 48 hours"
+}
+```
+
+**Security Notes:**
+- Response does NOT include reporter details (name, phone, ID)
+- Response does NOT include assigned officer details
+- Response does NOT include photo/evidence URLs
+- Only status, locality, and timeline are exposed
+
+### 10.6 SMS Notification with Tracking
+
+When a report is successfully submitted, the teacher receives:
+
+```
+Your dog report DJ-SDCRS-2024-000123 has been submitted.
+
+Track status: https://dj.gov.in/t/xY7kM
+or use ID: ABC123
+
+You will be notified when the dog is captured.
+```
+
+---
+
+## 11. Gateway Whitelist Configuration
+
+### 11.1 Overview
+
+The `_track` endpoint is configured as an **open endpoint** in the DIGIT API Gateway, allowing anonymous access without authentication. This is achieved through gateway whitelisting.
+
+### 11.2 Whitelist Configuration
+
+Add the following to the gateway configuration (`egov-gateway` values):
+
+```yaml
+egov-open-endpoints-whitelist: |
+  /sdcrs-services/v1/report/_track,
+  /egov-url-shortening/shortener,
+  /localization/messages/v1/_search,
+  /mdms-v2/v1/_search
+```
+
+**Explanation:**
+| Endpoint | Purpose |
+|----------|---------|
+| `/sdcrs-services/v1/report/_track` | Public report tracking |
+| `/egov-url-shortening/shortener` | URL shortening service (used by _track) |
+| `/localization/messages/v1/_search` | UI text localization |
+| `/mdms-v2/v1/_search` | Master data for status descriptions |
+
+### 11.3 Rate Limiting Configuration
+
+To prevent DDoS attacks and abuse of the public endpoint, configure rate limiting:
+
+```yaml
+zuul:
+  ratelimit:
+    enabled: true
+    repository: BUCKET4J_HAZELCAST
+    policy-list:
+      sdcrs-track:
+        - limit: 100
+          refresh-interval: 60
+          type:
+            - url=/sdcrs-services/v1/report/_track
+            - origin
+```
+
+**Rate Limit Rules:**
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `limit` | 100 | Max requests per window |
+| `refresh-interval` | 60 | Window size in seconds |
+| `type` | url + origin | Limit per IP per endpoint |
+
+This allows 100 requests per minute per IP address.
+
+### 11.4 Security Considerations
+
+| Risk | Mitigation |
+|------|------------|
+| Enumeration attack | Rate limiting + random tracking IDs |
+| PII exposure | Sanitized response (no reporter/officer details) |
+| DDoS attack | Rate limiting + origin-based throttling |
+| Data scraping | Response contains minimal public information |
+
+### 11.5 Action NOT in Role-Action Mapping
+
+> **Important:** The `_track` endpoint is NOT added to `ACCESSCONTROL-ACTIONS-TEST` or `ACCESSCONTROL-ROLEACTIONS`. Since it's whitelisted in the gateway, it bypasses the role-action authorization entirely. This is intentional for anonymous access.
+
+---
+
+## 12. Process Performance Indicators (PPIs)
+
+This section defines the key metrics that administrators can use to monitor system performance, identify bottlenecks, and drive improvements. All metrics should be viewable across time periods (daily, weekly, monthly, quarterly, yearly) and administrative hierarchies (ward, zone, district, state).
+
+### 12.1 Report Volume Metrics
+
+| Metric | Description | Formula | Drill-down Dimensions |
+|--------|-------------|---------|----------------------|
+| **Total Reports** | Number of reports submitted | COUNT(reports) | Time, Location, Report Type |
+| **Reports by Status** | Distribution across workflow states | COUNT(reports) GROUP BY status | Time, Location |
+| **Reports by Type** | Distribution by dog type (aggressive, injured, pack, standard) | COUNT(reports) GROUP BY report_type | Time, Location |
+| **New Reports** | Reports submitted in the period | COUNT(reports WHERE created_time IN period) | Time, Location |
+| **Daily Report Rate** | Average reports per day | SUM(reports) / days_in_period | Location |
+| **Reports by Channel** | Reports by submission channel (mobile app, web) | COUNT(reports) GROUP BY channel | Time, Location |
+
+### 12.2 Status Distribution Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Pending Validation** | Reports awaiting auto-validation | COUNT(status = 'PENDING_VALIDATION') |
+| **Pending Verification** | Reports in verifier queue | COUNT(status = 'PENDING_VERIFICATION') |
+| **Verified** | Reports verified, awaiting assignment | COUNT(status = 'VERIFIED') |
+| **Assigned** | Reports assigned to MC officers | COUNT(status = 'ASSIGNED') |
+| **In Progress** | Field visits underway | COUNT(status = 'IN_PROGRESS') |
+| **Captured** | Dogs captured, payout pending | COUNT(status = 'CAPTURED') |
+| **Resolved** | Successfully completed with payout | COUNT(status = 'RESOLVED') |
+| **Rejected** | Rejected by verifier | COUNT(status = 'REJECTED') |
+| **Auto-Rejected** | Failed auto-validation | COUNT(status = 'AUTO_REJECTED') |
+| **Duplicate** | Marked as duplicate | COUNT(status = 'DUPLICATE') |
+| **Unable to Locate** | Dog not found at location | COUNT(status = 'UNABLE_TO_LOCATE') |
+
+### 12.3 Time-Based (SLA) Metrics
+
+| Metric | Description | Formula | SLA Target |
+|--------|-------------|---------|------------|
+| **Avg. Time to Verification** | Submission to verification complete | AVG(verified_time - created_time) | < 4 hours |
+| **Avg. Time to Assignment** | Submission to MC assignment | AVG(assigned_time - created_time) | < 8 hours |
+| **Avg. Time to Field Visit** | Assignment to field visit start | AVG(field_visit_time - assigned_time) | < 24 hours |
+| **Avg. Time to Resolution** | Submission to final resolution | AVG(resolved_time - created_time) | < 72 hours |
+| **Avg. Time in Queue** | Time spent in each status | AVG(exit_time - entry_time) per status | Varies |
+| **SLA Compliance Rate** | % reports resolved within SLA | COUNT(resolved_within_sla) / COUNT(resolved) | > 90% |
+| **SLA Breach Rate** | % reports exceeding SLA | COUNT(breached_sla) / COUNT(total) | < 10% |
+| **Ageing Analysis** | Reports by age bucket | COUNT by (0-24h, 24-48h, 48-72h, >72h) | - |
+
+### 12.4 Resolution & Outcome Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Resolution Rate** | % reports reaching final state | COUNT(terminal_states) / COUNT(total) |
+| **Capture Success Rate** | % of assigned reports resulting in capture | COUNT(CAPTURED + RESOLVED) / COUNT(ASSIGNED) |
+| **Unable to Locate Rate** | % dogs not found | COUNT(UNABLE_TO_LOCATE) / COUNT(IN_PROGRESS) |
+| **Rejection Rate** | % reports rejected | COUNT(REJECTED + AUTO_REJECTED) / COUNT(total) |
+| **Duplicate Rate** | % marked as duplicate | COUNT(DUPLICATE) / COUNT(total) |
+| **Auto-Rejection Rate** | % failed auto-validation | COUNT(AUTO_REJECTED) / COUNT(total) |
+| **First-Visit Resolution** | % resolved on first field visit | COUNT(resolved_first_visit) / COUNT(field_visits) |
+
+### 12.5 Payout Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Total Payouts** | Total amount disbursed | SUM(payout_amount) |
+| **Payout Count** | Number of payouts processed | COUNT(payout_status = 'COMPLETED') |
+| **Average Payout per Report** | Average payout amount | AVG(payout_amount) |
+| **Payouts by Status** | Distribution (pending, processing, completed, failed) | COUNT GROUP BY payout_status |
+| **Pending Payout Amount** | Amount awaiting disbursement | SUM(payout_amount WHERE payout_status = 'PENDING') |
+| **Avg. Time to Payout** | Capture to payout completion | AVG(payout_time - captured_time) |
+| **Teachers at Monthly Cap** | Teachers who hit ₹5,000 cap | COUNT(monthly_earnings >= 5000) |
+| **Payout Failure Rate** | % of failed payout attempts | COUNT(payout_failed) / COUNT(payout_attempted) |
+
+### 12.6 User Performance Metrics
+
+#### Teacher (Reporter) Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Active Teachers** | Teachers with at least 1 report in period | COUNT(DISTINCT reporter_id) |
+| **Reports per Teacher** | Average reports per teacher | COUNT(reports) / COUNT(DISTINCT reporter_id) |
+| **Top Reporters** | Teachers with highest successful captures | RANK BY COUNT(RESOLVED) |
+| **Teacher Acceptance Rate** | % of teacher reports verified | COUNT(VERIFIED) / COUNT(submitted) per teacher |
+| **Teacher Earnings** | Total/average earnings | SUM/AVG(payout_amount) per teacher |
+| **Suspended Teachers** | Teachers with fraud penalties | COUNT(status = 'SUSPENDED') |
+
+#### Verifier Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Verifier Workload** | Reports verified per verifier | COUNT(verified) GROUP BY verifier_id |
+| **Avg. Verification Time** | Time to verify per verifier | AVG(verified_time - assigned_time) per verifier |
+| **Verification Accuracy** | % of verified reports resolved | COUNT(RESOLVED) / COUNT(VERIFIED) per verifier |
+| **Pending per Verifier** | Queue depth per verifier | COUNT(PENDING_VERIFICATION) per verifier |
+
+#### MC Officer Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **MC Officer Workload** | Reports assigned per officer | COUNT(assigned) GROUP BY mc_officer_id |
+| **Capture Rate per Officer** | % captures per officer | COUNT(CAPTURED) / COUNT(ASSIGNED) per officer |
+| **Avg. Field Visit Duration** | Time from start to completion | AVG(resolution_time - field_visit_start) per officer |
+| **Unable to Locate Rate** | % UTL per officer | COUNT(UNABLE_TO_LOCATE) / COUNT(IN_PROGRESS) per officer |
+| **Daily Completions** | Reports resolved per day per officer | COUNT(resolved) / days per officer |
+
+### 12.7 Quality & Fraud Prevention Metrics
+
+| Metric | Description | Formula |
+|--------|-------------|---------|
+| **Duplicate Detection Rate** | % caught by image hash matching | COUNT(DUPLICATE) / COUNT(submitted) |
+| **GPS Validation Failure Rate** | % failed GPS/boundary check | COUNT(gps_failed) / COUNT(submitted) |
+| **EXIF Validation Failure Rate** | % failed photo timestamp check | COUNT(exif_failed) / COUNT(submitted) |
+| **Fraud Alerts** | Reports flagged for suspicious activity | COUNT(fraud_flag = true) |
+| **Penalty Actions** | Warnings, suspensions, bans issued | COUNT GROUP BY penalty_type |
+| **Reopened Reports** | Reports returned for re-investigation | COUNT(reopened = true) |
+| **Escalations** | Reports escalated to supervisors | COUNT(escalated = true) |
+
+### 12.8 Geographic Distribution Metrics
+
+| Metric | Description | Grouping |
+|--------|-------------|----------|
+| **Reports by Ward** | Distribution across wards | GROUP BY ward_code |
+| **Reports by Zone** | Distribution across zones | GROUP BY zone_code |
+| **Reports by District** | Distribution across districts | GROUP BY district_code |
+| **Hotspot Analysis** | Locations with high report density | GROUP BY locality, HAVING COUNT > threshold |
+| **Coverage Map** | Areas with/without reports | Geographic visualization |
+| **Resolution Time by Area** | SLA performance by location | AVG(resolution_time) GROUP BY locality |
+
+### 12.9 Trend & Comparison Metrics
+
+| Metric | Description | Comparison |
+|--------|-------------|------------|
+| **Week-over-Week Growth** | Change in report volume | (this_week - last_week) / last_week |
+| **Month-over-Month Trend** | Monthly volume comparison | (this_month - last_month) / last_month |
+| **YoY Comparison** | Year-over-year metrics | this_year vs last_year |
+| **Target vs Actual** | Performance against targets | actual / target × 100% |
+| **Benchmark Comparison** | Performance vs other districts | district_metric / state_avg |
+
+### 12.10 Dashboard Hierarchy
+
+| Role | Dashboard Focus | Key Metrics |
+|------|-----------------|-------------|
+| **Teacher** | Personal performance | My reports, earnings, status distribution |
+| **Verifier** | Queue management | Pending queue, verification rate, accuracy |
+| **MC Officer** | Field operations | Assigned work, capture rate, daily targets |
+| **MC Supervisor** | Team performance | Team workload, SLA compliance, escalations |
+| **District Admin** | District overview | Volume, resolution rates, top performers, hotspots |
+| **State Admin** | Statewide analytics | District comparison, trends, budget utilization, fraud metrics |
+
+### 12.11 DSS Configuration
+
+The Dashboard Backend (DSS) requires two types of configuration: **MasterChartConfig** (defines aggregation queries) and **DashboardConfig** (groups charts into dashboards).
+
+#### 12.11.1 Master Chart Configuration (`MasterChartConfig.json`)
+
+> **Config File:** [`03-configs/mdms/DSS/MasterChartConfig.json`](03-configs/mdms/DSS/MasterChartConfig.json)
+
+Defines all chart queries with Elasticsearch aggregations. Charts included:
+
+| Chart ID | Type | Description |
+|----------|------|-------------|
+| `sdcrsTotalReports` | metric | Total report count with trend insight |
+| `sdcrsResolvedReports` | metric | Count of resolved reports |
+| `sdcrsCaptureRate` | metric | Percentage of captured vs assigned |
+| `sdcrsAvgResolutionTime` | metric | Average time to resolution (hours) |
+| `sdcrsReportsByStatus` | pie | Distribution by workflow status |
+| `sdcrsReportsByType` | pie | Distribution by report type |
+| `sdcrsDailyReportTrend` | line | Daily submission trend |
+| `sdcrsReportsByDistrict` | bar | Geographic distribution |
+| `sdcrsTotalPayouts` | metric | Total payout amount |
+| `sdcrsPendingPayouts` | metric | Pending payout count |
+| `sdcrsPayoutsByDistrict` | bar | Payouts by district |
+| `sdcrsMonthlyPayoutTrend` | line | Monthly payout trend |
+| `sdcrsTopEarners` | table | Top 10 earning reporters |
+| `sdcrsAvgTimeByStage` | bar | Avg time per workflow stage |
+| `sdcrsAgingReport` | table | Open reports by age bucket |
+| `sdcrsVerifierPerformance` | table | Verifier stats |
+| `sdcrsMcOfficerPerformance` | table | MC Officer capture stats |
+| `sdcrsFraudMetrics` | metric | Fraud flag count |
+
+#### 12.11.2 Dashboard Configuration (`DashboardConfig.json`)
+
+> **Config File:** [`03-configs/mdms/DSS/DashboardConfig.json`](03-configs/mdms/DSS/DashboardConfig.json)
+
+Groups charts into role-specific dashboards:
+
+| Dashboard ID | Name | Purpose |
+|--------------|------|---------|
+| `sdcrs-overview` | SDCRS Overview | Summary metrics, status/type distribution, daily trends, geographic |
+| `sdcrs-payout` | SDCRS Payout | Payout totals, pending, district breakdown, monthly trend, top earners |
+| `sdcrs-sla` | SDCRS SLA | SLA compliance rate, breached reports, avg time by stage, aging report |
+| `sdcrs-performance` | SDCRS Performance | Top reporters, verifier stats, MC officer capture rates |
+
+#### 12.11.3 Role-Dashboard Mapping (`RoleDashboardMapping.json`)
+
+> **Config File:** [`03-configs/mdms/DSS/RoleDashboardMapping.json`](03-configs/mdms/DSS/RoleDashboardMapping.json)
+
+Maps user roles to visible dashboards:
+
+| Role | Dashboards |
+|------|------------|
+| TEACHER | Overview |
+| VERIFIER | Overview, SLA |
+| MC_OFFICER | Overview |
+| MC_SUPERVISOR | Overview, SLA, Performance |
+| DISTRICT_ADMIN | Overview, Payout, SLA, Performance |
+| STATE_ADMIN | Overview, Payout, SLA, Performance |
+
+---
+
+## 13. Next Steps
 
 1. **Design Output #4:** Create detailed OpenAPI/Swagger specifications for all SDCRS APIs
-2. **Design Output #5:** Develop sequence diagrams for key user flows
+2. **Design Output #5:** Develop sequence diagrams for key user flows ✅ (Completed)
 3. **Design Output #6:** Create UI wireframes and component specifications
 4. **Implementation:** Set up DIGIT development environment and begin coding
 
@@ -1462,6 +891,7 @@ ORDER BY total_points DESC;
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: December 2024*
-*Status: Draft*
+*Document Version: 1.2*
+*Last Updated: December 2025*
+*Status: Draft - Simplified to single Dog Report Registry*
+*Change: Updated to use DIGIT-native Expense Service + IFMS Adapter for payouts (JIT/Treasury integration)*

@@ -1,0 +1,72 @@
+@startuml SDCRS_Payout
+title Stray Dog Reports - Payout Processing Flow
+
+participant "Kafka" as KF
+participant "SDCRSService" as SS
+participant "User" as US
+participant "MDMS" as MDMS
+participant "BillingService" as BS
+participant "Persister" as PS
+participant "NotificationService" as NS
+database "PostgreSQL" as DB
+actor "Teacher" as TCH
+
+note over KF,SS: Triggered when report status changes to CAPTURED
+
+KF -> SS: 1 Consume payout trigger message\n(reportId, teacherId, amount)
+
+SS -> DB: 2 Fetch report details
+DB --> SS: 3 report (with teacherId, resolution details)
+
+SS -> MDMS: 4 Fetch payout configuration\n(amount, monthly cap, daily limit)
+MDMS --> SS: 5 PayoutConfig
+
+SS -> US: 6 Retrieve teacher details\n(bankAccount, upiId)
+US --> SS: 7 teacher payment details
+
+SS -> DB: 8 Query teacher's monthly payout total\n(current month, status=COMPLETED)
+DB --> SS: 9 currentMonthTotal
+
+SS -> SS: 10 Calculate remaining monthly allowance\n(cap - currentMonthTotal)
+
+alt "Monthly cap exceeded"
+    SS -> SS: 11 Set payoutStatus = CAP_EXCEEDED
+    SS -> KF: 12 Push update to persister topic
+    KF -> PS: 13 Read payload
+    PS -> DB: 14 Update payoutStatus in eg_sdcrs_report
+
+    SS -> NS: 15 Notify teacher (cap exceeded)
+    NS -> TCH: 16 SMS: "Monthly payout cap reached"
+
+    note over SS: End flow - no payment
+else "Within monthly cap"
+    SS -> BS: 17 POST /billing-service/demand/_create\n(taxHeadCode: SDCRS_PAYOUT, amount: 500)
+    BS --> SS: 18 demandId
+
+    SS -> SS: 19 Update payoutDemandId, payoutStatus=PENDING
+
+    SS -> KF: 20 Push update to persister topic
+    KF -> PS: 21 Read payload
+    PS -> DB: 22 Update payout details in eg_sdcrs_report
+
+    note over BS: Async payment processing via Collection Service
+
+    BS -> BS: 23 Process payment to teacher's account
+    BS -> KF: 24 Publish payment-completed event
+
+    KF -> SS: 25 Consume payment completion event
+
+    SS -> SS: 26 Update payoutStatus = COMPLETED
+
+    SS -> WF: 27 Transition to RESOLVED status
+    WF --> SS: 28 workflow status
+
+    SS -> KF: 29 Push final update to persister topic
+    KF -> PS: 30 Read payload
+    PS -> DB: 31 Update final status in eg_sdcrs_report
+
+    SS -> NS: 32 Notify teacher (payout completed)
+    NS -> TCH: 33 SMS: "Rs.500 credited for report {reportNumber}"
+end
+
+@enduml

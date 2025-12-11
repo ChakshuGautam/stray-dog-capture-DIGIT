@@ -1,0 +1,99 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 7,
+    "description": "Submit dog report to SDCRS Service API",
+    "sender": "SDCRS Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Files uploaded, create report with fileStoreIds",
+    "previousPacket": "06-filestore-upload-response.json",
+    "nextPacket": "08-report-create-response.json",
+    "verified": true,
+    "source": "DogReportRequest.java, DogReport.java, Evidence.java, Location.java"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_create",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176200000,
+        "action": "_create",
+        "did": "1",
+        "key": "",
+        "msgId": "20241214123640|en_IN",
+        "authToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "userInfo": {
+          "id": 24226,
+          "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "userName": "T12345",
+          "name": "Ravi Kumar",
+          "mobileNumber": "9876543210",
+          "tenantId": "dj.djibouti-ville",
+          "type": "EMPLOYEE",
+          "roles": [
+            {
+              "code": "TEACHER",
+              "tenantId": "dj.djibouti-ville"
+            }
+          ]
+        }
+      },
+      "DogReports": [
+        {
+          "tenantId": "dj.djibouti-ville",
+          "serviceType": "StrayDogAggressive",
+          "description": "Pack of 3 aggressive dogs near school gate. They chase students during morning assembly.",
+          "location": {
+            "latitude": 11.5886,
+            "longitude": 43.1456,
+            "address": "Near Govt High School Main Gate, Djibouti-Ville",
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "ward": "Ward 5",
+            "wardCode": "W005",
+            "district": "Djibouti-Ville",
+            "districtCode": "DJ01",
+            "city": "Djibouti",
+            "pincode": "10000",
+            "gpsLatitude": 11.5887,
+            "gpsLongitude": 43.1455,
+            "gpsAccuracy": 8.5,
+            "gpsTimestamp": 1734176145000
+          },
+          "evidence": [
+            {
+              "fileStoreId": "fs-dog-001-abc123def456",
+              "evidenceType": "DOG_PHOTO",
+              "fileName": "IMG_20241214_123045.jpg",
+              "mimeType": "image/jpeg",
+              "fileSize": 2456789,
+              "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+              "captureTime": 1734176145000,
+              "latitude": 11.5886,
+              "longitude": 43.1456,
+              "deviceInfo": "Samsung SM-A525F"
+            },
+            {
+              "fileStoreId": "fs-selfie-001-xyz789ghi012",
+              "evidenceType": "REPORTER_SELFIE",
+              "fileName": "SELFIE_20241214_123112.jpg",
+              "mimeType": "image/jpeg",
+              "fileSize": 1234567,
+              "imageHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234",
+              "captureTime": 1734176172000,
+              "latitude": 11.5886,
+              "longitude": 43.1456,
+              "deviceInfo": "Samsung SM-A525F"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "description": "Maps SDCRS domain roles to PGR/CCRS roles for using CCRS directly",
+  "mappings": [
+    {
+      "sdcrsRole": "TEACHER",
+      "pgrRole": "CITIZEN",
+      "description": "Teachers report stray dog sightings as citizens"
+    },
+    {
+      "sdcrsRole": "VERIFIER",
+      "pgrRole": "GRO",
+      "description": "Verifiers review and verify reports like Grievance Redressal Officers"
+    },
+    {
+      "sdcrsRole": "MC_OFFICER",
+      "pgrRole": "PGR_LME",
+      "description": "MC Officers handle field work like Last Mile Employees"
+    },
+    {
+      "sdcrsRole": "MC_SUPERVISOR",
+      "pgrRole": "GRO",
+      "description": "MC Supervisors assign work and have GRO-level access"
+    },
+    {
+      "sdcrsRole": "DISTRICT_ADMIN",
+      "pgrRole": "PGR_VIEWER",
+      "description": "District Admins have read-only access for reporting"
+    },
+    {
+      "sdcrsRole": "STATE_ADMIN",
+      "pgrRole": "PGR_VIEWER",
+      "description": "State Admins have read-only access for management"
+    },
+    {
+      "sdcrsRole": "SYSTEM",
+      "pgrRole": "AUTO_ESCALATE",
+      "description": "System user for automated operations"
+    }
+  ],
+  "notes": [
+    "These mappings allow SDCRS to use existing PGR role-based access control",
+    "Custom SDCRS roles can still be added to ACCESSCONTROL-ROLES for UI display",
+    "Workflow actions reference both PGR roles and SDCRS-specific roles"
+  ]
+}

@@ -1,0 +1,53 @@
+@startuml SDCRS_Track
+title Stray Dog Reports - Public Tracking Flow (Anonymous Access)
+
+participant "Browser/SMS Link" as UI
+participant "Gateway" as GW
+participant "SDCRSService" as SS
+participant "Localization" as LOC
+database "PostgreSQL" as DB
+
+note over UI,GW: No authentication required\n(endpoint whitelisted in gateway)
+
+UI -> GW: 1 POST /sdcrs-services/v1/report/_track\n(reportNumber OR trackingId)
+
+GW -> GW: 2 Check endpoint whitelist\n(egov-open-endpoints-whitelist)
+
+alt "Endpoint NOT whitelisted"
+    GW --> UI: 3 401 Unauthorized
+else "Endpoint IS whitelisted (bypass auth)"
+    GW -> SS: 4 Route request to SDCRS service\n(no UserInfo enrichment)
+end
+
+SS -> SS: 5 Validate request payload\n(must have reportNumber OR trackingId)
+
+alt "Neither identifier provided"
+    SS --> UI: 6 400 Bad Request\n"reportNumber or trackingId required"
+end
+
+alt "Search by reportNumber"
+    SS -> DB: 7a Query by report_number
+else "Search by trackingId"
+    SS -> DB: 7b Query by tracking_id
+end
+
+DB --> SS: 8 Report record (if found)
+
+alt "Report not found"
+    SS --> UI: 9 404 Not Found\n"Report not found"
+end
+
+SS -> SS: 10 Sanitize response\n(remove PII: reporter name, phone,\nassigned officer details)
+
+SS -> LOC: 11 Get status descriptions\n(localized text for status codes)
+LOC --> SS: 12 Localized messages
+
+SS -> SS: 13 Build timeline from workflow history
+
+SS -> SS: 14 Calculate estimated resolution\n(based on SLA and current status)
+
+SS --> UI: 15 Return sanitized tracking response\n{\n  reportNumber,\n  trackingId,\n  trackingUrl,\n  status,\n  statusDescription,\n  locality,\n  timeline[],\n  estimatedResolution\n}
+
+note over UI: Response contains NO PII:\n- No reporter name/phone\n- No officer name/phone\n- No evidence URLs
+
+@enduml

@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 2,
+    "description": "Validate GPS coordinates from photo EXIF match device GPS",
+    "sender": "SDCRS Validator",
+    "receiver": "N/A (internal calculation)",
+    "trigger": "Validation process started",
+    "previousPacket": "01-validation-trigger.json",
+    "nextPacket": "03-timestamp-validation.json",
+    "verified": true,
+    "source": "Location.java - gpsValidated, gpsValidationResult fields"
+  },
+  "gpsValidation": {
+    "photoExifGps": {
+      "latitude": 11.5886,
+      "longitude": 43.1456
+    },
+    "deviceGps": {
+      "latitude": 11.5887,
+      "longitude": 43.1455,
+      "accuracy": 8.5
+    },
+    "calculation": {
+      "distanceMeters": 15.2,
+      "formula": "Haversine distance",
+      "toleranceMeters": 100
+    },
+    "result": {
+      "gpsValidated": true,
+      "gpsValidationResult": "MATCH",
+      "passed": true,
+      "reason": "EXIF GPS and device GPS within 100m tolerance"
+    }
+  },
+  "failureScenario": {
+    "_comment": "Example of GPS mismatch",
+    "result": {
+      "gpsValidated": true,
+      "gpsValidationResult": "MISMATCH",
+      "passed": false,
+      "reason": "EXIF GPS shows photo taken 5km away from device location"
+    },
+    "rejectionReason": "INVALID_GPS"
+  },
+  "notAvailableScenario": {
+    "_comment": "Photo has no EXIF GPS data",
+    "result": {
+      "gpsValidated": false,
+      "gpsValidationResult": "NOT_AVAILABLE",
+      "passed": true,
+      "reason": "No EXIF GPS data, using device GPS only"
+    }
+  }
+}

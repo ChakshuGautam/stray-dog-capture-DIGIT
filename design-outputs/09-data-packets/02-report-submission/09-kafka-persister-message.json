@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 9,
+    "description": "SDCRS Service publishes to Kafka for async persistence",
+    "sender": "SDCRS Service",
+    "receiver": "Persister Service (via Kafka)",
+    "trigger": "Report created, published for database persistence",
+    "previousPacket": "08-report-create-response.json",
+    "nextPacket": "10-workflow-transition-request.json",
+    "verified": true,
+    "source": "DIGIT Persister pattern - async write via Kafka"
+  },
+  "kafkaMessage": {
+    "topic": "save-sdcrs-report",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "DogReport": {
+        "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "tenantId": "dj.djibouti-ville",
+        "reportNumber": "DR-DJ-2024-000123",
+        "trackingId": "ABC12345",
+        "serviceType": "StrayDogAggressive",
+        "description": "Pack of 3 aggressive dogs near school gate. They chase students during morning assembly.",
+        "status": "PENDING_VALIDATION",
+        "reporterId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "reporterName": "Ravi Kumar",
+        "reporterPhone": "9876543210",
+        "reporterSchool": "Govt High School Djibouti",
+        "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+        "createdBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "createdTime": 1734176201000,
+        "lastModifiedBy": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "lastModifiedTime": 1734176201000
+      },
+      "Location": {
+        "id": "loc-uuid-001",
+        "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "latitude": 11.5886,
+        "longitude": 43.1456,
+        "address": "Near Govt High School Main Gate, Djibouti-Ville",
+        "locality": "Djibouti Centre",
+        "localityCode": "DJC001",
+        "wardCode": "W005",
+        "districtCode": "DJ01",
+        "city": "Djibouti",
+        "pincode": "10000",
+        "gpsLatitude": 11.5887,
+        "gpsLongitude": 43.1455,
+        "gpsAccuracy": 8.5,
+        "gpsTimestamp": 1734176145000
+      },
+      "Evidence": [
+        {
+          "id": "ev-uuid-001",
+          "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "fileStoreId": "fs-dog-001-abc123def456",
+          "evidenceType": "DOG_PHOTO",
+          "fileName": "IMG_20241214_123045.jpg",
+          "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+          "captureTime": 1734176145000,
+          "latitude": 11.5886,
+          "longitude": 43.1456
+        },
+        {
+          "id": "ev-uuid-002",
+          "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "fileStoreId": "fs-selfie-001-xyz789ghi012",
+          "evidenceType": "REPORTER_SELFIE",
+          "fileName": "SELFIE_20241214_123112.jpg",
+          "imageHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234",
+          "captureTime": 1734176172000,
+          "latitude": 11.5886,
+          "longitude": 43.1456
+        }
+      ]
+    },
+    "timestamp": 1734176201500,
+    "partition": 0
+  }
+}

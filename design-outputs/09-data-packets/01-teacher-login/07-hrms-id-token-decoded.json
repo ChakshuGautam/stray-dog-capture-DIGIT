@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 7,
+    "description": "Decoded ID token containing teacher claims from HRMS",
+    "sender": "N/A (decoded by SSO Adapter)",
+    "receiver": "N/A",
+    "trigger": "Backend decodes and validates id_token using HRMS JWKS",
+    "previousPacket": "06-hrms-token-response.json",
+    "nextPacket": "08-digit-user-search-request.json",
+    "verified": false,
+    "assumption": "HRMS includes custom claims for employee data (emp_id, school_code, upi_vpa, etc.)"
+  },
+  "idToken": {
+    "header": {
+      "alg": "RS256",
+      "typ": "JWT",
+      "kid": "hrms-key-1"
+    },
+    "payload": {
+      "sub": "T12345",
+      "name": "Ravi Kumar",
+      "email": "ravi@edu.gov.in",
+      "phone": "9876543210",
+      "emp_id": "T12345",
+      "designation": "TGT",
+      "subject": "SCIENCE",
+      "school_code": "DJGHS001",
+      "school_name": "Govt High School Djibouti",
+      "district_code": "DJ01",
+      "district_name": "Djibouti-Ville",
+      "upi_vpa": "ravi@okaxis",
+      "bank_account": "1234567890",
+      "ifsc": "AXIS0001234",
+      "status": "ACTIVE",
+      "joining_date": "2015-06-01",
+      "iss": "https://hrms.state.gov.in",
+      "aud": "sdcrs-mobile",
+      "exp": 1734203600,
+      "iat": 1734200000,
+      "nonce": "n-0S6_WzA2Mj"
+    },
+    "signature": "verified_via_jwks"
+  },
+  "jwksValidation": {
+    "jwksUri": "https://hrms.state.gov.in/.well-known/jwks.json",
+    "keyId": "hrms-key-1",
+    "algorithm": "RS256",
+    "signatureValid": true
+  },
+  "claimMapping": {
+    "_comment": "How HRMS claims map to DIGIT user fields (configured in MDMS)",
+    "sub": "userName",
+    "name": "name",
+    "phone": "mobileNumber",
+    "email": "emailId",
+    "emp_id": "additionalDetails.hrmsEmpId",
+    "upi_vpa": "additionalDetails.upiId",
+    "school_code": "additionalDetails.schoolCode",
+    "school_name": "additionalDetails.schoolName",
+    "designation": "additionalDetails.designation",
+    "district_code": "tenantId (via mapping DJ01 -> dj.djibouti-ville)"
+  }
+}

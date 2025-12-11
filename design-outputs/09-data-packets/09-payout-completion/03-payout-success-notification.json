@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 3,
+    "description": "SMS notification sent to teacher confirming payout",
+    "sender": "egov-notification-sms Service",
+    "receiver": "Teacher's Phone",
+    "trigger": "Report status changes to RESOLVED",
+    "previousPacket": "02-update-report-resolved.json",
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "SMS template for payout success notification"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Congratulations! Rs.500 has been credited to your UPI ID (9876543210@upi) for stray dog report (Tracking ID: ABC12345). UTR: 423456789012. Thank you for helping make our community safer!",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_PAYOUT_SUCCESS_TEACHER",
+      "category": "TRANSACTION"
+    }
+  },
+  "payoutComplete": {
+    "_comment": "End of happy path - teacher has received payment",
+    "finalStatus": "RESOLVED",
+    "payoutAmount": 500,
+    "utr": "423456789012",
+    "beneficiaryVpa": "9876543210@upi"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 5,
+    "description": "MC Officer marks dog as captured with evidence photo",
+    "sender": "MC Officer Mobile App",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Officer captures dog and uploads evidence photo",
+    "previousPacket": "04-field-visit-in-progress.json",
+    "nextPacket": "../07-payout-initiation/01-payout-trigger.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - MARK_CAPTURED action, DogReport.java - captureEvidence"
+  },
+  "capturePhotoUpload": {
+    "_comment": "First, officer uploads capture evidence photo",
+    "method": "POST",
+    "url": "http://filestore.egov:8092/filestore/v1/files",
+    "body": {
+      "tenantId": "dj.djibouti-ville",
+      "module": "sdcrs",
+      "tag": "capture-evidence"
+    },
+    "response": {
+      "fileStoreId": "fs-capture-uuid-001"
+    }
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer officer-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734188400000,
+        "action": "_update",
+        "msgId": "20241214155400|en_IN",
+        "userInfo": {
+          "id": 24500,
+          "uuid": "mco-uuid-001",
+          "userName": "MCO001",
+          "name": "Ibrahim Ali",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_OFFICER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "MARK_CAPTURED",
+            "comment": "Dog captured successfully, transported to shelter"
+          },
+          "resolutionType": "CAPTURED",
+          "resolutionRemarks": "Large brown dog with white spots captured. No injuries. Transported to Djibouti Animal Shelter.",
+          "captureEvidence": {
+            "photoFileStoreId": "fs-capture-uuid-001",
+            "capturedAt": 1734188400000,
+            "captureLocation": {
+              "latitude": 11.5887,
+              "longitude": 43.1455
+            }
+          },
+          "fieldVisitCompletedAt": 1734188400000
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "CAPTURED",
+          "resolutionType": "CAPTURED",
+          "payoutEligible": true,
+          "fieldVisitCompletedAt": 1734188400000
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "IN_PROGRESS",
+    "action": "MARK_CAPTURED",
+    "nextState": "CAPTURED",
+    "allowedRoles": ["MC_OFFICER"],
+    "triggersPayoutInitiation": true
+  }
+}

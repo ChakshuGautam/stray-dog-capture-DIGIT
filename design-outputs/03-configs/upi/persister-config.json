@@ -1,0 +1,72 @@
+{
+  "serviceName": "upi-payout-adapter",
+  "serviceConfig": {
+    "kafkaConsumerGroup": "upi-payout-persister"
+  },
+  "persisters": [
+    {
+      "topic": "upi-payout-persist",
+      "description": "Persist UPI payouts and fund accounts",
+      "mappings": [
+        {
+          "tableName": "eg_upi_payout",
+          "fromTopic": true,
+          "isInsertOnly": false,
+          "jsonPath": "$.payouts",
+          "query": "INSERT INTO eg_upi_payout (id, tenant_id, payout_number, reference_id, reference_type, beneficiary_id, beneficiary_type, amount, currency, mode, purpose, narration, status, provider_payout_id, utr, processed_at, failure_reason, error_code, retry_count, max_retries, additional_details, created_by, created_time, last_modified_by, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, provider_payout_id = EXCLUDED.provider_payout_id, utr = EXCLUDED.utr, processed_at = EXCLUDED.processed_at, failure_reason = EXCLUDED.failure_reason, error_code = EXCLUDED.error_code, retry_count = EXCLUDED.retry_count, last_modified_by = EXCLUDED.last_modified_by, last_modified_time = EXCLUDED.last_modified_time",
+          "typeMapping": [
+            {"fieldName": "id", "type": "STRING"},
+            {"fieldName": "tenantId", "type": "STRING"},
+            {"fieldName": "payoutNumber", "type": "STRING"},
+            {"fieldName": "referenceId", "type": "STRING"},
+            {"fieldName": "referenceType", "type": "STRING"},
+            {"fieldName": "beneficiaryId", "type": "STRING"},
+            {"fieldName": "beneficiaryType", "type": "STRING"},
+            {"fieldName": "amount", "type": "DOUBLE"},
+            {"fieldName": "currency", "type": "STRING"},
+            {"fieldName": "mode", "type": "STRING"},
+            {"fieldName": "purpose", "type": "STRING"},
+            {"fieldName": "narration", "type": "STRING"},
+            {"fieldName": "status", "type": "STRING"},
+            {"fieldName": "providerPayoutId", "type": "STRING"},
+            {"fieldName": "utr", "type": "STRING"},
+            {"fieldName": "processedAt", "type": "LONG"},
+            {"fieldName": "failureReason", "type": "STRING"},
+            {"fieldName": "errorCode", "type": "STRING"},
+            {"fieldName": "retryCount", "type": "INTEGER"},
+            {"fieldName": "maxRetries", "type": "INTEGER"},
+            {"fieldName": "additionalDetails", "type": "JSON"},
+            {"fieldName": "auditDetails.createdBy", "type": "STRING"},
+            {"fieldName": "auditDetails.createdTime", "type": "LONG"},
+            {"fieldName": "auditDetails.lastModifiedBy", "type": "STRING"},
+            {"fieldName": "auditDetails.lastModifiedTime", "type": "LONG"}
+          ]
+        },
+        {
+          "tableName": "eg_upi_fund_account",
+          "fromTopic": true,
+          "isInsertOnly": false,
+          "jsonPath": "$.payouts.*.fundAccount",
+          "parentJsonPath": "$.payouts",
+          "parentIdPath": "id",
+          "query": "INSERT INTO eg_upi_fund_account (id, payout_id, account_type, vpa, bank_account_number, ifsc_code, beneficiary_name, mobile_number, email, provider_fund_account_id, provider_contact_id, is_active, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET provider_fund_account_id = EXCLUDED.provider_fund_account_id, provider_contact_id = EXCLUDED.provider_contact_id",
+          "typeMapping": [
+            {"fieldName": "id", "type": "STRING"},
+            {"parentFieldName": "id", "type": "STRING"},
+            {"fieldName": "accountType", "type": "STRING"},
+            {"fieldName": "vpa", "type": "STRING"},
+            {"fieldName": "bankAccountNumber", "type": "STRING"},
+            {"fieldName": "ifscCode", "type": "STRING"},
+            {"fieldName": "beneficiaryName", "type": "STRING"},
+            {"fieldName": "mobileNumber", "type": "STRING"},
+            {"fieldName": "email", "type": "STRING"},
+            {"fieldName": "providerFundAccountId", "type": "STRING"},
+            {"fieldName": "providerContactId", "type": "STRING"},
+            {"fieldName": "isActive", "type": "BOOLEAN"},
+            {"currentTime": true, "type": "LONG"}
+          ]
+        }
+      ]
+    }
+  ]
+}

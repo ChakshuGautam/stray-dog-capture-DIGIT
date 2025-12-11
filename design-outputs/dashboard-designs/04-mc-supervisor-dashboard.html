@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDCRS - MC Supervisor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* shadcn/ui inspired theme - Unified Design System */
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(240 10% 3.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(240 10% 3.9%);
+            --muted: hsl(240 4.8% 95.9%);
+            --muted-foreground: hsl(240 3.8% 46.1%);
+            --border: hsl(240 5.9% 90%);
+            --input: hsl(240 5.9% 90%);
+            --primary: hsl(221 83% 53%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(240 4.8% 95.9%);
+            --secondary-foreground: hsl(240 5.9% 10%);
+            --accent: hsl(240 4.8% 95.9%);
+            --accent-foreground: hsl(240 5.9% 10%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(0 0% 98%);
+            --ring: hsl(240 5.9% 10%);
+            --radius: 0.5rem;
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 60px;
+
+            /* Chart colors - consistent palette */
+            --chart-1: hsl(221 83% 53%);
+            --chart-2: hsl(160 60% 45%);
+            --chart-3: hsl(30 80% 55%);
+            --chart-4: hsl(280 65% 60%);
+            --chart-5: hsl(340 75% 55%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--muted);
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: width 0.2s ease;
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed); }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--foreground);
+        }
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .sidebar-logo span { white-space: nowrap; }
+        .sidebar.collapsed .sidebar-logo span { display: none; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            color: var(--muted-foreground);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-toggle:hover { background: var(--secondary); }
+        .sidebar.collapsed .sidebar-toggle { margin: 0 auto; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0.75rem;
+            overflow-y: auto;
+        }
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted-foreground);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar.collapsed .nav-section-title { display: none; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            border-radius: var(--radius);
+            color: var(--muted-foreground);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.15s;
+            margin-bottom: 0.125rem;
+        }
+        .nav-item:hover {
+            background: var(--secondary);
+            color: var(--foreground);
+        }
+        .nav-item.active {
+            background: hsl(221 83% 53% / 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .nav-label { white-space: nowrap; }
+        .sidebar.collapsed .nav-label { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem; }
+
+        /* Main content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.2s ease;
+        }
+        .sidebar.collapsed + .main-wrapper { margin-left: var(--sidebar-collapsed); }
+
+        .header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .header-meta { font-size: 0.875rem; color: var(--muted-foreground); }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: hsl(188, 80%, 42%);
+            color: white;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: var(--card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        .filter-bar h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .date-filter {
+            display: flex;
+            gap: 0.25rem;
+        }
+        .date-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--foreground);
+        }
+        .date-btn:hover {
+            background: var(--muted);
+        }
+        .date-btn.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border-color: var(--primary);
+        }
+        .custom-date-picker {
+            display: none;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .custom-date-picker.show {
+            display: flex;
+        }
+        .custom-date-picker input {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+        }
+
+        .top-stats {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .stat-card.highlight .stat-value {
+            color: hsl(221, 83%, 53%);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .card-header-badge {
+            font-size: 0.7rem;
+            color: var(--muted-foreground);
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .team-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .team-table th, .team-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .team-table th {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .officer-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .officer-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--muted);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--muted-foreground);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .status-dot.active { background: hsl(160, 60%, 45%); }
+        .status-dot.break { background: hsl(30, 80%, 55%); }
+        .status-dot.offline { background: var(--muted-foreground); }
+
+        .workload-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--muted);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .workload-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .workload-fill.low { background: hsl(160, 60%, 45%); }
+        .workload-fill.medium { background: hsl(30, 80%, 55%); }
+        .workload-fill.high { background: hsl(0, 84.2%, 60.2%); }
+
+        .metric-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius);
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .metric-badge.good { background: hsl(160 60% 95%); color: hsl(160 60% 35%); }
+        .metric-badge.warning { background: hsl(30 80% 95%); color: hsl(30 80% 35%); }
+        .metric-badge.bad { background: hsl(0 84.2% 95%); color: hsl(0 84.2% 40%); }
+
+        .chart-container { height: 250px; }
+
+        .escalation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .escalation-item {
+            padding: 1rem;
+            background: hsl(0 84.2% 97%);
+            border-radius: var(--radius);
+            border-left: 3px solid hsl(0, 84.2%, 60.2%);
+        }
+        .escalation-item.warning {
+            background: hsl(30 80% 97%);
+            border-left-color: hsl(30, 80%, 55%);
+        }
+        .escalation-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            color: var(--foreground);
+        }
+        .escalation-meta {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+        }
+        .escalation-action {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .escalation-action button {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+        .escalation-action button:hover {
+            opacity: 0.9;
+        }
+        .btn-reassign { background: hsl(221, 83%, 53%); color: white; }
+        .btn-view { background: var(--muted); color: var(--foreground); }
+
+        .sla-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .sla-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--muted);
+            border-radius: var(--radius);
+        }
+        .sla-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+        .sla-value.green { color: hsl(160, 60%, 45%); }
+        .sla-value.yellow { color: hsl(30, 80%, 55%); }
+        .sla-value.red { color: hsl(0, 84.2%, 60.2%); }
+        .sla-label {
+            font-size: 0.65rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .top-stats { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: var(--sidebar-collapsed); }
+            .sidebar .nav-label, .sidebar .nav-section-title, .sidebar .sidebar-logo span { display: none; }
+            .sidebar .nav-item { justify-content: center; padding: 0.75rem; }
+            .main-wrapper { margin-left: var(--sidebar-collapsed); }
+            .top-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">🐕</div>
+                <span>SDCRS</span>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Dashboards</div>
+                <a href="01-teacher-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="graduation-cap"></i></span>
+                    <span class="nav-label">Teacher</span>
+                </a>
+                <a href="02-verifier-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="shield-check"></i></span>
+                    <span class="nav-label">Verifier</span>
+                </a>
+                <a href="03-mc-officer-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="truck"></i></span>
+                    <span class="nav-label">MC Officer</span>
+                </a>
+                <a href="04-mc-supervisor-dashboard.html" class="nav-item active">
+                    <span class="nav-icon"><i data-lucide="users"></i></span>
+                    <span class="nav-label">MC Supervisor</span>
+                </a>
+                <a href="05-district-admin-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span>
+                    <span class="nav-label">District Admin</span>
+                </a>
+                <a href="06-state-admin-dashboard.html" class="nav-item">
+                    <span class="nav-icon"><i data-lucide="landmark"></i></span>
+                    <span class="nav-label">State Admin</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="header">
+            <div>
+                <h1>MC Supervisor Dashboard</h1>
+                <div class="header-meta">Team Operations Portal • South Delhi MC</div>
+            </div>
+            <div class="user-info">
+                <span style="font-size: 0.875rem; color: var(--muted-foreground);">Manoj Singh</span>
+                <div class="avatar">MS</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="filter-bar">
+                <h3>Team Operations Overview</h3>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="date-filter">
+                        <button class="date-btn active" onclick="setDateRange('today')">Today</button>
+                        <button class="date-btn" onclick="setDateRange('week')">Week</button>
+                        <button class="date-btn" onclick="setDateRange('month')">Month</button>
+                        <button class="date-btn" onclick="setDateRange('custom')">Custom</button>
+                    </div>
+                    <div class="custom-date-picker" id="customDatePicker">
+                        <input type="date" id="startDate">
+                        <span>to</span>
+                        <input type="date" id="endDate">
+                        <button class="date-btn" onclick="applyCustomDate()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="top-stats">
+                <div class="stat-card highlight">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Active Officers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">34</div>
+                    <div class="stat-label">Pending Assignments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">67</div>
+                    <div class="stat-label">Captured Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Unable to Locate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Escalations</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Team Status</h3>
+                        <span class="card-header-badge">Live</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="team-table">
+                            <thead>
+                                <tr>
+                                    <th>Officer</th>
+                                    <th>Status</th>
+                                    <th>Assigned</th>
+                                    <th>Completed</th>
+                                    <th>Capture Rate</th>
+                                    <th>Workload</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">SK</div>
+                                            <div>Suresh Kumar</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot active"></span>Active</td>
+                                    <td>7</td>
+                                    <td>12</td>
+                                    <td><span class="metric-badge good">86%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill medium" style="width:70%"></div></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">RV</div>
+                                            <div>Ramesh Verma</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot active"></span>Active</td>
+                                    <td>5</td>
+                                    <td>15</td>
+                                    <td><span class="metric-badge good">93%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill low" style="width:50%"></div></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">AP</div>
+                                            <div>Anil Prasad</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot active"></span>Active</td>
+                                    <td>8</td>
+                                    <td>10</td>
+                                    <td><span class="metric-badge warning">71%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill high" style="width:85%"></div></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">VK</div>
+                                            <div>Vijay Kumar</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot break"></span>On Break</td>
+                                    <td>4</td>
+                                    <td>11</td>
+                                    <td><span class="metric-badge good">82%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill low" style="width:40%"></div></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">PS</div>
+                                            <div>Pradeep Singh</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot active"></span>Active</td>
+                                    <td>6</td>
+                                    <td>9</td>
+                                    <td><span class="metric-badge warning">75%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill medium" style="width:60%"></div></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="officer-name">
+                                            <div class="officer-avatar">MK</div>
+                                            <div>Mohan Kumar</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-dot active"></span>Active</td>
+                                    <td>4</td>
+                                    <td>10</td>
+                                    <td><span class="metric-badge good">90%</span></td>
+                                    <td>
+                                        <div class="workload-bar"><div class="workload-fill low" style="width:40%"></div></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Escalations & Alerts</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="escalation-list">
+                            <div class="escalation-item">
+                                <div class="escalation-title">SLA Breach - SDC-2024-0078</div>
+                                <div class="escalation-meta">Assigned to Anil Prasad • 26 hours since assignment • Okhla Industrial Area, Ward 7</div>
+                                <div class="escalation-action">
+                                    <button class="btn-reassign">Reassign</button>
+                                    <button class="btn-view">View Details</button>
+                                </div>
+                            </div>
+                            <div class="escalation-item">
+                                <div class="escalation-title">Multiple UTL - SDC-2024-0065</div>
+                                <div class="escalation-meta">2nd attempt failed • Vijay Kumar reports location inaccessible</div>
+                                <div class="escalation-action">
+                                    <button class="btn-reassign">Reassign</button>
+                                    <button class="btn-view">View Details</button>
+                                </div>
+                            </div>
+                            <div class="escalation-item warning">
+                                <div class="escalation-title">High Workload Alert - Anil Prasad</div>
+                                <div class="escalation-meta">8 pending assignments • Capture rate dropping</div>
+                                <div class="escalation-action">
+                                    <button class="btn-reassign">Redistribute Work</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Team Performance - Today</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>SLA Compliance</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="sla-grid">
+                            <div class="sla-item">
+                                <div class="sla-value green">94%</div>
+                                <div class="sla-label">Overall SLA Compliance</div>
+                            </div>
+                            <div class="sla-item">
+                                <div class="sla-value">4.2 hrs</div>
+                                <div class="sla-label">Avg. Response Time</div>
+                            </div>
+                            <div class="sla-item">
+                                <div class="sla-value yellow">3</div>
+                                <div class="sla-label">SLA Breaches Today</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <div class="chart-container" style="height: 150px;">
+                                <canvas id="slaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Hourly Activity</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        // shadcn-inspired chart colors
+        const chartColors = {
+            primary: 'hsl(221, 83%, 53%)',
+            secondary: 'hsl(160, 60%, 45%)',
+            tertiary: 'hsl(30, 80%, 55%)',
+            quaternary: 'hsl(280, 65%, 60%)',
+            quinary: 'hsl(340, 75%, 55%)',
+            destructive: 'hsl(0, 84.2%, 60.2%)',
+            muted: 'hsl(240, 4.8%, 95.9%)',
+            border: 'hsl(240, 5.9%, 90%)'
+        };
+
+        // Chart.js global defaults - shadcn style
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = 'hsl(240, 3.8%, 46.1%)';
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.boxWidth = 6;
+        Chart.defaults.plugins.tooltip.backgroundColor = 'hsl(240, 10%, 3.9%)';
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 6;
+        Chart.defaults.plugins.tooltip.titleFont = { weight: '600' };
+        Chart.defaults.elements.bar.borderRadius = 4;
+        Chart.defaults.elements.line.tension = 0.3;
+
+        // Team Performance Chart
+        new Chart(document.getElementById('performanceChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Suresh', 'Ramesh', 'Anil', 'Vijay', 'Pradeep', 'Mohan'],
+                datasets: [
+                    {
+                        label: 'Captured',
+                        data: [12, 15, 10, 11, 9, 10],
+                        backgroundColor: chartColors.secondary
+                    },
+                    {
+                        label: 'Unable to Locate',
+                        data: [2, 1, 4, 2, 3, 1],
+                        backgroundColor: chartColors.destructive
+                    },
+                    {
+                        label: 'Pending',
+                        data: [7, 5, 8, 4, 6, 4],
+                        backgroundColor: chartColors.tertiary
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                        grid: { color: chartColors.border }
+                    }
+                }
+            }
+        });
+
+        // SLA Trend Chart
+        new Chart(document.getElementById('slaChart'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'SLA Compliance %',
+                    data: [92, 95, 88, 94, 96, 91, 94],
+                    borderColor: chartColors.primary,
+                    backgroundColor: 'hsla(221, 83%, 53%, 0.1)',
+                    fill: true,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: 80,
+                        max: 100,
+                        grid: { color: chartColors.border }
+                    },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Hourly Activity Chart
+        new Chart(document.getElementById('hourlyChart'), {
+            type: 'line',
+            data: {
+                labels: ['8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM'],
+                datasets: [
+                    {
+                        label: 'Assigned',
+                        data: [5, 12, 18, 15, 8, 10, 14, 16, 12, 8, 4],
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'hsla(221, 83%, 53%, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Completed',
+                        data: [2, 8, 14, 12, 6, 8, 11, 14, 10, 7, 3],
+                        borderColor: chartColors.secondary,
+                        backgroundColor: 'hsla(160, 60%, 45%, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: chartColors.border } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Date Range Filter Functions
+        function setDateRange(range) {
+            document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const customPicker = document.getElementById('customDatePicker');
+            if (range === 'custom') {
+                customPicker.classList.add('show');
+            } else {
+                customPicker.classList.remove('show');
+                console.log('Date range selected:', range);
+            }
+        }
+
+        function applyCustomDate() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate && endDate) {
+                console.log('Custom date range:', startDate, 'to', endDate);
+            }
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

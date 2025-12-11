@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 3,
+    "description": "Verifier approves the report - moves to VERIFIED status",
+    "sender": "Verifier Web Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Verifier clicks 'Verify' button after reviewing evidence",
+    "previousPacket": "02-report-detail-view.json",
+    "nextPacket": "../05-assignment/01-supervisor-inbox.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - VERIFY action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer verifier-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734180200000,
+        "action": "_update",
+        "msgId": "20241214133200|en_IN",
+        "authToken": "verifier-jwt-token...",
+        "userInfo": {
+          "id": 24300,
+          "uuid": "ver-uuid-001-abcd-efgh",
+          "userName": "V001",
+          "name": "Ahmed Hassan",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "VERIFIER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "VERIFY",
+            "comment": "Evidence looks valid. Dog photo clearly shows aggressive stray dogs near school gate."
+          },
+          "verificationRemarks": "Photo and selfie verified. Location matches school area. Submitted during school hours."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "VERIFIED",
+          "verifiedBy": "ver-uuid-001-abcd-efgh",
+          "verifiedAt": 1734180200000,
+          "verificationRemarks": "Photo and selfie verified. Location matches school area. Submitted during school hours."
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PENDING_VERIFICATION",
+    "action": "VERIFY",
+    "nextState": "VERIFIED",
+    "allowedRoles": ["VERIFIER"]
+  }
+}

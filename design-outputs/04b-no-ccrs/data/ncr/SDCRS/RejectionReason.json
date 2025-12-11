@@ -1,0 +1,62 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "SDCRS",
+  "RejectionReason": [
+    {
+      "code": "INVALID_GPS",
+      "name": "Invalid GPS",
+      "description": "GPS coordinates do not match EXIF data",
+      "isAuto": true,
+      "active": true
+    },
+    {
+      "code": "OUTSIDE_BOUNDARY",
+      "name": "Outside Boundary",
+      "description": "Location is outside tenant boundary",
+      "isAuto": true,
+      "active": true
+    },
+    {
+      "code": "STALE_TIMESTAMP",
+      "name": "Stale Timestamp",
+      "description": "Photo is older than 48 hours",
+      "isAuto": true,
+      "active": true
+    },
+    {
+      "code": "DUPLICATE_IMAGE",
+      "name": "Duplicate Image",
+      "description": "Image has been submitted before",
+      "isAuto": true,
+      "active": true
+    },
+    {
+      "code": "POOR_QUALITY",
+      "name": "Poor Image Quality",
+      "description": "Image is too blurry or unclear",
+      "isAuto": false,
+      "active": true
+    },
+    {
+      "code": "NOT_A_DOG",
+      "name": "Not a Dog",
+      "description": "Image does not contain a dog",
+      "isAuto": false,
+      "active": true
+    },
+    {
+      "code": "DOMESTIC_DOG",
+      "name": "Domestic Dog",
+      "description": "Dog appears to be domestic/owned",
+      "isAuto": false,
+      "active": true
+    },
+    {
+      "code": "FRAUDULENT",
+      "name": "Fraudulent Submission",
+      "description": "Submission appears to be fraudulent",
+      "isAuto": false,
+      "active": true
+    }
+  ]
+}

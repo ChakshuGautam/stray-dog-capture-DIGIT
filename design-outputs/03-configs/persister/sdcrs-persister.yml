@@ -1,0 +1,129 @@
+serviceMaps:
+  serviceName: sdcrs-services
+  mappings:
+    - version: 1.0
+      description: Persists dog report in tables
+      fromTopic: save-sdcrs-report
+      isTransaction: true
+      queryMaps:
+        - query: >
+            INSERT INTO eg_sdcrs_report
+            (id, tenant_id, report_number, tracking_id, tracking_url, report_type, status,
+             reporter_id, reporter_name, reporter_phone,
+             latitude, longitude, address, locality_code,
+             ward_code, ward_name, district_code, district_name,
+             dog_description, dog_count, is_aggressive,
+             photo_file_store_id, selfie_file_store_id, image_hash,
+             assigned_mc_id, assigned_mc_name,
+             resolution_type, resolution_notes, resolution_time,
+             payout_status, payout_amount, payout_demand_id,
+             rejection_reason,
+             additional_details,
+             created_by, created_time, last_modified_by, last_modified_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          basePath: DogReport
+          jsonMaps:
+            - jsonPath: $.DogReport.id
+            - jsonPath: $.DogReport.tenantId
+            - jsonPath: $.DogReport.reportNumber
+            - jsonPath: $.DogReport.trackingId
+            - jsonPath: $.DogReport.trackingUrl
+            - jsonPath: $.DogReport.reportType
+            - jsonPath: $.DogReport.status
+            - jsonPath: $.DogReport.reporter.id
+            - jsonPath: $.DogReport.reporter.name
+            - jsonPath: $.DogReport.reporter.phone
+            - jsonPath: $.DogReport.location.latitude
+            - jsonPath: $.DogReport.location.longitude
+            - jsonPath: $.DogReport.location.address
+            - jsonPath: $.DogReport.location.localityCode
+            - jsonPath: $.DogReport.location.wardCode
+            - jsonPath: $.DogReport.location.wardName
+            - jsonPath: $.DogReport.location.districtCode
+            - jsonPath: $.DogReport.location.districtName
+            - jsonPath: $.DogReport.dogDetails.description
+            - jsonPath: $.DogReport.dogDetails.count
+            - jsonPath: $.DogReport.dogDetails.isAggressive
+            - jsonPath: $.DogReport.evidence.photoFileStoreId
+            - jsonPath: $.DogReport.evidence.selfieFileStoreId
+            - jsonPath: $.DogReport.evidence.imageHash
+            - jsonPath: $.DogReport.assignment.mcOfficerId
+            - jsonPath: $.DogReport.assignment.mcOfficerName
+            - jsonPath: $.DogReport.resolution.type
+            - jsonPath: $.DogReport.resolution.notes
+            - jsonPath: $.DogReport.resolution.time
+            - jsonPath: $.DogReport.payout.status
+            - jsonPath: $.DogReport.payout.amount
+            - jsonPath: $.DogReport.payout.demandId
+            - jsonPath: $.DogReport.rejectionReason
+            - jsonPath: $.DogReport.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.auditDetails.createdBy
+            - jsonPath: $.DogReport.auditDetails.createdTime
+            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
+            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+
+    - version: 1.0
+      description: Updates dog report in tables
+      fromTopic: update-sdcrs-report
+      isTransaction: true
+      queryMaps:
+        - query: >
+            UPDATE eg_sdcrs_report SET
+              status = ?,
+              verifier_id = ?,
+              verifier_name = ?,
+              verified_time = ?,
+              assigned_mc_id = ?,
+              assigned_mc_name = ?,
+              assigned_time = ?,
+              field_visit_start_time = ?,
+              resolution_type = ?,
+              resolution_notes = ?,
+              resolution_time = ?,
+              payout_status = ?,
+              payout_amount = ?,
+              payout_demand_id = ?,
+              payout_time = ?,
+              sla_breached = ?,
+              sla_breach_reason = ?,
+              fraud_flags = ?,
+              penalty_type = ?,
+              rejection_reason = ?,
+              rejection_notes = ?,
+              additional_details = ?,
+              last_modified_by = ?,
+              last_modified_time = ?
+            WHERE id = ?;
+          basePath: DogReport
+          jsonMaps:
+            - jsonPath: $.DogReport.status
+            - jsonPath: $.DogReport.verification.verifierId
+            - jsonPath: $.DogReport.verification.verifierName
+            - jsonPath: $.DogReport.verification.verifiedTime
+            - jsonPath: $.DogReport.assignment.mcOfficerId
+            - jsonPath: $.DogReport.assignment.mcOfficerName
+            - jsonPath: $.DogReport.assignment.assignedTime
+            - jsonPath: $.DogReport.assignment.fieldVisitStartTime
+            - jsonPath: $.DogReport.resolution.type
+            - jsonPath: $.DogReport.resolution.notes
+            - jsonPath: $.DogReport.resolution.time
+            - jsonPath: $.DogReport.payout.status
+            - jsonPath: $.DogReport.payout.amount
+            - jsonPath: $.DogReport.payout.demandId
+            - jsonPath: $.DogReport.payout.time
+            - jsonPath: $.DogReport.slaBreached
+            - jsonPath: $.DogReport.slaBreachReason
+            - jsonPath: $.DogReport.fraudFlags
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.penaltyType
+            - jsonPath: $.DogReport.rejectionReason
+            - jsonPath: $.DogReport.rejectionNotes
+            - jsonPath: $.DogReport.additionalDetails
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.DogReport.auditDetails.lastModifiedBy
+            - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+            - jsonPath: $.DogReport.id

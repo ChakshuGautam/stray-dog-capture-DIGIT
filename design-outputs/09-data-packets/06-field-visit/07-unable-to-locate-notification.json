@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 7,
+    "description": "SMS notification sent to teacher about unable to locate outcome",
+    "sender": "egov-notification-sms Service",
+    "receiver": "Teacher's Phone",
+    "trigger": "Report marked as unable to locate",
+    "previousPacket": "06-mark-unable-to-locate.json",
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "SMS template for unable to locate notification"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Update on your stray dog report (Tracking ID: ABC12345): Our team visited the location but could not locate the dog. The report has been closed. No payout will be issued for this report. Thank you for your vigilance.",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_UNABLE_TO_LOCATE_TEACHER",
+      "category": "TRANSACTION"
+    }
+  },
+  "noPayout": {
+    "_comment": "Unable to locate = terminal state with no payout",
+    "payoutEligible": false,
+    "reason": "Dog not found at reported location"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 7,
+    "description": "Admin/System retries failed payout (with corrected UPI)",
+    "sender": "Admin Portal OR System Auto-Retry",
+    "receiver": "SDCRS Service → UPI Payout Adapter",
+    "trigger": "Admin clicks retry OR system auto-retries after delay",
+    "previousPacket": "06-payout-failed-notification.json",
+    "nextPacket": "08-retry-payout-response.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - RETRY_PAYOUT action"
+  },
+  "scenarioA_AdminRetry": {
+    "_comment": "Admin manually retries with corrected UPI ID",
+    "request": {
+      "method": "POST",
+      "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+      "body": {
+        "RequestInfo": {
+          "apiId": "Rainmaker",
+          "userInfo": {
+            "uuid": "admin-uuid-001",
+            "userName": "ADMIN001",
+            "roles": [{"code": "STATE_ADMIN"}]
+          }
+        },
+        "DogReports": [
+          {
+            "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+            "tenantId": "dj.djibouti-ville",
+            "workflow": {
+              "action": "RETRY_PAYOUT",
+              "comment": "Retrying with corrected UPI ID"
+            },
+            "payoutDetails": {
+              "beneficiaryVpa": "amina.hassan@upi"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "scenarioB_AutoRetry": {
+    "_comment": "System auto-retries after 1 hour (for transient failures)",
+    "trigger": "Scheduled job detects PAYOUT_FAILED with canRetry=true and retryCount < maxRetries",
+    "retryPolicy": {
+      "maxRetries": 3,
+      "retryDelayMinutes": 60,
+      "exponentialBackoff": false
+    }
+  },
+  "kafkaMessageOnRetry": {
+    "topic": "upi-payout-create",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "tenantId": "dj.djibouti-ville",
+      "beneficiary": {
+        "userId": "teacher-uuid-001-abcd-efgh",
+        "name": "Amina Hassan",
+        "phone": "9876543210",
+        "upiVpa": "amina.hassan@upi"
+      },
+      "amount": 500,
+      "currency": "INR",
+      "purpose": "SDCRS_TEACHER_PAYOUT",
+      "referenceId": "SDCRS-DR-DJ-2024-000123-R1",
+      "isRetry": true,
+      "retryCount": 1,
+      "originalPayoutId": "pay-uuid-001-abcd-efgh-ijkl"
+    }
+  }
+}

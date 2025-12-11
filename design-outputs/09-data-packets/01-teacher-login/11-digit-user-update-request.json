@@ -1,0 +1,69 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 11,
+    "description": "Backend updates existing DIGIT user with latest HRMS data (returning user)",
+    "sender": "SSO Adapter Service",
+    "receiver": "egov-user Service",
+    "trigger": "User search found existing user",
+    "previousPacket": "09-digit-user-search-response.json (scenario B)",
+    "nextPacket": "13-digit-user-update-response.json",
+    "verified": true,
+    "source": "DIGIT egov-user service API - user update"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-user.egov:8107/user/users/_updatenovalidate",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200001000,
+        "action": "_update",
+        "did": "1",
+        "key": "",
+        "msgId": "20241214120001|en_IN",
+        "authToken": "system-auth-token"
+      },
+      "user": {
+        "id": 24226,
+        "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+        "userName": "T12345",
+        "name": "Ravi Kumar",
+        "mobileNumber": "9876543210",
+        "emailId": "ravi@edu.gov.in",
+        "type": "EMPLOYEE",
+        "tenantId": "dj.djibouti-ville",
+        "active": true,
+        "roles": [
+          {
+            "code": "TEACHER",
+            "name": "Teacher",
+            "tenantId": "dj.djibouti-ville"
+          }
+        ],
+        "additionalDetails": {
+          "hrmsEmpId": "T12345",
+          "upiId": "ravi@okaxis",
+          "bankAccount": "1234567890",
+          "ifsc": "AXIS0001234",
+          "schoolCode": "DJGHS001",
+          "schoolName": "Govt High School Djibouti",
+          "designation": "TGT",
+          "subject": "SCIENCE",
+          "joiningDate": "2015-06-01",
+          "hrmsStatus": "ACTIVE",
+          "ssoProvider": "STATE_HRMS",
+          "lastHrmsSync": "2024-12-14T12:00:00Z"
+        }
+      }
+    }
+  },
+  "_notes": {
+    "sync_purpose": "Updates user with latest HRMS data (school transfer, promotion, UPI change, etc.)",
+    "fields_updated": "UPI VPA, school details, designation - all from HRMS, not user-editable"
+  }
+}

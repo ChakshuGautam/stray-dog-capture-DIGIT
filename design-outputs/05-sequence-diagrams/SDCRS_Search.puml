@@ -1,0 +1,38 @@
+@startuml SDCRS_Search
+title Stray Dog Reports - Search Reports Flow
+
+participant "ReportUI" as UI
+participant "Gateway" as GW
+participant "User" as US
+participant "SDCRSService" as SS
+database "PostgreSQL" as DB
+
+UI -> GW: 1 Call Report _search API with search criteria\n& auth token.
+GW -> US: 2 Validate auth token in the request payload
+US --> GW: 3 User info
+
+alt "Token valid"
+    GW -> GW: 4 Enrich UserInfo in request payload
+    GW -> SS: 5 Route request to relevant service
+else "Token expired or invalid"
+    GW --> UI: 6 401 Unauthorized
+end
+
+SS -> SS: 7 Validate request payload (business logic)\nto ensure data integrity
+
+alt "Invalid Search Params"
+    SS --> UI: 8 400 Invalid Search
+end
+
+SS -> SS: 9 Retrieve user info from request\npayload & prep for query to DB
+
+SS -> SS: 10 Apply role-based filtering:\n- TEACHER: own reports only\n- VERIFIER: reports in PENDING_VERIFICATION\n- MC_OFFICER: assigned reports\n- MC_SUPERVISOR: reports in ward/district
+
+SS -> DB: 11 Query database with search criteria\n(status, reporterId, assignedTo, locality, dateRange)
+DB --> SS: 12 rows
+
+SS -> SS: 13 Format & prep response payload\n(apply pagination, sort by createdTime DESC)
+
+SS --> UI: 14 Return responses as a list
+
+@enduml

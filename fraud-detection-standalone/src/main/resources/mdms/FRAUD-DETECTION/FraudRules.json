@@ -1,0 +1,830 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "FRAUD-DETECTION",
+  "FraudRules": [
+    {
+      "id": "STD-001",
+      "code": "MISSING_GPS",
+      "name": "Missing GPS Coordinates",
+      "description": "Application evidence lacks GPS coordinates",
+      "category": "DQ",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS", "PGR", "TL"],
+      "condition": {
+        "type": "NULL_CHECK",
+        "field": "evidences[*].metadata.gpsLatitude"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyApplicant": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "STD-002",
+      "code": "GPS_OUTSIDE_BOUNDARY",
+      "name": "GPS Outside Tenant Boundary",
+      "description": "GPS coordinates are outside the tenant jurisdiction",
+      "category": "LOC",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS", "PGR"],
+      "condition": {
+        "type": "GEO_BOUNDARY",
+        "field": "locationData",
+        "boundaryType": "TENANT"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": true,
+        "rejectionReason": "LOC_OUTSIDE_BOUNDARY",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "STD-003",
+      "code": "HIGH_VELOCITY",
+      "name": "High Submission Velocity",
+      "description": "User submitted too many applications in short time",
+      "category": "VEL",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "VELOCITY",
+        "field": "applicantId",
+        "threshold": 5,
+        "windowHours": 1
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "cooldownMinutes": 60
+      }
+    },
+    {
+      "id": "STD-004",
+      "code": "STALE_TIMESTAMP",
+      "name": "Stale Evidence Timestamp",
+      "description": "Evidence timestamp is older than allowed threshold",
+      "category": "TMP",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "TIMESTAMP_AGE",
+        "field": "evidences[*].metadata.timestamp",
+        "maxAgeHours": 48
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": true,
+        "rejectionReason": "STALE_EVIDENCE"
+      }
+    },
+    {
+      "id": "STD-005",
+      "code": "EXACT_DUPLICATE",
+      "name": "Exact Duplicate Submission",
+      "description": "Content hash matches an existing submission exactly",
+      "category": "DUP",
+      "severity": "CRITICAL",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS", "PGR"],
+      "condition": {
+        "type": "HASH_MATCH",
+        "field": "contentHash",
+        "algorithm": "SHA256",
+        "threshold": 1.0
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "DUPLICATE_SUBMISSION"
+      }
+    },
+    {
+      "id": "STD-006",
+      "code": "NEAR_DUPLICATE",
+      "name": "Near-Duplicate Submission",
+      "description": "Image is highly similar to a recent submission",
+      "category": "DUP",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "IMAGE_SIMILARITY",
+        "field": "evidences[purpose=DOG_PHOTO].fileStoreId",
+        "algorithm": "pHash",
+        "threshold": 0.90,
+        "lookbackDays": 7
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "linkToOriginal": true
+      }
+    },
+    {
+      "id": "STD-007",
+      "code": "RAPID_FIRE",
+      "name": "Rapid Fire Submissions",
+      "description": "Submissions made less than minimum interval apart",
+      "category": "VEL",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "INTERVAL",
+        "field": "applicantId",
+        "minIntervalMinutes": 5
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false
+      }
+    },
+    {
+      "id": "STD-008",
+      "code": "DEVICE_SHARING",
+      "name": "Device Used by Multiple Users",
+      "description": "Same device ID used by different user accounts",
+      "category": "COL",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "DEVICE_SHARING",
+        "field": "evidences[*].metadata.deviceId",
+        "minUniqueUsers": 2,
+        "windowDays": 7
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true
+      }
+    },
+    {
+      "id": "STD-009",
+      "code": "LOCATION_CLUSTERING",
+      "name": "Unusual Location Clustering",
+      "description": "Multiple submissions clustered in small geographic area",
+      "category": "COL",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "GEO_CLUSTER",
+        "field": "locationData",
+        "radiusMeters": 50,
+        "windowHours": 24,
+        "minCount": 5
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false
+      }
+    },
+    {
+      "id": "STD-010",
+      "code": "EXIF_STRIPPED",
+      "name": "EXIF Metadata Stripped",
+      "description": "Photo metadata intentionally removed",
+      "category": "EVD",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "applicableModules": ["SDCRS"],
+      "condition": {
+        "type": "METADATA_CHECK",
+        "field": "evidences[*].metadata.exifPresent",
+        "expectedValue": true
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true
+      }
+    },
+    {
+      "id": "SDCRS-001",
+      "code": "DOG_PHOTO_SELFIE_TIME_GAP",
+      "name": "Photo-Selfie Time Gap Too Large",
+      "description": "Dog photo and selfie timestamps differ by more than 10 minutes",
+      "category": "TMP",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "TIMESTAMP_DIFF",
+        "field1": "evidences[purpose=DOG_PHOTO].metadata.timestamp",
+        "field2": "evidences[purpose=SELFIE].metadata.timestamp",
+        "maxDiffMinutes": 10
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "SDCRS-002",
+      "code": "AGGRESSIVE_DOG_NO_PHOTO",
+      "name": "Aggressive Dog Without Adequate Evidence",
+      "description": "Dog marked as aggressive but photo quality/angle is poor",
+      "category": "EVD",
+      "severity": "LOW",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#additionalData != null && #additionalData['isAggressive'] == true && (#additionalData['imageQualityScore'] == null || #additionalData['imageQualityScore'] < 0.5)"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false
+      }
+    },
+    {
+      "id": "SDCRS-013",
+      "code": "PACK_SIZE_SUSPICIOUSLY_LARGE",
+      "name": "Suspiciously Large Pack Size Reported",
+      "description": "Teacher reported an unusually large pack of dogs (>10)",
+      "category": "EVD",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#additionalData != null && #additionalData['dogCount'] != null && #additionalData['dogCount'] > 10"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "SDCRS-014",
+      "code": "INCOMPLETE_EVIDENCE_SET",
+      "name": "Incomplete Evidence Submitted",
+      "description": "Submission missing required evidence types (dog photo or selfie)",
+      "category": "DQ",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#evidences == null || #evidenceCount < 2"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "SDCRS-015",
+      "code": "LOCATION_IN_RESTRICTED_AREA",
+      "name": "Location in Restricted Zone",
+      "description": "Report location falls within a restricted zone (airport, military, etc.)",
+      "category": "LOC",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#latitude != null && #longitude != null && (#latitude > 28.55 && #latitude < 28.57 && #longitude > 77.08 && #longitude < 77.12)"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true,
+        "escalateToRole": "DISTRICT_ADMIN"
+      }
+    },
+    {
+      "id": "SDCRS-016",
+      "code": "HIGH_VALUE_REPORTER",
+      "name": "High Volume Reporter Flag",
+      "description": "Reporter has submitted more than 50 reports in their lifetime",
+      "category": "VEL",
+      "severity": "LOW",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#additionalData != null && #additionalData['lifetimeReportCount'] != null && #additionalData['lifetimeReportCount'] > 50"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "SDCRS-017",
+      "code": "SUSPICIOUS_DEVICE_MODEL",
+      "name": "Suspicious Device Model",
+      "description": "Report submitted from emulator or suspicious device",
+      "category": "COL",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "CUSTOM",
+        "expression": "#deviceId != null && (#deviceId.contains('emulator') || #deviceId.contains('sdk') || #deviceId.contains('generic'))"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true,
+        "escalateToRole": "DISTRICT_ADMIN"
+      }
+    },
+    {
+      "id": "SDCRS-003",
+      "code": "GPS_PHOTO_SELFIE_MISMATCH",
+      "name": "GPS Mismatch Between Photos",
+      "description": "Dog photo GPS and selfie GPS are too far apart",
+      "category": "LOC",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "GEO_DISTANCE",
+        "point1": "evidences[purpose=DOG_PHOTO].metadata.gps",
+        "point2": "evidences[purpose=SELFIE].metadata.gps",
+        "maxDistanceMeters": 500
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": false
+      }
+    },
+    {
+      "id": "SDCRS-004",
+      "code": "MULTIPLE_DOGS_SAME_LOCATION",
+      "name": "Multiple Reports from Same Location",
+      "description": "Multiple dog reports from nearly identical GPS within 24 hours",
+      "category": "DUP",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "GEO_CLUSTER",
+        "field": "locationData",
+        "radiusMeters": 50,
+        "windowHours": 24,
+        "minCount": 3
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "linkRelated": true
+      }
+    },
+    {
+      "id": "SDCRS-005",
+      "code": "SCHOOL_HOURS_VIOLATION",
+      "name": "Report Outside School Hours",
+      "description": "Teacher submitting report outside typical school hours",
+      "category": "TMP",
+      "severity": "LOW",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "TIME_WINDOW",
+        "field": "createdTime",
+        "allowedWindows": [
+          { "start": "07:00", "end": "18:00", "days": ["MON", "TUE", "WED", "THU", "FRI"] },
+          { "start": "08:00", "end": "14:00", "days": ["SAT"] }
+        ],
+        "timezone": "Asia/Kolkata"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false
+      }
+    },
+    {
+      "id": "SDCRS-006",
+      "code": "MONTHLY_CAP_APPROACHING",
+      "name": "Monthly Submission Cap Warning",
+      "description": "Teacher approaching monthly submission limit",
+      "category": "VEL",
+      "severity": "LOW",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "AGGREGATE_COUNT",
+        "field": "applicantId",
+        "periodDays": 30,
+        "threshold": 15,
+        "capValue": 20
+      },
+      "action": {
+        "type": "NOTIFY",
+        "notifyApplicant": true,
+        "autoReject": false
+      }
+    },
+    {
+      "id": "SDCRS-007",
+      "code": "DEVICE_SHARED_MULTIPLE_TEACHERS",
+      "name": "Device Used by Multiple Teachers",
+      "description": "Same device ID used by different teacher accounts",
+      "category": "COL",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "DEVICE_SHARING",
+        "field": "evidences[*].metadata.deviceId",
+        "minUniqueUsers": 2,
+        "windowDays": 7
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true,
+        "escalateToRole": "DISTRICT_ADMIN"
+      }
+    },
+    {
+      "id": "SDCRS-008",
+      "code": "DOG_PHOTO_DUPLICATE_EXACT",
+      "name": "Exact Duplicate Dog Photo",
+      "description": "Dog photo is byte-for-byte identical to previous submission",
+      "category": "DUP",
+      "severity": "CRITICAL",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "HASH_MATCH",
+        "field": "evidences[purpose=DOG_PHOTO].fileStoreId",
+        "algorithm": "SHA256",
+        "threshold": 1.0,
+        "lookbackDays": 30
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "DUPLICATE_EVIDENCE",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "SDCRS-009",
+      "code": "DOG_PHOTO_SIMILAR",
+      "name": "Similar Dog Photo Found",
+      "description": "Dog photo is perceptually similar (>90%) to previous submission",
+      "category": "DUP",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "IMAGE_SIMILARITY",
+        "field": "evidences[purpose=DOG_PHOTO].fileStoreId",
+        "algorithm": "pHash",
+        "threshold": 0.90,
+        "lookbackDays": 7
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "linkToOriginal": true,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "SDCRS-010",
+      "code": "SELFIE_REUSE",
+      "name": "Selfie Reused Across Submissions",
+      "description": "Same selfie photo used in multiple submissions",
+      "category": "EVD",
+      "severity": "CRITICAL",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "HASH_MATCH",
+        "field": "evidences[purpose=SELFIE].fileStoreId",
+        "algorithm": "SHA256",
+        "threshold": 1.0,
+        "lookbackDays": 30,
+        "sameApplicantOnly": true
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "SELFIE_REUSED",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "SDCRS-011",
+      "code": "GPS_VELOCITY_IMPOSSIBLE",
+      "name": "Impossible GPS Velocity",
+      "description": "Location changed faster than physically possible between submissions",
+      "category": "LOC",
+      "severity": "HIGH",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "GPS_VELOCITY",
+        "field": "locationData",
+        "maxSpeedKmh": 120,
+        "minIntervalMinutes": 5
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true
+      }
+    },
+    {
+      "id": "SDCRS-012",
+      "code": "DAILY_LIMIT_EXCEEDED",
+      "name": "Daily Submission Limit Exceeded",
+      "description": "Teacher exceeded maximum daily submission limit",
+      "category": "VEL",
+      "severity": "MEDIUM",
+      "ruleType": "INTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "AGGREGATE_COUNT",
+        "field": "applicantId",
+        "periodDays": 1,
+        "threshold": 5
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "DAILY_LIMIT_EXCEEDED",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "EXT-001",
+      "code": "NO_DOG_IN_PHOTO",
+      "name": "No Dog Detected in Photo",
+      "description": "Object detection service found no dog in the submitted photo",
+      "category": "EVD",
+      "severity": "CRITICAL",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "OBJECT_DETECTOR",
+        "checkExpression": "predictions.dogCount == 0",
+        "minConfidence": 0.8
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "NO_DOG_DETECTED",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "EXT-002",
+      "code": "DOG_COUNT_MISMATCH",
+      "name": "Dog Count Mismatch",
+      "description": "Reported dog count doesn't match detected count from image analysis",
+      "category": "EVD",
+      "severity": "MEDIUM",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "OBJECT_DETECTOR",
+        "checkExpression": "abs(predictions.dogCount - additionalData.dogCount) > 1",
+        "minConfidence": 0.7
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "EXT-003",
+      "code": "SELFIE_FACE_MISMATCH",
+      "name": "Selfie Doesn't Match Profile Photo",
+      "description": "Face recognition service found selfie doesn't match registered user photo",
+      "category": "IDN",
+      "severity": "CRITICAL",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "FACE_MATCHER",
+        "checkExpression": "predictions.match == false && predictions.similarity < 0.7",
+        "minConfidence": 0.9
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true,
+        "escalateToRole": "DISTRICT_ADMIN"
+      }
+    },
+    {
+      "id": "EXT-004",
+      "code": "LOW_IMAGE_QUALITY",
+      "name": "Poor Image Quality",
+      "description": "Image quality analysis found photo is blurry, poorly lit, or low resolution",
+      "category": "EVD",
+      "severity": "LOW",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "IMAGE_QUALITY_ANALYZER",
+        "checkExpression": "predictions.overallQuality < 0.4 || predictions.isAcceptable == false"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyApplicant": true,
+        "message": "Please submit a clearer photo"
+      }
+    },
+    {
+      "id": "EXT-005",
+      "code": "ANOMALOUS_SUBMISSION_PATTERN",
+      "name": "Anomalous Submission Detected",
+      "description": "Anomaly detection service flagged unusual submission pattern",
+      "category": "VEL",
+      "severity": "HIGH",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "ANOMALY_DETECTOR",
+        "checkExpression": "predictions.isAnomaly == true && predictions.anomalyScore > 0.85"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "escalate": true
+      }
+    },
+    {
+      "id": "EXT-006",
+      "code": "PHOTO_NOT_DOG_RELATED",
+      "name": "Photo Contains No Animals",
+      "description": "Object detection found no dogs or animals in the submitted photo",
+      "category": "EVD",
+      "severity": "HIGH",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "OBJECT_DETECTOR",
+        "checkExpression": "predictions.dogCount == 0 && predictions.catCount == 0",
+        "minConfidence": 0.85
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "EXT-007",
+      "code": "GPS_SPOOFING_DETECTED",
+      "name": "GPS Spoofing Detected",
+      "description": "GPS validation service detected signs of location manipulation",
+      "category": "LOC",
+      "severity": "CRITICAL",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "GPS_SPOOFING_DETECTOR",
+        "checkExpression": "predictions.isSpoofed == true && predictions.spoofingConfidence > 0.9"
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "GPS_SPOOFING_DETECTED",
+        "notifyApplicant": true,
+        "escalate": true,
+        "escalateToRole": "STATE_ADMIN"
+      }
+    },
+    {
+      "id": "EXT-008",
+      "code": "SUSPICIOUS_GPS_PATTERN",
+      "name": "Suspicious GPS Pattern",
+      "description": "GPS validation found suspicious patterns suggesting possible manipulation",
+      "category": "LOC",
+      "severity": "HIGH",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "GPS_SPOOFING_DETECTOR",
+        "checkExpression": "predictions.isSpoofed == true && predictions.spoofingConfidence > 0.6 && predictions.spoofingConfidence <= 0.9"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true,
+        "escalate": true,
+        "escalateToRole": "DISTRICT_ADMIN"
+      }
+    },
+    {
+      "id": "EXT-009",
+      "code": "NO_FACE_IN_SELFIE",
+      "name": "No Face Detected in Selfie",
+      "description": "Face detection service found no face in the selfie photo",
+      "category": "EVD",
+      "severity": "CRITICAL",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "FACE_MATCHER",
+        "checkExpression": "predictions.facesDetected == 0",
+        "minConfidence": 0.9
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "INVALID_SELFIE",
+        "notifyApplicant": true
+      }
+    },
+    {
+      "id": "EXT-010",
+      "code": "MULTIPLE_FACES_IN_SELFIE",
+      "name": "Multiple Faces in Selfie",
+      "description": "Face detection found more than one face in selfie photo",
+      "category": "EVD",
+      "severity": "MEDIUM",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "FACE_MATCHER",
+        "checkExpression": "predictions.facesDetected > 1",
+        "minConfidence": 0.8
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    },
+    {
+      "id": "EXT-011",
+      "code": "EXTREMELY_BLURRY_IMAGE",
+      "name": "Extremely Blurry Image",
+      "description": "Image quality analysis found photo too blurry to process reliably",
+      "category": "EVD",
+      "severity": "HIGH",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "IMAGE_QUALITY_ANALYZER",
+        "checkExpression": "predictions.blurScore < 0.2"
+      },
+      "action": {
+        "type": "AUTO_REJECT",
+        "rejectionReason": "IMAGE_TOO_BLURRY",
+        "notifyApplicant": true,
+        "message": "Please submit a clearer, focused photo"
+      }
+    },
+    {
+      "id": "EXT-012",
+      "code": "NIGHTTIME_PHOTO_NO_FLASH",
+      "name": "Nighttime Photo Without Proper Lighting",
+      "description": "Image analysis found photo taken at night is too dark to identify the dog",
+      "category": "EVD",
+      "severity": "MEDIUM",
+      "ruleType": "EXTERNAL",
+      "enabled": true,
+      "condition": {
+        "type": "EXTERNAL_VALIDATOR",
+        "validatorId": "IMAGE_QUALITY_ANALYZER",
+        "checkExpression": "predictions.exposureScore < 0.3 && metadata.timestamp.hour >= 18 || metadata.timestamp.hour <= 6"
+      },
+      "action": {
+        "type": "FLAG",
+        "autoReject": false,
+        "notifyVerifier": true
+      }
+    }
+  ]
+}

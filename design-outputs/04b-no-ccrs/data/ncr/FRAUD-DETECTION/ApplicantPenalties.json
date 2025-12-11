@@ -1,0 +1,89 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "FRAUD-DETECTION",
+  "ApplicantPenalties": [
+    {
+      "level": 1,
+      "code": "WARNING",
+      "name": "Warning",
+      "description": "First offense - formal warning issued",
+      "triggerCondition": {
+        "confirmedFrauds": 1
+      },
+      "action": {
+        "type": "NOTIFY_WARNING",
+        "notifyApplicant": true,
+        "notifyAdmin": false
+      },
+      "duration": null,
+      "canAppeal": false
+    },
+    {
+      "level": 2,
+      "code": "COOLDOWN",
+      "name": "Submission Cooldown",
+      "description": "Temporary block on new submissions",
+      "triggerCondition": {
+        "confirmedFrauds": 2,
+        "withinDays": 30
+      },
+      "action": {
+        "type": "SUBMISSION_BLOCK",
+        "notifyApplicant": true,
+        "notifyAdmin": true
+      },
+      "duration": {
+        "days": 7
+      },
+      "canAppeal": true,
+      "appealToRole": "DISTRICT_ADMIN"
+    },
+    {
+      "level": 3,
+      "code": "SUSPENSION",
+      "name": "Account Suspension",
+      "description": "Account suspended from all activities",
+      "triggerCondition": {
+        "confirmedFrauds": 3,
+        "withinDays": 90
+      },
+      "action": {
+        "type": "ACCOUNT_SUSPEND",
+        "notifyApplicant": true,
+        "notifyAdmin": true,
+        "freezePayouts": true
+      },
+      "duration": {
+        "days": 30
+      },
+      "canAppeal": true,
+      "appealToRole": "STATE_ADMIN"
+    },
+    {
+      "level": 4,
+      "code": "BAN",
+      "name": "Permanent Ban",
+      "description": "Permanent removal from the program",
+      "triggerCondition": {
+        "confirmedFrauds": 5
+      },
+      "action": {
+        "type": "PERMANENT_BAN",
+        "notifyApplicant": true,
+        "notifyAdmin": true,
+        "freezePayouts": true,
+        "reportToAuthority": true
+      },
+      "duration": null,
+      "canAppeal": true,
+      "appealToRole": "STATE_ADMIN",
+      "appealWindow": {
+        "days": 30
+      }
+    }
+  ],
+  "penaltyEscalation": {
+    "resetAfterDays": 365,
+    "goodBehaviorReductionDays": 90
+  }
+}

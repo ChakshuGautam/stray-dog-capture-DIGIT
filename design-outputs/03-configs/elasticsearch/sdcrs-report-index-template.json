@@ -1,0 +1,80 @@
+{
+  "index_patterns": ["sdcrs-report-index*"],
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1,
+    "index.mapping.total_fields.limit": 1500,
+    "analysis": {
+      "normalizer": {
+        "lowercase_normalizer": {
+          "type": "custom",
+          "filter": ["lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "tenantId": { "type": "keyword" },
+      "reportNumber": { "type": "keyword" },
+      "trackingId": { "type": "keyword" },
+      "reportType": { "type": "keyword" },
+      "status": { "type": "keyword" },
+
+      "reporterId": { "type": "keyword" },
+      "reporterName": {
+        "type": "text",
+        "fields": {
+          "keyword": { "type": "keyword", "normalizer": "lowercase_normalizer" }
+        }
+      },
+
+      "latitude": { "type": "float" },
+      "longitude": { "type": "float" },
+      "location": { "type": "geo_point" },
+      "localityCode": { "type": "keyword" },
+      "wardCode": { "type": "keyword" },
+      "wardName": { "type": "keyword" },
+      "districtCode": { "type": "keyword" },
+      "districtName": { "type": "keyword" },
+
+      "dogCount": { "type": "integer" },
+      "isAggressive": { "type": "boolean" },
+
+      "verifierId": { "type": "keyword" },
+      "verifierName": { "type": "text" },
+      "verifiedTime": { "type": "date", "format": "epoch_millis" },
+
+      "assignedMcId": { "type": "keyword" },
+      "assignedMcName": { "type": "text" },
+      "assignedTime": { "type": "date", "format": "epoch_millis" },
+      "fieldVisitStartTime": { "type": "date", "format": "epoch_millis" },
+
+      "resolutionType": { "type": "keyword" },
+      "resolutionTime": { "type": "date", "format": "epoch_millis" },
+
+      "payoutStatus": { "type": "keyword" },
+      "payoutAmount": { "type": "float" },
+      "payoutTime": { "type": "date", "format": "epoch_millis" },
+
+      "slaBreached": { "type": "boolean" },
+      "slaBreachReason": { "type": "keyword" },
+
+      "fraudFlags": { "type": "keyword" },
+      "penaltyType": { "type": "keyword" },
+
+      "rejectionReason": { "type": "keyword" },
+
+      "createdBy": { "type": "keyword" },
+      "createdTime": { "type": "date", "format": "epoch_millis" },
+      "lastModifiedBy": { "type": "keyword" },
+      "lastModifiedTime": { "type": "date", "format": "epoch_millis" },
+
+      "timeToVerification": { "type": "long" },
+      "timeToAssignment": { "type": "long" },
+      "timeToFieldVisit": { "type": "long" },
+      "timeToResolution": { "type": "long" }
+    }
+  }
+}

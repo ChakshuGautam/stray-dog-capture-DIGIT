@@ -1,0 +1,78 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 5,
+    "description": "SDCRS updates report to PAYOUT_FAILED",
+    "sender": "SDCRS Service (Kafka Consumer)",
+    "receiver": "Workflow Service → Persister",
+    "trigger": "Payout failure callback received",
+    "previousPacket": "04-payout-failed-callback.json",
+    "nextPacket": "06-payout-failed-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - PAYOUT_FAILED action"
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734188445000,
+        "action": "_update",
+        "userInfo": {
+          "uuid": "system-uuid",
+          "userName": "SYSTEM",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "PAYOUT_FAILED",
+            "comment": "UPI payout failed: Invalid beneficiary VPA"
+          },
+          "payoutDetails": {
+            "payoutId": "pay-uuid-001-abcd-efgh-ijkl",
+            "razorpayPayoutId": "pout_NhY2MnOpKc4n9I",
+            "payoutStatus": "FAILED",
+            "payoutAmount": 500,
+            "failureReason": "Invalid beneficiary VPA",
+            "retryCount": 0,
+            "maxRetries": 3,
+            "canRetry": true
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "PAYOUT_FAILED",
+          "payoutDetails": {
+            "payoutStatus": "FAILED",
+            "failureReason": "Invalid beneficiary VPA",
+            "canRetry": true
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PAYOUT_PENDING",
+    "action": "PAYOUT_FAILED",
+    "nextState": "PAYOUT_FAILED",
+    "isTerminal": false,
+    "allowedRoles": ["SYSTEM"]
+  }
+}

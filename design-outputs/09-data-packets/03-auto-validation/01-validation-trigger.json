@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 1,
+    "description": "Kafka message triggers async auto-validation process",
+    "sender": "SDCRS Service",
+    "receiver": "SDCRS Validator (async consumer)",
+    "trigger": "Report created with status PENDING_VALIDATION",
+    "previousPacket": "../02-report-submission/10-workflow-transition-request.json",
+    "nextPacket": "02-gps-validation.json",
+    "verified": false,
+    "assumption": "Async validation triggered via Kafka topic"
+  },
+  "kafkaMessage": {
+    "topic": "sdcrs-validation-request",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "tenantId": "dj.djibouti-ville",
+      "reporterId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+      "validationChecks": [
+        "GPS_LOCATION",
+        "TIMESTAMP_FRESHNESS",
+        "BOUNDARY_CHECK",
+        "DUPLICATE_IMAGE",
+        "FRAUD_SCORE"
+      ],
+      "evidence": [
+        {
+          "id": "ev-uuid-001",
+          "evidenceType": "DOG_PHOTO",
+          "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+          "captureTime": 1734176145000,
+          "latitude": 11.5886,
+          "longitude": 43.1456
+        }
+      ],
+      "location": {
+        "latitude": 11.5886,
+        "longitude": 43.1456,
+        "gpsLatitude": 11.5887,
+        "gpsLongitude": 43.1455,
+        "gpsTimestamp": 1734176145000,
+        "districtCode": "DJ01"
+      }
+    },
+    "timestamp": 1734176203000
+  }
+}

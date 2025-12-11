@@ -1,0 +1,108 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+  "roleactions": [
+    {
+      "rolecode": "CITIZEN",
+      "actionid": 2001,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "CITIZEN",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "TEACHER",
+      "actionid": 2001,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "TEACHER",
+      "actionid": 2002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "TEACHER",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 2002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "VERIFIER",
+      "actionid": 2004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 2002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 2002,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "actionid": 2004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "actionid": 2004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "ncr"
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "actionid": 2004,
+      "actioncode": "",
+      "tenantId": "ncr"
+    }
+  ]
+}

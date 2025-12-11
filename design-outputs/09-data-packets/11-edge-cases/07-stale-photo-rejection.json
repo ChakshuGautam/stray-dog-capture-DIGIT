@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 7,
+    "description": "Report rejected because photo timestamp is older than 48 hours",
+    "sender": "Auto-Validation Service",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Photo EXIF timestamp validation fails",
+    "previousPacket": "../03-auto-validation/02-timestamp-check.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "TimestampValidation.java"
+  },
+  "context": {
+    "photoTimestamp": 1733875200000,
+    "submissionTimestamp": 1734176201000,
+    "ageInHours": 83.6,
+    "maxAllowedAgeHours": 48
+  },
+  "validationResult": {
+    "check": "TIMESTAMP_VALIDATION",
+    "passed": false,
+    "reason": "Photo is 83.6 hours old, exceeds maximum of 48 hours"
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-013-abcd",
+          "workflow": {
+            "action": "AUTO_VALIDATE_FAIL",
+            "comment": "Photo timestamp too old"
+          },
+          "rejectionReason": "STALE_PHOTO",
+          "rejectionRemarks": "Photo was taken more than 48 hours ago. Please submit recent photos only.",
+          "validationDetails": {
+            "timestampCheck": {
+              "passed": false,
+              "photoAge": "83.6 hours",
+              "maxAllowed": "48 hours"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-013-abcd",
+          "status": "AUTO_REJECTED",
+          "rejectionReason": "STALE_PHOTO"
+        }
+      ]
+    }
+  },
+  "teacherNotification": {
+    "sms": "Your stray dog report has been rejected. Reason: The photo is older than 48 hours. Please take a fresh photo of the current situation and resubmit."
+  }
+}

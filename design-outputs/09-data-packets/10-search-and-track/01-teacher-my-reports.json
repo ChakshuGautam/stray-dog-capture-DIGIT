@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "stage": "10-search-and-track",
+    "step": 1,
+    "description": "Teacher views their submitted reports in app",
+    "sender": "Teacher Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Teacher opens 'My Reports' tab",
+    "previousPacket": null,
+    "nextPacket": "02-teacher-report-detail.json",
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - reporterId filter"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer teacher-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000000,
+        "action": "_search",
+        "msgId": "20241214180000|en_IN",
+        "userInfo": {
+          "id": 24200,
+          "uuid": "teacher-uuid-001-abcd-efgh",
+          "userName": "T001",
+          "name": "Amina Hassan",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "TEACHER"}]
+        }
+      },
+      "searchCriteria": {
+        "tenantId": "dj.djibouti-ville",
+        "reporterId": "teacher-uuid-001-abcd-efgh",
+        "sortBy": "createdTime",
+        "sortOrder": "DESC",
+        "offset": 0,
+        "limit": 20
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "serviceType": "StrayDogAggressive",
+          "status": "RESOLVED",
+          "location": {
+            "locality": "Djibouti Centre",
+            "address": "Near Govt High School Main Gate"
+          },
+          "payoutDetails": {
+            "payoutStatus": "SUCCESS",
+            "payoutAmount": 500
+          },
+          "auditDetails": {
+            "createdTime": 1734176201000
+          }
+        },
+        {
+          "id": "dr-uuid-002-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000100",
+          "trackingId": "XYZ98765",
+          "serviceType": "StrayDogInjured",
+          "status": "IN_PROGRESS",
+          "location": {
+            "locality": "Boulaos",
+            "address": "Near Community Center"
+          },
+          "payoutDetails": null,
+          "auditDetails": {
+            "createdTime": 1734090000000
+          }
+        }
+      ],
+      "TotalCount": 2
+    }
+  }
+}

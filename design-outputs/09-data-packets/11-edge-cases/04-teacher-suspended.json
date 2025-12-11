@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 4,
+    "description": "Suspended teacher tries to submit report",
+    "sender": "Teacher Mobile App",
+    "receiver": "SDCRS Service",
+    "trigger": "Teacher with suspension penalty tries to create report",
+    "previousPacket": null,
+    "nextPacket": null,
+    "verified": false,
+    "assumption": "Penalty status checked during report creation"
+  },
+  "context": {
+    "teacherPenaltyStatus": {
+      "penaltyType": "SUSPENSION",
+      "suspendedAt": 1733961600000,
+      "suspendedUntil": 1734566400000,
+      "reason": "Multiple fraudulent reports detected",
+      "warningCount": 5
+    }
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_create",
+    "body": {
+      "RequestInfo": {
+        "userInfo": {
+          "uuid": "teacher-uuid-suspended-001",
+          "roles": [{"code": "TEACHER"}]
+        }
+      },
+      "DogReport": {
+        "tenantId": "dj.djibouti-ville",
+        "serviceType": "StrayDogStandard"
+      }
+    }
+  },
+  "response": {
+    "status": 403,
+    "body": {
+      "ResponseInfo": {
+        "status": "failed"
+      },
+      "Errors": [
+        {
+          "code": "SDCRS_TEACHER_SUSPENDED",
+          "message": "Your account has been temporarily suspended from submitting reports.",
+          "description": "Due to policy violations, your reporting privileges have been suspended.",
+          "params": {
+            "suspendedUntil": "2024-12-19T00:00:00Z",
+            "reason": "Multiple fraudulent reports detected",
+            "helpdesk": "8000-123-456"
+          }
+        }
+      ]
+    }
+  },
+  "penaltyEscalation": {
+    "_comment": "Penalty levels from MDMS ApplicantPenalties.json",
+    "levels": [
+      {"level": 1, "type": "WARNING", "trigger": "1-2 rejected reports"},
+      {"level": 2, "type": "COOLDOWN_24H", "trigger": "3 rejected reports"},
+      {"level": 3, "type": "SUSPENSION_7D", "trigger": "5 rejected reports"},
+      {"level": 4, "type": "BAN", "trigger": "10 rejected reports or fraud confirmed"}
+    ]
+  }
+}

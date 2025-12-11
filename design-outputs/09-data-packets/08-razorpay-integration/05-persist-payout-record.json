@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 5,
+    "description": "UPI Payout Adapter persists payout record via Kafka",
+    "sender": "UPI Payout Adapter",
+    "receiver": "DIGIT Persister Service → PostgreSQL",
+    "trigger": "Payout created in Razorpay (queued)",
+    "previousPacket": "04-payout-queued-response.json",
+    "nextPacket": "06-webhook-payout-processing.json",
+    "verified": true,
+    "source": "upi-adapter-persister-config.json, eg_upi_payout table"
+  },
+  "kafkaMessage": {
+    "topic": "upi-payout-persist",
+    "key": "pout_NhY2MnOpKc4n9I",
+    "value": {
+      "Payout": {
+        "id": "pay-uuid-001-abcd-efgh-ijkl",
+        "razorpayPayoutId": "pout_NhY2MnOpKc4n9I",
+        "razorpayContactId": "cont_NhY2KwLfKc4n7G",
+        "razorpayFundAccountId": "fa_NhY2LmVnKc4n8H",
+        "referenceId": "SDCRS-DR-DJ-2024-000123",
+        "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "tenantId": "dj.djibouti-ville",
+        "beneficiaryId": "teacher-uuid-001-abcd-efgh",
+        "beneficiaryName": "Amina Hassan",
+        "beneficiaryVpa": "9876543210@upi",
+        "amount": 500,
+        "currency": "INR",
+        "status": "QUEUED",
+        "mode": "UPI",
+        "purpose": "SDCRS_TEACHER_PAYOUT",
+        "utr": null,
+        "failureReason": null,
+        "retryCount": 0,
+        "maxRetries": 3,
+        "auditDetails": {
+          "createdBy": "system-uuid",
+          "createdTime": 1734188430000,
+          "lastModifiedBy": "system-uuid",
+          "lastModifiedTime": 1734188430000
+        }
+      }
+    }
+  },
+  "persisterConfig": {
+    "tableName": "eg_upi_payout",
+    "insertQuery": "INSERT INTO eg_upi_payout (id, razorpay_payout_id, razorpay_contact_id, razorpay_fund_account_id, reference_id, report_id, tenant_id, beneficiary_id, beneficiary_name, beneficiary_vpa, amount, currency, status, mode, purpose, utr, failure_reason, retry_count, max_retries, created_by, created_time, last_modified_by, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  }
+}

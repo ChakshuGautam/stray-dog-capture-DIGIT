@@ -1,0 +1,67 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 13,
+    "description": "Final app state after successful login - user navigated to dashboard",
+    "sender": "N/A (app internal state)",
+    "receiver": "N/A",
+    "trigger": "Login flow complete",
+    "previousPacket": "12-digit-token-response.json",
+    "nextPacket": "../02-report-submission/01-photo-capture.json",
+    "verified": false,
+    "assumption": "Mobile app state management structure"
+  },
+  "appState": {
+    "auth": {
+      "isAuthenticated": true,
+      "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refreshToken": "digit_refresh_x1y2z3a4b5c6d7e8f9g0",
+      "tokenExpiresAt": 1734203600000,
+      "loginMethod": "STATE_HRMS_SSO"
+    },
+    "user": {
+      "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+      "userName": "T12345",
+      "name": "Ravi Kumar",
+      "mobileNumber": "9876543210",
+      "emailId": "ravi@edu.gov.in",
+      "tenantId": "dj.djibouti-ville",
+      "roles": ["TEACHER"],
+      "school": {
+        "code": "DJGHS001",
+        "name": "Govt High School Djibouti"
+      },
+      "designation": "TGT"
+    },
+    "dashboard": {
+      "totalReports": 12,
+      "pendingPayouts": 2,
+      "totalEarnings": 4500,
+      "monthlyEarnings": 1500,
+      "monthlyCap": 5000,
+      "remainingCap": 3500
+    },
+    "navigation": {
+      "currentScreen": "Dashboard",
+      "availableActions": [
+        "REPORT_NEW_DOG",
+        "VIEW_MY_REPORTS",
+        "VIEW_EARNINGS",
+        "TRACK_REPORT",
+        "PROFILE",
+        "LOGOUT"
+      ]
+    }
+  },
+  "localStorage": {
+    "_comment": "Persisted across app restarts",
+    "tenantId": "dj.djibouti-ville",
+    "userId": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+    "userName": "T12345"
+  },
+  "secureStorage": {
+    "_comment": "iOS Keychain / Android Keystore - encrypted",
+    "accessToken": "[encrypted]",
+    "refreshToken": "[encrypted]"
+  }
+}

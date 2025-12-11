@@ -1,0 +1,42 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 3,
+    "description": "Validate photo timestamp is within acceptable window (48 hours)",
+    "sender": "SDCRS Validator",
+    "receiver": "N/A (internal calculation)",
+    "trigger": "GPS validation complete",
+    "previousPacket": "02-gps-validation.json",
+    "nextPacket": "04-boundary-validation.json",
+    "verified": false,
+    "assumption": "48-hour freshness window from PayoutConfig.json"
+  },
+  "timestampValidation": {
+    "photoCaptureTime": 1734176145000,
+    "submissionTime": 1734176201000,
+    "currentTime": 1734176203000,
+    "calculation": {
+      "captureToSubmitSeconds": 56,
+      "captureToNowSeconds": 58,
+      "maxAllowedSeconds": 172800,
+      "maxAllowedHours": 48
+    },
+    "result": {
+      "passed": true,
+      "reason": "Photo captured 56 seconds before submission"
+    }
+  },
+  "failureScenario": {
+    "_comment": "Photo is older than 48 hours",
+    "photoCaptureTime": 1733916145000,
+    "calculation": {
+      "captureToNowHours": 72,
+      "maxAllowedHours": 48
+    },
+    "result": {
+      "passed": false,
+      "reason": "Photo captured 72 hours ago, exceeds 48-hour limit"
+    },
+    "rejectionReason": "STALE_TIMESTAMP"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "stage": "07-payout-initiation",
+    "step": 2,
+    "description": "SDCRS Service updates workflow to PAYOUT_PENDING",
+    "sender": "SDCRS Service (System)",
+    "receiver": "Workflow Service",
+    "trigger": "Payout creation message sent to Kafka",
+    "previousPacket": "01-payout-trigger.json",
+    "nextPacket": "../08-razorpay-integration/01-create-contact.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - INITIATE_PAYOUT action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734188410000,
+        "action": "_update",
+        "msgId": "20241214155410|en_IN",
+        "userInfo": {
+          "id": 0,
+          "uuid": "system-uuid",
+          "userName": "SYSTEM",
+          "name": "System",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "INITIATE_PAYOUT",
+            "comment": "Payout initiated automatically after capture"
+          },
+          "payoutDetails": {
+            "payoutId": null,
+            "payoutStatus": "INITIATED",
+            "payoutAmount": 500,
+            "payoutInitiatedAt": 1734188410000
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "PAYOUT_PENDING",
+          "payoutDetails": {
+            "payoutStatus": "INITIATED",
+            "payoutAmount": 500,
+            "payoutInitiatedAt": 1734188410000
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "CAPTURED",
+    "action": "INITIATE_PAYOUT",
+    "nextState": "PAYOUT_PENDING",
+    "allowedRoles": ["SYSTEM"]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 2,
+    "description": "App extracts EXIF data and generates perceptual hash for duplicate detection",
+    "sender": "SDCRS Mobile App (local processing)",
+    "receiver": "N/A",
+    "trigger": "Photo captured successfully",
+    "previousPacket": "01-photo-capture.json",
+    "nextPacket": "03-selfie-capture.json",
+    "verified": true,
+    "source": "Evidence.java model - imageHash field (pHash, 64 chars max)"
+  },
+  "extractedEvidence": {
+    "evidenceType": "DOG_PHOTO",
+    "fileName": "IMG_20241214_123045.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 2456789,
+    "imageHash": "d4c3b2a1e5f6789012345678901234567890123456789012345678901234",
+    "captureTime": 1734176145000,
+    "latitude": 11.5886,
+    "longitude": 43.1456,
+    "deviceInfo": "Samsung SM-A525F"
+  },
+  "hashAlgorithm": {
+    "_comment": "Perceptual hash for image similarity detection",
+    "algorithm": "pHash",
+    "hashLength": 64,
+    "similarityThreshold": 0.90
+  }
+}

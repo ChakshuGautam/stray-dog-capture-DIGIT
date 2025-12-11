@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 7,
+    "description": "Razorpay webhook: payout.processed event (SUCCESS)",
+    "sender": "Razorpay X Webhook",
+    "receiver": "UPI Payout Adapter Webhook Endpoint",
+    "trigger": "UPI transfer completed successfully",
+    "previousPacket": "06-webhook-payout-processing.json",
+    "nextPacket": "../09-payout-completion/01-payout-success-callback.json",
+    "verified": true,
+    "source": "WebhookController.java, PayoutCallback.java"
+  },
+  "webhookRequest": {
+    "method": "POST",
+    "url": "https://sdcrs.dj.digit.org/upi-adapter/webhook/v1/razorpay",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Razorpay-Signature": "sha256_hmac_signature_here",
+      "X-Razorpay-Event-Id": "event_NhY2NpRsKc4n1K"
+    },
+    "body": {
+      "entity": "event",
+      "account_id": "acc_BFDpHKYQh2qhtW",
+      "event": "payout.processed",
+      "contains": ["payout"],
+      "payload": {
+        "payout": {
+          "entity": {
+            "id": "pout_NhY2MnOpKc4n9I",
+            "entity": "payout",
+            "fund_account_id": "fa_NhY2LmVnKc4n8H",
+            "amount": 50000,
+            "currency": "INR",
+            "notes": {
+              "report_id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+              "report_number": "DR-DJ-2024-000123",
+              "tenant_id": "dj.djibouti-ville"
+            },
+            "fees": 0,
+            "tax": 0,
+            "status": "processed",
+            "utr": "423456789012",
+            "mode": "UPI",
+            "purpose": "payout",
+            "reference_id": "SDCRS-DR-DJ-2024-000123",
+            "narration": "SDCRS Teacher Payout",
+            "failure_reason": null,
+            "created_at": 1734188430
+          }
+        }
+      },
+      "created_at": 1734188435
+    }
+  },
+  "utrNote": {
+    "_comment": "UTR (Unique Transaction Reference) confirms successful UPI transfer",
+    "utr": "423456789012",
+    "meaning": "Money has been credited to teacher's UPI account"
+  }
+}

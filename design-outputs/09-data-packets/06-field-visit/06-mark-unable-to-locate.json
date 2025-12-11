@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "stage": "06-field-visit",
+    "step": 6,
+    "description": "MC Officer marks dog as unable to locate (no payout)",
+    "sender": "MC Officer Mobile App",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Officer cannot find dog at reported location",
+    "previousPacket": "04-field-visit-in-progress.json",
+    "nextPacket": "07-unable-to-locate-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - MARK_UNABLE_TO_LOCATE action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer officer-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734188400000,
+        "action": "_update",
+        "msgId": "20241214155400|en_IN",
+        "userInfo": {
+          "id": 24500,
+          "uuid": "mco-uuid-001",
+          "userName": "MCO001",
+          "name": "Ibrahim Ali",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_OFFICER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "MARK_UNABLE_TO_LOCATE",
+            "comment": "Dog not found at location after 30 min search"
+          },
+          "resolutionType": "UNABLE_TO_LOCATE",
+          "resolutionRemarks": "Searched the area for 30 minutes. Spoke with local shopkeepers. Dog may have moved to different location.",
+          "unableToLocateReason": "DOG_MOVED",
+          "fieldVisitCompletedAt": 1734188400000,
+          "fieldVisitLocation": {
+            "_comment": "Officer's location when marking unable to locate",
+            "latitude": 11.5886,
+            "longitude": 43.1456
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "UNABLE_TO_LOCATE",
+          "resolutionType": "UNABLE_TO_LOCATE",
+          "payoutEligible": false,
+          "fieldVisitCompletedAt": 1734188400000
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "IN_PROGRESS",
+    "action": "MARK_UNABLE_TO_LOCATE",
+    "nextState": "UNABLE_TO_LOCATE",
+    "isTerminal": true,
+    "allowedRoles": ["MC_OFFICER"]
+  },
+  "unableToLocateReasons": {
+    "_comment": "MDMS-defined reasons",
+    "DOG_MOVED": "Dog appears to have moved to different location",
+    "INCORRECT_LOCATION": "Location details provided were inaccurate",
+    "DOG_ALREADY_CAPTURED": "Dog may have been captured by others",
+    "SEARCH_TIMEOUT": "Exceeded maximum search time"
+  }
+}

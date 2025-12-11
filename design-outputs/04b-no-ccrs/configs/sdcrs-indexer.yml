@@ -1,0 +1,68 @@
+ServiceMaps:
+  serviceName: SDCRS Indexer
+  mappings:
+    - version: 1.0
+      name: sdcrs-report-indexer
+      fromTopic: sdcrs-report-index
+      isTransaction: true
+      typeMap:
+        - index: sdcrs-report
+          type: general
+      customJsonMapping:
+        indexMapping: |
+          {
+            "settings": {
+              "number_of_shards": 3,
+              "number_of_replicas": 1
+            },
+            "mappings": {
+              "properties": {
+                "id": { "type": "keyword" },
+                "tenantId": { "type": "keyword" },
+                "reportNumber": { "type": "keyword" },
+                "serviceCode": { "type": "keyword" },
+                "description": { "type": "text" },
+                "status": { "type": "keyword" },
+                "reporter": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "keyword" },
+                    "name": { "type": "text" },
+                    "phone": { "type": "keyword" },
+                    "type": { "type": "keyword" },
+                    "schoolCode": { "type": "keyword" }
+                  }
+                },
+                "location": { "type": "geo_point" },
+                "address": { "type": "text" },
+                "landmark": { "type": "text" },
+                "localityCode": { "type": "keyword" },
+                "wardCode": { "type": "keyword" },
+                "districtCode": { "type": "keyword" },
+                "dogDetails": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "isAggressive": { "type": "boolean" },
+                    "description": { "type": "text" }
+                  }
+                },
+                "assignedOfficerId": { "type": "keyword" },
+                "assignedOfficerName": { "type": "text" },
+                "resolutionType": { "type": "keyword" },
+                "payoutEligible": { "type": "boolean" },
+                "payoutAmount": { "type": "float" },
+                "payoutStatus": { "type": "keyword" },
+                "rejectionReason": { "type": "keyword" },
+                "createdTime": { "type": "date", "format": "epoch_millis" },
+                "lastModifiedTime": { "type": "date", "format": "epoch_millis" }
+              }
+            }
+          }
+        fieldMaps:
+          - inJsonPath: $.DogReport
+            outJsonPath: $.Data
+          - inJsonPath: $.DogReport.location
+            outJsonPath: $.Data.location
+            transform: |
+              {"lat": $.latitude, "lon": $.longitude}

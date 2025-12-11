@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 9,
+    "description": "egov-user returns empty array (first-time login) or existing user",
+    "sender": "egov-user Service",
+    "receiver": "SSO Adapter Service",
+    "trigger": "Response to user search",
+    "previousPacket": "08-digit-user-search-request.json",
+    "nextPacket": "10-digit-user-create-request.json (if new) or 11-digit-user-update-request.json (if exists)",
+    "verified": true,
+    "source": "DIGIT egov-user service API response"
+  },
+  "responseScenarioA": {
+    "_comment": "User NOT found (first-time login)",
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000500,
+        "resMsgId": "res-msg-001",
+        "msgId": "20241214120000|en_IN",
+        "status": "successful"
+      },
+      "user": []
+    }
+  },
+  "responseScenarioB": {
+    "_comment": "User found (returning user)",
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000500,
+        "resMsgId": "res-msg-001",
+        "msgId": "20241214120000|en_IN",
+        "status": "successful"
+      },
+      "user": [
+        {
+          "id": 24226,
+          "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "userName": "T12345",
+          "name": "Ravi Kumar",
+          "mobileNumber": "9876543210",
+          "emailId": "ravi@edu.gov.in",
+          "type": "EMPLOYEE",
+          "tenantId": "dj.djibouti-ville",
+          "active": true,
+          "roles": [
+            {
+              "code": "TEACHER",
+              "name": "Teacher",
+              "tenantId": "dj.djibouti-ville"
+            }
+          ],
+          "additionalDetails": {
+            "hrmsEmpId": "T12345",
+            "upiId": "ravi@okaxis",
+            "schoolCode": "DJGHS001",
+            "schoolName": "Govt High School Djibouti",
+            "designation": "TGT",
+            "ssoProvider": "STATE_HRMS",
+            "lastHrmsSync": "2024-12-10T10:30:00Z"
+          },
+          "createdBy": "system",
+          "createdDate": 1702000000000,
+          "lastModifiedBy": "system",
+          "lastModifiedDate": 1734100000000
+        }
+      ]
+    }
+  }
+}

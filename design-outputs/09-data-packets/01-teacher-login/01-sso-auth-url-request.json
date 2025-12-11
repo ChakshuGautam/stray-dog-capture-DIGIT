@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 1,
+    "description": "Mobile app requests OAuth2 authorization URL from backend",
+    "sender": "SDCRS Mobile App",
+    "receiver": "SSO Adapter Service",
+    "trigger": "Teacher clicks 'Login with State HRMS' button",
+    "previousPacket": null,
+    "nextPacket": "02-sso-auth-url-response.json",
+    "verified": false,
+    "assumption": "SSO Adapter endpoint structure assumed based on standard OAuth2 patterns"
+  },
+  "request": {
+    "method": "GET",
+    "url": "/sso/v1/auth-url",
+    "queryParams": {
+      "redirect_uri": "sdcrs://callback",
+      "client_type": "mobile"
+    },
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Correlation-Id": "mob-1734200000001"
+    }
+  }
+}

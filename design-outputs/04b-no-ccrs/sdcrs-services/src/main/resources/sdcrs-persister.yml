@@ -1,0 +1,176 @@
+# ==============================================================================
+# SDCRS Persister Configuration
+# ==============================================================================
+# This file defines Kafka topics and database mappings for the DIGIT Persister.
+# Persister consumes messages from Kafka and writes to PostgreSQL.
+#
+# Tables:
+#   - eg_sdcrs_report: Main dog report table
+#   - eg_sdcrs_location: Location details for each report
+#   - eg_sdcrs_evidence: Evidence (photos) linked to reports
+#   - eg_sdcrs_payout: Payout tracking for teachers
+#   - eg_sdcrs_audit_log: Audit trail for all state changes
+# ==============================================================================
+
+serviceMaps:
+  serviceName: sdcrs-services
+  mappings:
+
+    # ==============================================================================
+    # CREATE - New Dog Report
+    # ==============================================================================
+    - version: 1.0
+      description: Persists new dog report
+      fromTopic: save-sdcrs-report
+      isTransaction: true
+      queryMaps:
+
+        # Insert main report record
+        - query: |
+            INSERT INTO eg_sdcrs_report (
+              id, tenant_id, report_number, tracking_id, tracking_url,
+              status, reporter_id, reporter_name, reporter_phone, reporter_type,
+              dog_description, dog_behavior, dog_count, image_hash,
+              assigned_officer_id, assigned_officer_name,
+              verified_by, verified_date, verification_remarks,
+              resolved_by, resolved_date, resolution_type, resolution_remarks,
+              rejection_reason, rejection_remarks,
+              payout_status, payout_amount, payout_reference,
+              created_by, created_time, last_modified_by, last_modified_time
+            ) VALUES (
+              :id, :tenantId, :reportNumber, :trackingId, :trackingUrl,
+              :status, :reporterId, :reporterName, :reporterPhone, :reporterType,
+              :dogDescription, :dogBehavior, :dogCount, :imageHash,
+              :assignedOfficerId, :assignedOfficerName,
+              :verifiedBy, :verifiedDate, :verificationRemarks,
+              :resolvedBy, :resolvedDate, :resolutionType, :resolutionRemarks,
+              :rejectionReason, :rejectionRemarks,
+              :payoutStatus, :payoutAmount, :payoutReference,
+              :auditDetails.createdBy, :auditDetails.createdTime,
+              :auditDetails.lastModifiedBy, :auditDetails.lastModifiedTime
+            )
+          basePath: dogReports.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.id
+
+        # Insert location record
+        - query: |
+            INSERT INTO eg_sdcrs_location (
+              id, report_id, latitude, longitude, address, landmark,
+              locality_code, locality_name, ward_code, ward_name,
+              district_code, district_name, pincode,
+              gps_accuracy, gps_validated
+            ) VALUES (
+              :location.id, :id, :location.latitude, :location.longitude,
+              :location.address, :location.landmark,
+              :location.localityCode, :location.localityName,
+              :location.wardCode, :location.wardName,
+              :location.districtCode, :location.districtName, :location.pincode,
+              :location.gpsAccuracy, :location.gpsValidated
+            )
+          basePath: dogReports.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.location.id
+
+        # Insert evidence records
+        - query: |
+            INSERT INTO eg_sdcrs_evidence (
+              id, report_id, file_store_id, evidence_type,
+              latitude, longitude, capture_time, file_hash,
+              created_time
+            ) VALUES (
+              :id, :reportId, :fileStoreId, :evidenceType,
+              :latitude, :longitude, :captureTime, :fileHash,
+              :createdTime
+            )
+          basePath: dogReports.*.evidence.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.evidence.*.id
+
+    # ==============================================================================
+    # UPDATE - Existing Dog Report
+    # ==============================================================================
+    - version: 1.0
+      description: Updates existing dog report
+      fromTopic: update-sdcrs-report
+      isTransaction: true
+      queryMaps:
+
+        # Update main report record
+        - query: |
+            UPDATE eg_sdcrs_report SET
+              status = :status,
+              assigned_officer_id = :assignedOfficerId,
+              assigned_officer_name = :assignedOfficerName,
+              verified_by = :verifiedBy,
+              verified_date = :verifiedDate,
+              verification_remarks = :verificationRemarks,
+              resolved_by = :resolvedBy,
+              resolved_date = :resolvedDate,
+              resolution_type = :resolutionType,
+              resolution_remarks = :resolutionRemarks,
+              rejection_reason = :rejectionReason,
+              rejection_remarks = :rejectionRemarks,
+              payout_status = :payoutStatus,
+              payout_amount = :payoutAmount,
+              payout_reference = :payoutReference,
+              last_modified_by = :auditDetails.lastModifiedBy,
+              last_modified_time = :auditDetails.lastModifiedTime
+            WHERE id = :id
+          basePath: dogReports.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.id
+
+        # Insert audit log entry
+        - query: |
+            INSERT INTO eg_sdcrs_audit_log (
+              id, report_id, action, previous_status, new_status,
+              actor_id, actor_name, comments, created_time
+            ) VALUES (
+              :id, :reportId, :action, :previousStatus, :newStatus,
+              :actorId, :actorName, :comments, :createdTime
+            )
+          basePath: dogReports.*.auditLog.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.auditLog.*.id
+
+    # ==============================================================================
+    # PAYOUT UPDATE - Payout Status Changes
+    # ==============================================================================
+    - version: 1.0
+      description: Updates payout status
+      fromTopic: sdcrs-payout-update
+      isTransaction: true
+      queryMaps:
+
+        # Update payout fields in report
+        - query: |
+            UPDATE eg_sdcrs_report SET
+              payout_status = :payoutStatus,
+              payout_amount = :payoutAmount,
+              payout_reference = :payoutReference,
+              last_modified_by = :auditDetails.lastModifiedBy,
+              last_modified_time = :auditDetails.lastModifiedTime
+            WHERE id = :id
+          basePath: dogReports.*
+          jsonMaps:
+            - jsonPath: $.dogReports.*.id
+
+        # Insert payout tracking record
+        - query: |
+            INSERT INTO eg_sdcrs_payout (
+              id, report_id, teacher_id, tenant_id,
+              amount, demand_id, payment_id, status,
+              month_year, created_time, completed_time
+            ) VALUES (
+              :id, :reportId, :teacherId, :tenantId,
+              :amount, :demandId, :paymentId, :status,
+              :monthYear, :createdTime, :completedTime
+            )
+            ON CONFLICT (id) DO UPDATE SET
+              payment_id = :paymentId,
+              status = :status,
+              completed_time = :completedTime
+          basePath: payoutRecords.*
+          jsonMaps:
+            - jsonPath: $.payoutRecords.*.id

@@ -1,0 +1,144 @@
+@startuml SDCRS_Swimlane_UPI
+!theme plain
+title SDCRS Process Workflow with UPI Payout
+footer Stray Dog Capture & Reporting System - December 2024
+
+' =========================================================
+' SUBMISSION PHASE
+' =========================================================
+|Teacher|
+start
+:Submit Dog Report;
+note right
+  Includes:
+  - Dog photo
+  - Selfie
+  - GPS (auto)
+  - Description
+end note
+
+' =========================================================
+' VALIDATION PHASE (Automated)
+' =========================================================
+|System|
+:Auto-Validate;
+note right
+  Checks:
+  - GPS presence
+  - Boundary check
+  - Image freshness
+  - Duplicate hash
+end note
+
+if (Validation Passed?) then (no)
+  :AUTO_REJECTED;
+  |Teacher|
+  note left #LightYellow: <<async>>\nSMS: Rejected
+  :View Rejection;
+  note right #LightCoral: No payout
+  stop
+else (yes)
+  |Verifier|
+  :PENDING_VERIFICATION;
+  :Review Evidence;
+note right
+  Review:
+  - Photo quality
+  - Location validity
+  - Duplicate check
+end note
+
+if (Evidence Valid?) then (reject)
+  :REJECTED / DUPLICATE;
+  |Teacher|
+  note left #LightYellow: <<async>>\nSMS: Rejected
+  :View Rejection;
+  note right #LightCoral: No payout
+  stop
+else (approve)
+  |Verifier|
+  :VERIFIED;
+endif
+
+' =========================================================
+' FIELD VISIT PHASE
+' =========================================================
+|MC Officer|
+:ASSIGNED;
+note left #LightYellow: <<async>>\nSMS to MC Officer
+note right: SLA: 24 hours
+
+:IN_PROGRESS;
+note right
+  Activities:
+  - Navigate to location
+  - Locate dog
+  - Capture
+  - Upload evidence
+end note
+
+if (Dog Found?) then (no)
+  :UNABLE_TO_LOCATE;
+  |Teacher|
+  note left #LightYellow: <<async>>\nSMS: Not Found
+  :View Status;
+  note right #LightCoral: No payout
+  stop
+else (yes)
+  |MC Officer|
+  :CAPTURED;
+endif
+
+' =========================================================
+' UPI PAYOUT PHASE
+' =========================================================
+|System|
+:PAYOUT_PENDING;
+note left #LightYellow: <<async>>\nSMS: Payout initiated
+note right
+  UPI Adapter:
+  - Create Contact
+  - Create Fund Account
+  - Create Payout
+
+  Razorpay:
+  - Process UPI transfer
+end note
+
+if (Payment Success?) then (no)
+  :PAYOUT_FAILED;
+
+  note right
+    Admin Actions:
+    - RETRY_PAYOUT
+    - MANUAL_RESOLVE
+  end note
+
+  if (Retry or Manual?) then (retry)
+    :RETRY_PAYOUT;
+    :Process UPI Payment;
+  else (manual)
+    |System|
+    :RESOLVED;
+    |Teacher|
+    note left #LightYellow: <<async>>\nSMS: Manual Payout
+    #LightGreen:Receive Manual Payout;
+    stop
+  endif
+
+else (yes)
+  |System|
+  :RESOLVED;
+  note left #LightYellow: <<async>>\nSMS: Rs.500 credited
+endif
+
+|Teacher|
+#LightGreen:Receive UPI Payout;
+note right
+  Amount: Rs.500
+  Via UPI ID
+end note
+
+stop
+
+@enduml

@@ -1,0 +1,146 @@
+@startuml SDCRS_StateMachine_UPI
+!theme plain
+title SDCRS Workflow State Machine with UPI Payout
+footer Stray Dog Capture & Reporting System - December 2024
+
+' Styling
+skinparam state {
+  BackgroundColor<<terminal>> LightGray
+  BackgroundColor<<success>> LightGreen
+  BackgroundColor<<payout>> Gold
+  BorderColor Black
+}
+
+' =========================================================
+' STATE MACHINE DEFINITION
+' =========================================================
+
+[*] --> PENDING_VALIDATION : SUBMIT\n[TEACHER]
+
+' VALIDATION PHASE
+state "Auto-Validation" as validation {
+  PENDING_VALIDATION : SLA: 5 min
+  PENDING_VALIDATION : Actor: SYSTEM
+  PENDING_VALIDATION : GPS, Image, Boundary Check
+}
+
+PENDING_VALIDATION --> PENDING_VERIFICATION : AUTO_VALIDATE_PASS\n[SYSTEM]
+PENDING_VALIDATION --> AUTO_REJECTED : AUTO_VALIDATE_FAIL\n[SYSTEM]
+
+state AUTO_REJECTED <<terminal>> {
+  AUTO_REJECTED : No Payout
+  AUTO_REJECTED : Reason logged
+}
+AUTO_REJECTED --> [*]
+
+' VERIFICATION PHASE
+state "Human Verification" as verification {
+  PENDING_VERIFICATION : SLA: 4 hours
+  PENDING_VERIFICATION : Actor: VERIFIER
+  PENDING_VERIFICATION : Evidence Review
+}
+
+PENDING_VERIFICATION --> VERIFIED : VERIFY\n[VERIFIER]
+PENDING_VERIFICATION --> REJECTED : REJECT\n[VERIFIER]
+PENDING_VERIFICATION --> DUPLICATE : MARK_DUPLICATE\n[VERIFIER]
+PENDING_VERIFICATION --> PENDING_VERIFICATION : COMMENT\n[TEACHER]
+
+state REJECTED <<terminal>> {
+  REJECTED : No Payout
+  REJECTED : Manual rejection
+}
+REJECTED --> [*]
+
+state DUPLICATE <<terminal>> {
+  DUPLICATE : No Payout
+  DUPLICATE : Linked to original
+}
+DUPLICATE --> [*]
+
+' ASSIGNMENT PHASE
+state "Assignment" as assignment {
+  VERIFIED : SLA: 1 hour
+  VERIFIED : Actor: MC_SUPERVISOR
+  VERIFIED : Assign to Officer
+
+  ASSIGNED : SLA: 24 hours
+  ASSIGNED : Actor: MC_OFFICER
+  ASSIGNED : Officer notified
+}
+
+VERIFIED --> ASSIGNED : ASSIGN\n[MC_SUPERVISOR]
+ASSIGNED --> VERIFIED : REASSIGN\n[MC_SUPERVISOR]
+
+' FIELD VISIT PHASE
+state "Field Visit" as fieldVisit {
+  IN_PROGRESS : SLA: 24 hours
+  IN_PROGRESS : Actor: MC_OFFICER
+  IN_PROGRESS : On-site capture
+}
+
+ASSIGNED --> IN_PROGRESS : START_FIELD_VISIT\n[MC_OFFICER]
+
+IN_PROGRESS --> CAPTURED : MARK_CAPTURED\n[MC_OFFICER]
+IN_PROGRESS --> UNABLE_TO_LOCATE : MARK_UNABLE_TO_LOCATE\n[MC_OFFICER]
+
+state UNABLE_TO_LOCATE <<terminal>> {
+  UNABLE_TO_LOCATE : No Payout
+  UNABLE_TO_LOCATE : Dog not found
+}
+UNABLE_TO_LOCATE --> [*]
+
+' =========================================================
+' UPI PAYOUT PHASE (NEW)
+' =========================================================
+state "UPI Payout Processing" as payoutPhase <<payout>> {
+  CAPTURED : Dog captured!
+  CAPTURED : Actor: SYSTEM
+  CAPTURED : Trigger payout
+
+  PAYOUT_PENDING : SLA: 24 hours
+  PAYOUT_PENDING : Actor: UPI_ADAPTER
+  PAYOUT_PENDING : Waiting for Razorpay
+
+  PAYOUT_FAILED : Retryable
+  PAYOUT_FAILED : Actor: ADMIN/SYSTEM
+  PAYOUT_FAILED : Max 3 retries
+}
+
+CAPTURED --> PAYOUT_PENDING : INITIATE_PAYOUT\n[SYSTEM]
+
+PAYOUT_PENDING --> RESOLVED : PAYOUT_SUCCESS\n[SYSTEM]
+PAYOUT_PENDING --> PAYOUT_FAILED : PAYOUT_FAILED\n[SYSTEM]
+
+PAYOUT_FAILED --> PAYOUT_PENDING : RETRY_PAYOUT\n[SYSTEM/STATE_ADMIN]
+PAYOUT_FAILED --> RESOLVED : MANUAL_RESOLVE\n[STATE_ADMIN]
+
+' RESOLUTION PHASE
+state "Resolution" as resolution <<success>> {
+  RESOLVED : Payout Complete
+  RESOLVED : Teacher paid via UPI
+  RESOLVED : UTR recorded
+
+  CLOSED : Feedback received
+  CLOSED : Final state
+}
+
+RESOLVED --> CLOSED : RATE\n[TEACHER]
+
+RESOLVED --> [*]
+CLOSED --> [*]
+
+' =========================================================
+' LEGEND
+' =========================================================
+legend right
+  |= Color |= Meaning |
+  |<#LightGray>| Terminal (No Payout) |
+  |<#Gold>| UPI Payout Processing |
+  |<#LightGreen>| Success (Payout Done) |
+
+  **Actions Format:**
+  ACTION_NAME
+  [ROLE]
+endlegend
+
+@enduml

@@ -1,0 +1,296 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "FRAUD-DETECTION",
+  "ExternalValidators": [
+    {
+      "id": "DOG_BREED_CLASSIFIER",
+      "name": "Dog Breed Classification AI",
+      "description": "Identifies dog breed from photo using CNN model",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${AI_SERVICE_URL}/api/v1/classify/dog-breed",
+        "method": "POST",
+        "authType": "API_KEY",
+        "authHeader": "X-API-Key",
+        "authSecretKey": "AI_SERVICE_API_KEY"
+      },
+      "inputMapping": {
+        "imageField": "evidences[purpose=DOG_PHOTO].fileStoreId",
+        "imageFormat": "BASE64"
+      },
+      "outputMapping": {
+        "breedField": "predictions.breed",
+        "confidenceField": "predictions.confidence",
+        "isDogField": "predictions.is_dog"
+      },
+      "timeout": {
+        "connectMs": 5000,
+        "readMs": 30000
+      },
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 1000,
+        "backoffMultiplier": 2.0
+      },
+      "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeoutMs": 60000
+      },
+      "cache": {
+        "enabled": true,
+        "ttlSeconds": 86400,
+        "keyFields": ["imageHash"]
+      },
+      "fallback": {
+        "action": "SKIP_RULE",
+        "logLevel": "WARN"
+      }
+    },
+    {
+      "id": "OBJECT_DETECTOR",
+      "name": "Object Detection (YOLO)",
+      "description": "Detects objects in image - verifies dog presence and count",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${YOLO_SERVICE_URL}/detect",
+        "method": "POST",
+        "authType": "BEARER_TOKEN",
+        "authSecretKey": "YOLO_SERVICE_TOKEN"
+      },
+      "inputMapping": {
+        "imageField": "evidences[purpose=DOG_PHOTO].fileStoreId",
+        "imageFormat": "URL",
+        "parameters": {
+          "classes": ["dog", "person", "cat"],
+          "minConfidence": 0.5
+        }
+      },
+      "outputMapping": {
+        "detectionsField": "detections",
+        "dogCountField": "detections[class=dog].count",
+        "personPresentField": "detections[class=person].exists"
+      },
+      "timeout": {
+        "connectMs": 3000,
+        "readMs": 15000
+      },
+      "async": true,
+      "priority": "NORMAL",
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 500,
+        "backoffMultiplier": 2.0
+      },
+      "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeoutMs": 30000
+      },
+      "cache": {
+        "enabled": true,
+        "ttlSeconds": 3600,
+        "keyFields": ["imageHash", "parameters"]
+      },
+      "fallback": {
+        "action": "DEGRADE_TO_MANUAL",
+        "logLevel": "WARN"
+      }
+    },
+    {
+      "id": "FACE_MATCHER",
+      "name": "Face Recognition & Matching",
+      "description": "Compares selfie with registered user photo",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${FACE_API_URL}/api/verify",
+        "method": "POST",
+        "authType": "OAUTH2",
+        "tokenEndpoint": "${FACE_API_URL}/oauth/token",
+        "clientIdKey": "FACE_API_CLIENT_ID",
+        "clientSecretKey": "FACE_API_CLIENT_SECRET"
+      },
+      "inputMapping": {
+        "sourceImage": "evidences[purpose=SELFIE].fileStoreId",
+        "targetImage": "applicant.profilePhotoId",
+        "threshold": 0.85
+      },
+      "outputMapping": {
+        "matchField": "result.match",
+        "similarityField": "result.similarity",
+        "facesDetectedField": "result.faces_detected"
+      },
+      "timeout": {
+        "connectMs": 5000,
+        "readMs": 20000
+      },
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 1000,
+        "backoffMultiplier": 2.0
+      },
+      "circuitBreaker": {
+        "failureThreshold": 3,
+        "resetTimeoutMs": 60000
+      },
+      "cache": {
+        "enabled": true,
+        "ttlSeconds": 86400,
+        "keyFields": ["sourceImageHash", "targetImageHash"]
+      },
+      "fallback": {
+        "action": "DEGRADE_TO_MANUAL",
+        "logLevel": "WARN"
+      }
+    },
+    {
+      "id": "IMAGE_QUALITY_ANALYZER",
+      "name": "Image Quality Assessment",
+      "description": "Analyzes image blur, lighting, resolution",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${IQA_SERVICE_URL}/analyze",
+        "method": "POST",
+        "authType": "BASIC",
+        "usernameKey": "IQA_USERNAME",
+        "passwordKey": "IQA_PASSWORD"
+      },
+      "inputMapping": {
+        "imageField": "evidences[*].fileStoreId",
+        "checkTypes": ["blur", "exposure", "resolution", "noise"]
+      },
+      "outputMapping": {
+        "overallQuality": "quality.overall_score",
+        "blurScore": "quality.blur_score",
+        "exposureScore": "quality.exposure_score",
+        "isAcceptable": "quality.acceptable"
+      },
+      "timeout": {
+        "connectMs": 3000,
+        "readMs": 10000
+      },
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 500,
+        "backoffMultiplier": 1.5
+      },
+      "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeoutMs": 30000
+      },
+      "cache": {
+        "enabled": true,
+        "ttlSeconds": 3600,
+        "keyFields": ["imageHash"]
+      },
+      "fallback": {
+        "action": "SKIP_RULE",
+        "logLevel": "INFO"
+      }
+    },
+    {
+      "id": "ANOMALY_DETECTOR",
+      "name": "Submission Anomaly Detection",
+      "description": "ML model to detect unusual submission patterns",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${ANOMALY_SERVICE_URL}/predict",
+        "method": "POST",
+        "authType": "API_KEY",
+        "authHeader": "Authorization",
+        "authSecretKey": "ANOMALY_API_KEY"
+      },
+      "inputMapping": {
+        "features": {
+          "submissionHour": "createdTime.hour",
+          "dayOfWeek": "createdTime.dayOfWeek",
+          "gpsLat": "locationData.latitude",
+          "gpsLon": "locationData.longitude",
+          "recentSubmissionCount": "applicant.recentCount",
+          "avgTimeBetweenSubmissions": "applicant.avgIntervalMinutes"
+        }
+      },
+      "outputMapping": {
+        "anomalyScore": "prediction.anomaly_score",
+        "isAnomaly": "prediction.is_anomaly",
+        "anomalyType": "prediction.anomaly_type"
+      },
+      "timeout": {
+        "connectMs": 3000,
+        "readMs": 5000
+      },
+      "retry": {
+        "maxAttempts": 1,
+        "backoffMs": 500,
+        "backoffMultiplier": 1.0
+      },
+      "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeoutMs": 30000
+      },
+      "cache": {
+        "enabled": false
+      },
+      "fallback": {
+        "action": "SKIP_RULE",
+        "logLevel": "WARN"
+      }
+    },
+    {
+      "id": "GPS_SPOOFING_DETECTOR",
+      "name": "GPS Spoofing Detection",
+      "description": "Detects GPS manipulation using ML signals analysis",
+      "type": "AI_MODEL",
+      "enabled": true,
+      "endpoint": {
+        "url": "${GPS_VALIDATION_URL}/detect-spoofing",
+        "method": "POST",
+        "authType": "API_KEY",
+        "authHeader": "X-API-Key",
+        "authSecretKey": "GPS_VALIDATION_API_KEY"
+      },
+      "inputMapping": {
+        "gpsData": {
+          "latitude": "locationData.latitude",
+          "longitude": "locationData.longitude",
+          "altitude": "locationData.altitude",
+          "accuracy": "locationData.accuracy",
+          "speed": "locationData.speed",
+          "bearing": "locationData.bearing",
+          "timestamp": "locationData.timestamp"
+        },
+        "deviceInfo": "evidences[*].metadata.deviceInfo",
+        "historicalLocations": "applicant.recentLocations"
+      },
+      "outputMapping": {
+        "isSpoofed": "prediction.is_spoofed",
+        "spoofingConfidence": "prediction.confidence",
+        "spoofingMethod": "prediction.method"
+      },
+      "timeout": {
+        "connectMs": 3000,
+        "readMs": 8000
+      },
+      "retry": {
+        "maxAttempts": 1,
+        "backoffMs": 500,
+        "backoffMultiplier": 1.0
+      },
+      "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeoutMs": 30000
+      },
+      "cache": {
+        "enabled": false
+      },
+      "fallback": {
+        "action": "APPLY_DEFAULT",
+        "defaultValue": { "isSpoofed": false },
+        "logLevel": "WARN"
+      }
+    }
+  ]
+}

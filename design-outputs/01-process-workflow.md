@@ -117,8 +117,8 @@ No payout is issued for:
 
 ## Source Files
 
-- **Workflow Generator:** `generate_workflow.py`
-- **Workflow Diagram:** `assets/sdcrs-workflow.png`
+- **Workflow Generator:** [`generate_workflow.py`](../generate_workflow.py)
+- **Workflow Diagram:** [`assets/sdcrs-workflow.png`](../assets/sdcrs-workflow.png)
 
 ---
 

@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 10,
+    "description": "Backend creates new DIGIT user with TEACHER role (first-time login)",
+    "sender": "SSO Adapter Service",
+    "receiver": "egov-user Service",
+    "trigger": "User search returned empty array",
+    "previousPacket": "09-digit-user-search-response.json (scenario A)",
+    "nextPacket": "12-digit-user-create-response.json",
+    "verified": true,
+    "source": "DIGIT egov-user service API - user create"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-user.egov:8107/user/users/_createnovalidate",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200001000,
+        "action": "_create",
+        "did": "1",
+        "key": "",
+        "msgId": "20241214120001|en_IN",
+        "authToken": "system-auth-token"
+      },
+      "user": {
+        "userName": "T12345",
+        "name": "Ravi Kumar",
+        "mobileNumber": "9876543210",
+        "emailId": "ravi@edu.gov.in",
+        "type": "EMPLOYEE",
+        "tenantId": "dj.djibouti-ville",
+        "active": true,
+        "roles": [
+          {
+            "code": "TEACHER",
+            "name": "Teacher",
+            "tenantId": "dj.djibouti-ville"
+          }
+        ],
+        "additionalDetails": {
+          "hrmsEmpId": "T12345",
+          "upiId": "ravi@okaxis",
+          "bankAccount": "1234567890",
+          "ifsc": "AXIS0001234",
+          "schoolCode": "DJGHS001",
+          "schoolName": "Govt High School Djibouti",
+          "designation": "TGT",
+          "subject": "SCIENCE",
+          "joiningDate": "2015-06-01",
+          "hrmsStatus": "ACTIVE",
+          "ssoProvider": "STATE_HRMS",
+          "lastHrmsSync": "2024-12-14T12:00:00Z"
+        }
+      }
+    }
+  },
+  "_notes": {
+    "endpoint": "_createnovalidate is used for system-created users (no OTP validation)",
+    "role_assignment": "TEACHER role is automatically assigned to all SSO users from HRMS",
+    "upi_from_hrms": "UPI VPA comes from HRMS, not entered by teacher"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 10,
+    "description": "SDCRS Service triggers workflow transition to PENDING_VALIDATION",
+    "sender": "SDCRS Service",
+    "receiver": "egov-workflow-v2 Service",
+    "trigger": "After report persistence initiated",
+    "previousPacket": "09-kafka-persister-message.json",
+    "nextPacket": "../03-auto-validation/01-validation-trigger.json",
+    "verified": true,
+    "source": "DIGIT Workflow Service API, BusinessService-with-UPI.json"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://egov-workflow-v2.egov:8109/egov-workflow-v2/egov-wf/process/_transition",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176202000,
+        "action": "_transition",
+        "did": "1",
+        "key": "",
+        "msgId": "20241214123642|en_IN",
+        "authToken": "system-auth-token",
+        "userInfo": {
+          "id": 24226,
+          "uuid": "11t0e02b-4f8a-4c6e-9d3f-2a1b0c9d8e7f",
+          "userName": "T12345",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [
+            {
+              "code": "TEACHER",
+              "tenantId": "dj.djibouti-ville"
+            }
+          ]
+        }
+      },
+      "ProcessInstances": [
+        {
+          "tenantId": "dj.djibouti-ville",
+          "businessService": "SDCRS",
+          "businessId": "DR-DJ-2024-000123",
+          "moduleName": "sdcrs-services",
+          "action": "SUBMIT",
+          "comment": "Report submitted by teacher"
+        }
+      ]
+    }
+  },
+  "workflowConfig": {
+    "_comment": "From BusinessService-with-UPI.json",
+    "currentState": null,
+    "action": "SUBMIT",
+    "nextState": "PENDING_VALIDATION",
+    "allowedRoles": ["TEACHER"]
+  }
+}

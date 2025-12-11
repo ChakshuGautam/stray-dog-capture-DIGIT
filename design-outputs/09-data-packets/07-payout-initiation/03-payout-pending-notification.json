@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "stage": "07-payout-initiation",
+    "step": 3,
+    "description": "SMS notification sent to teacher about payout processing",
+    "sender": "egov-notification-sms Service",
+    "receiver": "Teacher's Phone",
+    "trigger": "Report enters PAYOUT_PENDING state",
+    "previousPacket": "02-initiate-payout-workflow.json",
+    "nextPacket": "../08-razorpay-integration/01-create-contact.json",
+    "verified": false,
+    "assumption": "SMS template for payout processing notification"
+  },
+  "kafkaMessage": {
+    "topic": "egov.core.notification.sms",
+    "value": {
+      "mobileNumber": "9876543210",
+      "message": "Great news! Your stray dog report (Tracking ID: ABC12345) has been resolved. The dog has been captured successfully. Your payout of Rs.500 is being processed and will be credited to your UPI ID (9876543210@upi) shortly.",
+      "tenantId": "dj.djibouti-ville",
+      "templateId": "SDCRS_PAYOUT_PROCESSING_TEACHER",
+      "category": "TRANSACTION"
+    }
+  }
+}

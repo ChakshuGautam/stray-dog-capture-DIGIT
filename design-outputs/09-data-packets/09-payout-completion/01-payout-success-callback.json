@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 1,
+    "description": "UPI Adapter sends success callback to SDCRS via Kafka",
+    "sender": "UPI Payout Adapter",
+    "receiver": "SDCRS Service (via Kafka)",
+    "trigger": "Razorpay webhook confirms payout.processed",
+    "previousPacket": "../08-razorpay-integration/07-webhook-payout-processed.json",
+    "nextPacket": "02-update-report-resolved.json",
+    "verified": true,
+    "source": "PayoutCallback.java, PayoutCallbackConsumer.java"
+  },
+  "kafkaMessage": {
+    "topic": "sdcrs-payout-callback",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "tenantId": "dj.djibouti-ville",
+      "payoutId": "pay-uuid-001-abcd-efgh-ijkl",
+      "razorpayPayoutId": "pout_NhY2MnOpKc4n9I",
+      "status": "SUCCESS",
+      "utr": "423456789012",
+      "amount": 500,
+      "beneficiaryVpa": "9876543210@upi",
+      "processedAt": 1734188435000,
+      "failureReason": null
+    },
+    "headers": {
+      "X-Correlation-Id": "corr-uuid-001",
+      "X-Tenant-Id": "dj.djibouti-ville"
+    }
+  }
+}

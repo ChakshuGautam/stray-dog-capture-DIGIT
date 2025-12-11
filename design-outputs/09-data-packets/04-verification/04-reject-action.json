@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 4,
+    "description": "Verifier rejects the report - moves to terminal REJECTED status",
+    "sender": "Verifier Web Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Verifier selects rejection reason and clicks 'Reject'",
+    "previousPacket": "02-report-detail-view.json",
+    "nextPacket": "06-rejection-notification.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - REJECT action, RejectionReason.json"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer verifier-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734180200000,
+        "action": "_update",
+        "msgId": "20241214133200|en_IN",
+        "authToken": "verifier-jwt-token...",
+        "userInfo": {
+          "id": 24300,
+          "uuid": "ver-uuid-001-abcd-efgh",
+          "userName": "V001",
+          "name": "Ahmed Hassan",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "VERIFIER"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "workflow": {
+            "action": "REJECT",
+            "comment": "Photo does not show a stray dog"
+          },
+          "rejectionReason": "NOT_A_DOG",
+          "rejectionRemarks": "The photo shows a pet dog with a collar. This is clearly someone's pet, not a stray dog."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "REJECTED",
+          "rejectionReason": "NOT_A_DOG",
+          "rejectionRemarks": "The photo shows a pet dog with a collar. This is clearly someone's pet, not a stray dog.",
+          "payoutEligible": false
+        }
+      ]
+    }
+  },
+  "rejectionReasons": {
+    "_comment": "From MDMS RejectionReason.json (manual rejections)",
+    "NOT_A_DOG": "Photo does not show a dog",
+    "DOMESTIC_DOG": "Photo shows a pet/domestic dog",
+    "POOR_QUALITY": "Photo quality too poor to verify",
+    "FRAUDULENT": "Evidence appears to be manipulated"
+  },
+  "workflowTransition": {
+    "currentState": "PENDING_VERIFICATION",
+    "action": "REJECT",
+    "nextState": "REJECTED",
+    "isTerminal": true,
+    "allowedRoles": ["VERIFIER"]
+  }
+}

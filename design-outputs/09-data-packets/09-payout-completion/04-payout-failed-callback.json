@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 4,
+    "description": "UPI Adapter sends failure callback to SDCRS via Kafka",
+    "sender": "UPI Payout Adapter",
+    "receiver": "SDCRS Service (via Kafka)",
+    "trigger": "Razorpay webhook confirms payout.failed",
+    "previousPacket": "../08-razorpay-integration/08-webhook-payout-failed.json",
+    "nextPacket": "05-update-report-payout-failed.json",
+    "verified": true,
+    "source": "PayoutCallback.java, PayoutCallbackConsumer.java"
+  },
+  "kafkaMessage": {
+    "topic": "sdcrs-payout-callback",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "tenantId": "dj.djibouti-ville",
+      "payoutId": "pay-uuid-001-abcd-efgh-ijkl",
+      "razorpayPayoutId": "pout_NhY2MnOpKc4n9I",
+      "status": "FAILED",
+      "utr": null,
+      "amount": 500,
+      "beneficiaryVpa": "9876543210@upi",
+      "processedAt": 1734188440000,
+      "failureReason": "Invalid beneficiary VPA",
+      "retryCount": 0,
+      "canRetry": true
+    },
+    "headers": {
+      "X-Correlation-Id": "corr-uuid-001",
+      "X-Tenant-Id": "dj.djibouti-ville"
+    }
+  }
+}

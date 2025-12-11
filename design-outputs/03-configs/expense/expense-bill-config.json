@@ -1,0 +1,45 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "expense",
+  "ExpenseBillConfig": [
+    {
+      "businessService": "SDCRS",
+      "billType": "PAYOUT",
+      "description": "Stray Dog Capture Reporting System - Teacher Payout",
+      "workflow": {
+        "businessServiceCode": "EXPENSE.SDCRS",
+        "initialAction": "CREATE",
+        "inWorkflowStatusAllowed": false
+      },
+      "billDetails": {
+        "fromPeriod": null,
+        "toPeriod": null,
+        "referenceIdRequired": true,
+        "referenceIdLabel": "Dog Report ID"
+      },
+      "lineItems": [
+        {
+          "headCode": "SDCRS_PAYOUT",
+          "headCodeDescription": "Teacher payout for verified dog capture",
+          "type": "PAYABLE",
+          "isActive": true
+        }
+      ],
+      "payee": {
+        "type": "INDIVIDUAL",
+        "identifierType": "TEACHER_ID",
+        "bankAccountRequired": true
+      },
+      "calculation": {
+        "mode": "FIXED",
+        "fixedAmount": 500,
+        "currency": "INR"
+      },
+      "validation": {
+        "maxDailyPayouts": 5,
+        "monthlyPayoutCap": 5000,
+        "requiresWorkflowApproval": false
+      }
+    }
+  ]
+}

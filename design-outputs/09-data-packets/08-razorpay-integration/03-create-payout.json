@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 3,
+    "description": "UPI Payout Adapter creates payout request to Razorpay X",
+    "sender": "UPI Payout Adapter",
+    "receiver": "Razorpay X API",
+    "trigger": "Fund account created/validated successfully",
+    "previousPacket": "02-create-fund-account.json",
+    "nextPacket": "04-payout-queued-response.json",
+    "verified": true,
+    "source": "RazorpayService.java - createPayout(), Payout.java"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.razorpay.com/v1/payouts",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Basic {base64(key_id:key_secret)}",
+      "X-Payout-Idempotency": "SDCRS-DR-DJ-2024-000123"
+    },
+    "body": {
+      "account_number": "7878780080316316",
+      "fund_account_id": "fa_NhY2LmVnKc4n8H",
+      "amount": 50000,
+      "currency": "INR",
+      "mode": "UPI",
+      "purpose": "payout",
+      "queue_if_low_balance": true,
+      "reference_id": "SDCRS-DR-DJ-2024-000123",
+      "narration": "SDCRS Teacher Payout",
+      "notes": {
+        "report_id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+        "report_number": "DR-DJ-2024-000123",
+        "tenant_id": "dj.djibouti-ville",
+        "service_type": "StrayDogAggressive"
+      }
+    }
+  },
+  "amountNote": {
+    "_comment": "Razorpay uses paise (100 paise = 1 INR)",
+    "displayAmount": 500,
+    "razorpayAmount": 50000
+  }
+}

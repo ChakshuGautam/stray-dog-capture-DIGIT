@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "stage": "01-teacher-login",
+    "step": 5,
+    "description": "Backend exchanges authorization code for tokens at HRMS token endpoint",
+    "sender": "SSO Adapter Service",
+    "receiver": "State HRMS OAuth2 Server",
+    "trigger": "Backend processing token-exchange request",
+    "previousPacket": "04-token-exchange-request.json",
+    "nextPacket": "06-hrms-token-response.json",
+    "verified": false,
+    "assumption": "HRMS OAuth2 server follows RFC 6749 token endpoint specification"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://hrms.state.gov.in/oauth2/token",
+    "headers": {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Basic c2RjcnMtbW9iaWxlOmNsaWVudF9zZWNyZXRfaGVyZQ=="
+    },
+    "body": {
+      "grant_type": "authorization_code",
+      "code": "AUTH_CODE_hrms_7f8g9h0i1j2k3l4m",
+      "redirect_uri": "sdcrs://callback",
+      "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+    },
+    "bodyEncoded": "grant_type=authorization_code&code=AUTH_CODE_hrms_7f8g9h0i1j2k3l4m&redirect_uri=sdcrs%3A%2F%2Fcallback&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+  },
+  "_notes": {
+    "authorization_header": "Base64 encoded 'sdcrs-mobile:client_secret_here'",
+    "code_verifier": "Retrieved from Redis using state 'csrf_abc123xyz' as key"
+  }
+}

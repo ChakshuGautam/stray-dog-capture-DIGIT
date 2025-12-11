@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 5,
+    "description": "Report rejected because GPS location is outside tenant boundary",
+    "sender": "Auto-Validation Service",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "GPS coordinates not within dj.djibouti-ville boundary",
+    "previousPacket": "../03-auto-validation/03-boundary-check.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "BoundaryValidation.java, Location Service integration"
+  },
+  "context": {
+    "reportedLocation": {
+      "latitude": 11.8500,
+      "longitude": 43.5000
+    },
+    "tenantBoundary": {
+      "tenantId": "dj.djibouti-ville",
+      "boundaryType": "CITY",
+      "approximateCenter": {"latitude": 11.5886, "longitude": 43.1456},
+      "radiusKm": 15
+    },
+    "distanceFromBoundary": 42.5
+  },
+  "validationResult": {
+    "check": "BOUNDARY_VALIDATION",
+    "passed": false,
+    "reason": "Location (11.8500, 43.5000) is 42.5 km outside dj.djibouti-ville boundary"
+  },
+  "workflowUpdate": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-012-abcd",
+          "workflow": {
+            "action": "AUTO_VALIDATE_FAIL",
+            "comment": "Location outside service boundary"
+          },
+          "rejectionReason": "OUTSIDE_BOUNDARY",
+          "rejectionRemarks": "Reported location is outside the service area for dj.djibouti-ville.",
+          "validationDetails": {
+            "boundaryCheck": {
+              "passed": false,
+              "distanceFromBoundaryKm": 42.5
+            }
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-012-abcd",
+          "status": "AUTO_REJECTED",
+          "rejectionReason": "OUTSIDE_BOUNDARY"
+        }
+      ]
+    }
+  },
+  "teacherNotification": {
+    "sms": "Your stray dog report has been rejected. Reason: The reported location is outside the service area. Please ensure you are within Djibouti city limits when submitting reports."
+  }
+}

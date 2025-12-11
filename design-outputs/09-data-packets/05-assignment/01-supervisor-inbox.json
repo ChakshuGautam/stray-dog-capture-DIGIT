@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "stage": "05-assignment",
+    "step": 1,
+    "description": "MC Supervisor views verified reports pending assignment",
+    "sender": "MC Supervisor Web Portal",
+    "receiver": "SDCRS Service",
+    "trigger": "Supervisor logs in to assign work",
+    "previousPacket": "../04-verification/03-verify-action.json",
+    "nextPacket": "02-available-officers.json",
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - status filter VERIFIED"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer supervisor-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734183600000,
+        "action": "_search",
+        "msgId": "20241214143000|en_IN",
+        "userInfo": {
+          "id": 24400,
+          "uuid": "sup-uuid-001",
+          "userName": "SUP001",
+          "name": "Mohammed Farah",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_SUPERVISOR"}]
+        }
+      },
+      "searchCriteria": {
+        "tenantId": "dj.djibouti-ville",
+        "status": ["VERIFIED"],
+        "sortBy": "createdTime",
+        "sortOrder": "ASC",
+        "offset": 0,
+        "limit": 20
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "serviceType": "StrayDogAggressive",
+          "status": "VERIFIED",
+          "location": {
+            "locality": "Djibouti Centre",
+            "localityCode": "DJC001",
+            "wardCode": "W005",
+            "address": "Near Govt High School Main Gate"
+          },
+          "verifiedAt": 1734180200000,
+          "auditDetails": {
+            "createdTime": 1734176201000
+          }
+        }
+      ],
+      "TotalCount": 1
+    }
+  }
+}

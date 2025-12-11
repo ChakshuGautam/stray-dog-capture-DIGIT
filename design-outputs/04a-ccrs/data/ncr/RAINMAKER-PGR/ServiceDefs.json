@@ -1,0 +1,50 @@
+{
+  "tenantId": "ncr",
+  "moduleName": "RAINMAKER-PGR",
+  "ServiceDefs": [
+    {
+      "serviceCode": "StrayDogAggressive",
+      "name": "Aggressive Stray Dog",
+      "keywords": "stray, dog, aggressive, bite, attack, dangerous, animal, street",
+      "department": "DEPT_ANIMAL_CONTROL",
+      "slaHours": 24,
+      "active": true,
+      "menuPath": "StrayDog",
+      "menuPathName": "Stray Dog Reports",
+      "order": 1
+    },
+    {
+      "serviceCode": "StrayDogInjured",
+      "name": "Injured Stray Dog",
+      "keywords": "stray, dog, injured, hurt, wound, sick, animal, help",
+      "department": "DEPT_ANIMAL_CONTROL",
+      "slaHours": 24,
+      "active": true,
+      "menuPath": "StrayDog",
+      "menuPathName": "Stray Dog Reports",
+      "order": 2
+    },
+    {
+      "serviceCode": "StrayDogPack",
+      "name": "Stray Dog Pack",
+      "keywords": "stray, dog, pack, group, multiple, dogs, street, area",
+      "department": "DEPT_ANIMAL_CONTROL",
+      "slaHours": 48,
+      "active": true,
+      "menuPath": "StrayDog",
+      "menuPathName": "Stray Dog Reports",
+      "order": 3
+    },
+    {
+      "serviceCode": "StrayDogStandard",
+      "name": "Standard Stray Dog Sighting",
+      "keywords": "stray, dog, sighting, street, animal, report",
+      "department": "DEPT_ANIMAL_CONTROL",
+      "slaHours": 72,
+      "active": true,
+      "menuPath": "StrayDog",
+      "menuPathName": "Stray Dog Reports",
+      "order": 4
+    }
+  ]
+}

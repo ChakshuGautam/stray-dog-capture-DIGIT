@@ -1,0 +1,51 @@
+{
+  "tenantId": "dj",
+  "moduleName": "DSS",
+  "RoleDashboardMapping": [
+    {
+      "rolecode": "TEACHER",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "My Reports Overview" }
+      ]
+    },
+    {
+      "rolecode": "VERIFIER",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "SDCRS Overview" },
+        { "id": "sdcrs-sla", "name": "SLA Monitoring" }
+      ]
+    },
+    {
+      "rolecode": "MC_OFFICER",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "SDCRS Overview" }
+      ]
+    },
+    {
+      "rolecode": "MC_SUPERVISOR",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "SDCRS Overview" },
+        { "id": "sdcrs-sla", "name": "SLA Monitoring" },
+        { "id": "sdcrs-performance", "name": "Team Performance" }
+      ]
+    },
+    {
+      "rolecode": "DISTRICT_ADMIN",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "SDCRS Overview" },
+        { "id": "sdcrs-payout", "name": "Payout Analytics" },
+        { "id": "sdcrs-sla", "name": "SLA Monitoring" },
+        { "id": "sdcrs-performance", "name": "Performance Analytics" }
+      ]
+    },
+    {
+      "rolecode": "STATE_ADMIN",
+      "dashboards": [
+        { "id": "sdcrs-overview", "name": "SDCRS Overview" },
+        { "id": "sdcrs-payout", "name": "Payout Analytics" },
+        { "id": "sdcrs-sla", "name": "SLA Monitoring" },
+        { "id": "sdcrs-performance", "name": "Performance Analytics" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 2,
+    "description": "UPI Payout Adapter creates fund account (UPI VPA) for contact",
+    "sender": "UPI Payout Adapter",
+    "receiver": "Razorpay X API",
+    "trigger": "Contact created successfully",
+    "previousPacket": "01-create-contact.json",
+    "nextPacket": "03-create-payout.json",
+    "verified": true,
+    "source": "RazorpayService.java - createFundAccount(), FundAccount.java"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.razorpay.com/v1/fund_accounts",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Basic {base64(key_id:key_secret)}"
+    },
+    "body": {
+      "contact_id": "cont_NhY2KwLfKc4n7G",
+      "account_type": "vpa",
+      "vpa": {
+        "address": "9876543210@upi"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "fa_NhY2LmVnKc4n8H",
+      "entity": "fund_account",
+      "contact_id": "cont_NhY2KwLfKc4n7G",
+      "account_type": "vpa",
+      "vpa": {
+        "username": "9876543210",
+        "handle": "upi",
+        "address": "9876543210@upi"
+      },
+      "active": true,
+      "created_at": 1734188425
+    }
+  },
+  "caching": {
+    "_comment": "Fund account ID cached for reuse",
+    "cacheKey": "razorpay:fund_account:teacher-uuid-001-abcd-efgh:9876543210@upi",
+    "cacheValue": "fa_NhY2LmVnKc4n8H",
+    "ttl": "30 days"
+  }
+}

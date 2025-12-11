@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "stage": "08-razorpay-integration",
+    "step": 8,
+    "description": "Razorpay webhook: payout.failed event (FAILURE)",
+    "sender": "Razorpay X Webhook",
+    "receiver": "UPI Payout Adapter Webhook Endpoint",
+    "trigger": "UPI transfer failed",
+    "previousPacket": "06-webhook-payout-processing.json",
+    "nextPacket": "../09-payout-completion/03-payout-failed-callback.json",
+    "verified": true,
+    "source": "WebhookController.java, PayoutCallback.java"
+  },
+  "webhookRequest": {
+    "method": "POST",
+    "url": "https://sdcrs.dj.digit.org/upi-adapter/webhook/v1/razorpay",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Razorpay-Signature": "sha256_hmac_signature_here",
+      "X-Razorpay-Event-Id": "event_NhY2NqStKc4n2L"
+    },
+    "body": {
+      "entity": "event",
+      "account_id": "acc_BFDpHKYQh2qhtW",
+      "event": "payout.failed",
+      "contains": ["payout"],
+      "payload": {
+        "payout": {
+          "entity": {
+            "id": "pout_NhY2MnOpKc4n9I",
+            "entity": "payout",
+            "fund_account_id": "fa_NhY2LmVnKc4n8H",
+            "amount": 50000,
+            "currency": "INR",
+            "notes": {
+              "report_id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+              "report_number": "DR-DJ-2024-000123",
+              "tenant_id": "dj.djibouti-ville"
+            },
+            "fees": 0,
+            "tax": 0,
+            "status": "failed",
+            "utr": null,
+            "mode": "UPI",
+            "purpose": "payout",
+            "reference_id": "SDCRS-DR-DJ-2024-000123",
+            "narration": "SDCRS Teacher Payout",
+            "failure_reason": "Invalid beneficiary VPA",
+            "created_at": 1734188430
+          }
+        }
+      },
+      "created_at": 1734188440
+    }
+  },
+  "commonFailureReasons": {
+    "_comment": "Common reasons for UPI payout failures",
+    "INVALID_VPA": "Invalid beneficiary VPA - VPA does not exist or is incorrect",
+    "INSUFFICIENT_BALANCE": "Insufficient balance in RazorpayX account",
+    "BENEFICIARY_BANK_OFFLINE": "Beneficiary bank is temporarily unavailable",
+    "DAILY_LIMIT_EXCEEDED": "Daily payout limit exceeded",
+    "VPA_NOT_REGISTERED": "VPA not registered for UPI"
+  }
+}

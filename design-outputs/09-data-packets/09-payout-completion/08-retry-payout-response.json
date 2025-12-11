@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "stage": "09-payout-completion",
+    "step": 8,
+    "description": "Retry transitions report back to PAYOUT_PENDING",
+    "sender": "SDCRS Service",
+    "receiver": "Workflow Service",
+    "trigger": "RETRY_PAYOUT action executed",
+    "previousPacket": "07-retry-payout-request.json",
+    "nextPacket": "../08-razorpay-integration/01-create-contact.json (flow restarts)",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - RETRY_PAYOUT action"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "PAYOUT_PENDING",
+          "payoutDetails": {
+            "payoutStatus": "RETRY_INITIATED",
+            "beneficiaryVpa": "amina.hassan@upi",
+            "retryCount": 1,
+            "maxRetries": 3,
+            "lastRetryAt": 1734192000000
+          }
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "PAYOUT_FAILED",
+    "action": "RETRY_PAYOUT",
+    "nextState": "PAYOUT_PENDING",
+    "allowedRoles": ["SYSTEM", "STATE_ADMIN"]
+  },
+  "nextSteps": {
+    "_comment": "After retry, flow goes back through Razorpay integration",
+    "sequence": [
+      "Create/reuse contact in Razorpay",
+      "Create fund account with new VPA",
+      "Create new payout",
+      "Wait for webhook callback",
+      "Update to RESOLVED or PAYOUT_FAILED again"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "stage": "03-auto-validation",
+    "step": 8,
+    "description": "All validations passed - trigger workflow transition to PENDING_VERIFICATION",
+    "sender": "SDCRS Validator",
+    "receiver": "egov-workflow-v2 Service",
+    "trigger": "Fraud score LOW, all checks passed",
+    "previousPacket": "07-fraud-score-response.json",
+    "nextPacket": "../04-verification/01-verifier-inbox.json",
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - AUTO_VALIDATE_PASS action"
+  },
+  "validationSummary": {
+    "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "reportNumber": "DR-DJ-2024-000123",
+    "overallResult": "PASS",
+    "checks": [
+      {"check": "GPS_LOCATION", "result": "PASS", "details": "Within 100m tolerance"},
+      {"check": "TIMESTAMP_FRESHNESS", "result": "PASS", "details": "Photo 56 seconds old"},
+      {"check": "BOUNDARY_CHECK", "result": "PASS", "details": "Within dj.djibouti-ville"},
+      {"check": "DUPLICATE_IMAGE", "result": "PASS", "details": "No duplicates above 90%"},
+      {"check": "FRAUD_SCORE", "result": "PASS", "details": "Risk score 15 (LOW)"}
+    ],
+    "fraudScore": 15,
+    "fraudRiskLevel": "LOW"
+  },
+  "workflowTransition": {
+    "method": "POST",
+    "url": "http://egov-workflow-v2.egov:8109/egov-workflow-v2/egov-wf/process/_transition",
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734176210000,
+        "action": "_transition",
+        "msgId": "20241214123650|en_IN",
+        "authToken": "system-auth-token",
+        "userInfo": {
+          "uuid": "system-user-uuid",
+          "userName": "SYSTEM",
+          "roles": [{"code": "SYSTEM"}]
+        }
+      },
+      "ProcessInstances": [
+        {
+          "tenantId": "dj.djibouti-ville",
+          "businessService": "SDCRS",
+          "businessId": "DR-DJ-2024-000123",
+          "moduleName": "sdcrs-services",
+          "action": "AUTO_VALIDATE_PASS",
+          "comment": "Auto-validation passed. Fraud score: 15 (LOW)"
+        }
+      ]
+    }
+  },
+  "resultingState": {
+    "currentState": "PENDING_VALIDATION",
+    "action": "AUTO_VALIDATE_PASS",
+    "nextState": "PENDING_VERIFICATION"
+  }
+}

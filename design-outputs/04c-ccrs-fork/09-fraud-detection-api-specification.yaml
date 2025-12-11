@@ -1,0 +1,1645 @@
+openapi: 3.0.3
+info:
+  title: Fraud Detection Service API
+  description: |
+    API specification for the DIGIT Fraud Detection Service.
+
+    This is a **reusable, centralized service** that identifies potential fraud, abuse,
+    and quality issues in citizen applications across DIGIT platform modules (SDCRS, PGR, TL, etc.).
+
+    ## Overview
+    The Fraud Detection Service operates both synchronously (blocking) and asynchronously
+    (via Kafka) to analyze submissions, apply configurable fraud rules, and raise flags
+    for human review or automated rejection.
+
+    ## Key Features
+    - **Configurable Rules**: Fraud rules defined in MDMS, no code changes needed
+    - **Multi-Module Support**: Works with SDCRS, PGR, Trade License, and other DIGIT modules
+    - **Duplicate Detection**: Perceptual hashing (pHash) for image similarity
+    - **Velocity Analysis**: Detects abnormal submission rates
+    - **Geospatial Validation**: GPS spoofing detection, boundary validation
+    - **Risk Profiling**: Applicant risk scoring and penalty escalation
+
+    ## Authentication
+    All endpoints require JWT authentication via the `auth-token` header.
+
+    ## Rule Categories
+    | Code | Category | Description |
+    |------|----------|-------------|
+    | DQ | Data Quality | Missing, malformed, or inconsistent data |
+    | DUP | Duplicate | Same or similar submission already exists |
+    | LOC | Location | GPS spoofing, boundary violations |
+    | VEL | Velocity | Abnormal submission rate |
+    | TMP | Temporal | Timestamp manipulation, stale data |
+    | IDN | Identity | Account anomalies, impersonation |
+    | COL | Collusion | Coordinated fraud by multiple users |
+    | EVD | Evidence | Manipulated photos, metadata stripping |
+
+  version: 1.0.0
+  contact:
+    name: DIGIT Platform Team
+    email: fraud-detection@digit.org
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.ncr.digit.org/fraud-detection/v1
+    description: Production server
+  - url: https://staging.ncr.digit.org/fraud-detection/v1
+    description: Staging server
+  - url: http://localhost:8082/fraud-detection/v1
+    description: Local development
+
+tags:
+  - name: Fraud Check
+    description: Submit applications for fraud analysis
+  - name: Fraud Flags
+    description: Manage fraud flags raised during checks
+  - name: Rules
+    description: Query configured fraud detection rules
+  - name: Statistics
+    description: Fraud analytics and statistics
+  - name: Risk Profile
+    description: Applicant risk profile management
+
+paths:
+  # ============================================================================
+  # FRAUD CHECK - SYNCHRONOUS
+  # ============================================================================
+  /_check:
+    post:
+      tags:
+        - Fraud Check
+      summary: Perform synchronous fraud check
+      description: |
+        Submit an application for immediate fraud analysis. This is a blocking call
+        that returns the fraud check result synchronously.
+
+        **Use Cases:**
+        - Real-time validation during application submission
+        - Quick pre-check before processing
+
+        **Check Types:**
+        | Type | Description | Typical Time |
+        |------|-------------|--------------|
+        | QUICK | Essential checks only | 200-500ms |
+        | FULL | All applicable rules | 500-2000ms |
+        | DEEP | Full + pattern analysis | 2-10s |
+
+      operationId: performFraudCheck
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudCheckRequest'
+            examples:
+              sdcrsQuickCheck:
+                summary: Quick check for SDCRS report
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    ver: "1.0"
+                    ts: 1702300000000
+                    action: "_check"
+                    msgId: "check-001"
+                    authToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  fraudCheck:
+                    tenantId: "ncr"
+                    moduleCode: "SDCRS"
+                    businessService: "SDCRS"
+                    applicationId: "NCR-SDCRS-2024-000123"
+                    applicantId: "user-uuid-123"
+                    applicantType: "TEACHER"
+                    checkType: "QUICK"
+                    priority: "NORMAL"
+                    evidences:
+                      - type: "PHOTO"
+                        fileStoreId: "fs-uuid-dog-photo"
+                        purpose: "DOG_PHOTO"
+                        metadata:
+                          gpsLatitude: 11.5890
+                          gpsLongitude: 43.1456
+                          timestamp: 1702299000000
+                          deviceId: "device-123"
+                          exifPresent: true
+                      - type: "PHOTO"
+                        fileStoreId: "fs-uuid-selfie"
+                        purpose: "SELFIE"
+                        metadata:
+                          gpsLatitude: 11.5891
+                          gpsLongitude: 43.1457
+                          timestamp: 1702299100000
+                          deviceId: "device-123"
+                          exifPresent: true
+                    locationData:
+                      reportedLatitude: 11.5890
+                      reportedLongitude: 43.1456
+                      locality: "LOC-001"
+                      ward: "WARD-A"
+                      district: "CENTRAL"
+      responses:
+        '200':
+          description: Fraud check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudCheckResponse'
+              examples:
+                cleanResult:
+                  summary: No fraud detected
+                  value:
+                    ResponseInfo:
+                      apiId: "fraud-detection"
+                      ver: "1.0"
+                      ts: 1702300000500
+                      status: "successful"
+                    fraudCheckResult:
+                      id: "result-uuid-001"
+                      fraudCheckId: "check-uuid-001"
+                      applicationId: "NCR-SDCRS-2024-000123"
+                      status: "CLEAN"
+                      overallScore: 12
+                      riskLevel: "LOW"
+                      flagCount: 0
+                      flags: []
+                      recommendation: "ALLOW"
+                      processingTimeMs: 450
+                      rulesEvaluated: 15
+                      rulesPassed: 15
+                      rulesFailed: 0
+                flaggedResult:
+                  summary: Fraud flags raised
+                  value:
+                    ResponseInfo:
+                      apiId: "fraud-detection"
+                      ver: "1.0"
+                      ts: 1702300001200
+                      status: "successful"
+                    fraudCheckResult:
+                      id: "result-uuid-002"
+                      fraudCheckId: "check-uuid-002"
+                      applicationId: "NCR-SDCRS-2024-000124"
+                      status: "FLAGGED"
+                      overallScore: 72
+                      riskLevel: "HIGH"
+                      flagCount: 2
+                      flags:
+                        - id: "flag-uuid-001"
+                          ruleId: "SDCRS-003"
+                          ruleCode: "GPS_PHOTO_SELFIE_MISMATCH"
+                          category: "LOC"
+                          severity: "HIGH"
+                          score: 40
+                          status: "OPEN"
+                          details:
+                            message: "Dog photo GPS is 850m from selfie GPS"
+                            threshold: 500
+                            actualValue: 850
+                            unit: "meters"
+                        - id: "flag-uuid-002"
+                          ruleId: "SDCRS-001"
+                          ruleCode: "DOG_PHOTO_SELFIE_TIME_GAP"
+                          category: "TMP"
+                          severity: "MEDIUM"
+                          score: 25
+                          status: "OPEN"
+                          details:
+                            message: "Time gap between photos is 15 minutes"
+                            threshold: 10
+                            actualValue: 15
+                            unit: "minutes"
+                      recommendation: "HOLD_FOR_REVIEW"
+                      processingTimeMs: 1200
+                      rulesEvaluated: 15
+                      rulesPassed: 13
+                      rulesFailed: 2
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # FRAUD CHECK - ASYNCHRONOUS
+  # ============================================================================
+  /_checkAsync:
+    post:
+      tags:
+        - Fraud Check
+      summary: Submit asynchronous fraud check
+      description: |
+        Submit an application for asynchronous fraud analysis via Kafka.
+        Returns immediately with a check ID. Results are published to
+        `fraud-check-result` topic.
+
+        **Use Cases:**
+        - Non-blocking fraud analysis
+        - Deep pattern analysis
+        - Batch processing
+
+        **Result Notification:**
+        - Kafka topic: `fraud-check-result`
+        - Key: applicationId
+        - Callback URL (optional): POST with FraudCheckResult
+
+      operationId: submitAsyncFraudCheck
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudCheckAsyncRequest'
+            examples:
+              deepCheck:
+                summary: Deep analysis request
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    ver: "1.0"
+                    ts: 1702300000000
+                    action: "_checkAsync"
+                    msgId: "async-check-001"
+                    authToken: "..."
+                  fraudCheck:
+                    tenantId: "ncr"
+                    moduleCode: "SDCRS"
+                    applicationId: "NCR-SDCRS-2024-000123"
+                    applicantId: "user-uuid-123"
+                    checkType: "DEEP"
+                    priority: "HIGH"
+                    evidences: []
+                    locationData: {}
+                  callbackUrl: "https://api.ncr.digit.org/sdcrs/v1/_fraudCallback"
+      responses:
+        '202':
+          description: Fraud check request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudCheckAsyncResponse'
+              example:
+                ResponseInfo:
+                  apiId: "fraud-detection"
+                  ver: "1.0"
+                  ts: 1702300000100
+                  status: "successful"
+                fraudCheckId: "check-uuid-003"
+                status: "PENDING"
+                estimatedCompletionMs: 5000
+                resultTopic: "fraud-check-result"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # FRAUD FLAGS - SEARCH
+  # ============================================================================
+  /flags/_search:
+    post:
+      tags:
+        - Fraud Flags
+      summary: Search fraud flags
+      description: |
+        Search for fraud flags with various filters. Results are filtered based on user role.
+
+        **Role-Based Access:**
+        | Role | Visible Flags |
+        |------|---------------|
+        | VERIFIER | Flags for applications in their queue |
+        | MC_SUPERVISOR | Flags for their jurisdiction |
+        | DISTRICT_ADMIN | All flags in district |
+        | STATE_ADMIN | All flags in state |
+        | FRAUD_ANALYST | All flags (special role) |
+
+      operationId: searchFraudFlags
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudFlagSearchRequest'
+            examples:
+              searchOpenHighSeverity:
+                summary: Search open high-severity flags
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    ver: "1.0"
+                    ts: 1702300000000
+                    action: "_search"
+                    msgId: "flag-search-001"
+                    authToken: "..."
+                  searchCriteria:
+                    tenantId: "ncr"
+                    moduleCode: "SDCRS"
+                    status:
+                      - "OPEN"
+                      - "UNDER_REVIEW"
+                    severity:
+                      - "HIGH"
+                      - "CRITICAL"
+                    limit: 50
+                    offset: 0
+                    sortBy: "createdTime"
+                    sortOrder: "DESC"
+              searchByApplicant:
+                summary: Search flags for specific applicant
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    msgId: "flag-search-002"
+                    authToken: "..."
+                  searchCriteria:
+                    tenantId: "ncr"
+                    applicantIds:
+                      - "user-uuid-123"
+                    fromDate: 1701000000000
+                    toDate: 1702400000000
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudFlagSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # FRAUD FLAGS - GET BY ID
+  # ============================================================================
+  /flags/{flagId}:
+    get:
+      tags:
+        - Fraud Flags
+      summary: Get fraud flag by ID
+      description: Retrieve detailed information about a specific fraud flag.
+      operationId: getFraudFlag
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          description: The unique identifier of the fraud flag
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fraud flag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudFlagResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # FRAUD FLAGS - RESOLVE
+  # ============================================================================
+  /flags/_resolve:
+    post:
+      tags:
+        - Fraud Flags
+      summary: Resolve a fraud flag
+      description: |
+        Mark a fraud flag as resolved with appropriate resolution type.
+
+        **Resolution Types:**
+        | Type | Description |
+        |------|-------------|
+        | FALSE_POSITIVE | Flag was incorrect, application is legitimate |
+        | TRUE_POSITIVE | Fraud confirmed, action taken |
+        | INCONCLUSIVE | Cannot determine, escalate or allow with monitoring |
+        | DUPLICATE_FLAG | Already addressed by another flag |
+
+        **Required Roles:** `VERIFIER`, `FRAUD_ANALYST`, `DISTRICT_ADMIN`
+
+      operationId: resolveFraudFlag
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudFlagResolveRequest'
+            examples:
+              falsePositive:
+                summary: Mark as false positive
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    ver: "1.0"
+                    ts: 1702400000000
+                    action: "_resolve"
+                    msgId: "resolve-001"
+                    authToken: "..."
+                    userInfo:
+                      uuid: "verifier-uuid-001"
+                      roles:
+                        - code: "VERIFIER"
+                  flagResolution:
+                    flagId: "flag-uuid-001"
+                    resolution: "FALSE_POSITIVE"
+                    resolutionReason: "GPS drift is within acceptable range for mobile devices"
+                    action: "ALLOW_APPLICATION"
+              truePositive:
+                summary: Confirm fraud
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    msgId: "resolve-002"
+                    authToken: "..."
+                  flagResolution:
+                    flagId: "flag-uuid-002"
+                    resolution: "TRUE_POSITIVE"
+                    resolutionReason: "Same dog photo submitted by different teacher yesterday"
+                    action: "REJECT_APPLICATION"
+                    applyPenalty: true
+      responses:
+        '200':
+          description: Flag resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudFlagResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # FRAUD FLAGS - ESCALATE
+  # ============================================================================
+  /flags/_escalate:
+    post:
+      tags:
+        - Fraud Flags
+      summary: Escalate a fraud flag
+      description: |
+        Escalate a fraud flag to higher authority for review.
+
+        **Escalation Hierarchy:**
+        - VERIFIER → MC_SUPERVISOR
+        - MC_SUPERVISOR → DISTRICT_ADMIN
+        - DISTRICT_ADMIN → STATE_ADMIN
+        - STATE_ADMIN → FRAUD_ANALYST
+
+      operationId: escalateFraudFlag
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudFlagEscalateRequest'
+            examples:
+              escalateToAdmin:
+                summary: Escalate to district admin
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    ver: "1.0"
+                    ts: 1702400000000
+                    action: "_escalate"
+                    msgId: "escalate-001"
+                    authToken: "..."
+                  flagEscalation:
+                    flagId: "flag-uuid-001"
+                    escalateTo: "DISTRICT_ADMIN"
+                    reason: "Potential collusion detected, requires higher authority review"
+                    priority: "HIGH"
+      responses:
+        '200':
+          description: Flag escalated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudFlagResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # RULES - SEARCH
+  # ============================================================================
+  /rules/_search:
+    post:
+      tags:
+        - Rules
+      summary: Search configured fraud rules
+      description: |
+        Search for fraud detection rules configured in MDMS.
+        Useful for displaying active rules in dashboards.
+
+      operationId: searchFraudRules
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudRuleSearchRequest'
+            examples:
+              searchSdcrsRules:
+                summary: Search SDCRS-specific rules
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    msgId: "rule-search-001"
+                    authToken: "..."
+                  searchCriteria:
+                    tenantId: "ncr"
+                    moduleCode: "SDCRS"
+                    enabled: true
+      responses:
+        '200':
+          description: Rules list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudRuleSearchResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # STATISTICS
+  # ============================================================================
+  /stats/_aggregate:
+    post:
+      tags:
+        - Statistics
+      summary: Get fraud statistics
+      description: |
+        Aggregate fraud statistics for dashboards and analytics.
+
+        **Available Metrics:**
+        - Total flags by severity
+        - Flag resolution rates
+        - Top triggered rules
+        - Applicant risk distribution
+        - Module-wise fraud trends
+
+      operationId: getFraudStatistics
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudStatsRequest'
+            examples:
+              weeklyStats:
+                summary: Weekly fraud summary
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    msgId: "stats-001"
+                    authToken: "..."
+                  statsCriteria:
+                    tenantId: "ncr"
+                    moduleCode: "SDCRS"
+                    fromDate: 1701700000000
+                    toDate: 1702400000000
+                    groupBy:
+                      - "severity"
+                      - "category"
+                    metrics:
+                      - "totalFlags"
+                      - "resolutionRate"
+                      - "avgResolutionTime"
+      responses:
+        '200':
+          description: Fraud statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # RISK PROFILE
+  # ============================================================================
+  /applicant/_riskProfile:
+    post:
+      tags:
+        - Risk Profile
+      summary: Get applicant risk profile
+      description: |
+        Retrieve or create risk profile for an applicant.
+        Risk profiles track fraud history and penalty status.
+
+        **Risk Levels:**
+        | Level | Score Range | Description |
+        |-------|-------------|-------------|
+        | LOW | 0-25 | Normal user |
+        | MEDIUM | 26-50 | Some flags, monitored |
+        | HIGH | 51-75 | Multiple flags, restrictions may apply |
+        | CRITICAL | 76-100 | Suspected fraudster, blocked |
+
+        **Penalty Levels:**
+        | Level | Name | Duration |
+        |-------|------|----------|
+        | 1 | WARNING | N/A |
+        | 2 | COOLDOWN | 7 days |
+        | 3 | SUSPENSION | 30 days |
+        | 4 | BAN | Permanent |
+
+      operationId: getApplicantRiskProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskProfileRequest'
+            examples:
+              getProfile:
+                summary: Get risk profile
+                value:
+                  RequestInfo:
+                    apiId: "fraud-detection"
+                    msgId: "risk-profile-001"
+                    authToken: "..."
+                  riskProfileCriteria:
+                    tenantId: "ncr"
+                    applicantId: "user-uuid-123"
+      responses:
+        '200':
+          description: Applicant risk profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskProfileResponse'
+              example:
+                ResponseInfo:
+                  apiId: "fraud-detection"
+                  ver: "1.0"
+                  ts: 1702400000000
+                  status: "successful"
+                riskProfile:
+                  id: "profile-uuid-001"
+                  tenantId: "ncr"
+                  applicantId: "user-uuid-123"
+                  riskScore: 35
+                  riskLevel: "MEDIUM"
+                  totalApplications: 25
+                  flaggedApplications: 3
+                  confirmedFrauds: 1
+                  falsePositives: 2
+                  penaltyLevel: 1
+                  penaltyStatus: "WARNING"
+                  penaltyReason: "First confirmed fraud - warning issued"
+                  lastApplicationTime: 1702300000000
+                  lastFraudTime: 1701500000000
+                  canSubmit: true
+                  submissionRestriction: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+# ==============================================================================
+# COMPONENTS
+# ==============================================================================
+components:
+  # ============================================================================
+  # SECURITY SCHEMES
+  # ============================================================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from DIGIT User Service
+
+  # ============================================================================
+  # SCHEMAS
+  # ============================================================================
+  schemas:
+    # --------------------------------------------------------------------------
+    # Request/Response Wrappers
+    # --------------------------------------------------------------------------
+    RequestInfo:
+      type: object
+      description: DIGIT standard request metadata
+      required:
+        - apiId
+        - ver
+        - ts
+        - action
+        - msgId
+      properties:
+        apiId:
+          type: string
+          example: "fraud-detection"
+        ver:
+          type: string
+          example: "1.0"
+        ts:
+          type: integer
+          format: int64
+          description: Timestamp in epoch milliseconds
+        action:
+          type: string
+          example: "_check"
+        did:
+          type: string
+        key:
+          type: string
+        msgId:
+          type: string
+        authToken:
+          type: string
+          description: JWT authentication token
+        userInfo:
+          $ref: '#/components/schemas/UserInfo'
+
+    ResponseInfo:
+      type: object
+      description: DIGIT standard response metadata
+      properties:
+        apiId:
+          type: string
+        ver:
+          type: string
+        ts:
+          type: integer
+          format: int64
+        resMsgId:
+          type: string
+        msgId:
+          type: string
+        status:
+          type: string
+          enum: [successful, failed]
+
+    UserInfo:
+      type: object
+      description: Authenticated user information
+      properties:
+        id:
+          type: integer
+        uuid:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        name:
+          type: string
+        mobileNumber:
+          type: string
+        type:
+          type: string
+          enum: [CITIZEN, EMPLOYEE]
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        tenantId:
+          type: string
+
+    Role:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        tenantId:
+          type: string
+
+    AuditDetails:
+      type: object
+      description: Audit trail information
+      readOnly: true
+      properties:
+        createdBy:
+          type: string
+          format: uuid
+        createdTime:
+          type: integer
+          format: int64
+        lastModifiedBy:
+          type: string
+          format: uuid
+        lastModifiedTime:
+          type: integer
+          format: int64
+
+    # --------------------------------------------------------------------------
+    # Fraud Check Models
+    # --------------------------------------------------------------------------
+    FraudCheckRequest:
+      type: object
+      required:
+        - RequestInfo
+        - fraudCheck
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        fraudCheck:
+          $ref: '#/components/schemas/FraudCheck'
+
+    FraudCheckAsyncRequest:
+      type: object
+      required:
+        - RequestInfo
+        - fraudCheck
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        fraudCheck:
+          $ref: '#/components/schemas/FraudCheck'
+        callbackUrl:
+          type: string
+          format: uri
+          description: URL to POST results when check completes
+
+    FraudCheck:
+      type: object
+      description: Fraud check input payload
+      required:
+        - tenantId
+        - moduleCode
+        - applicationId
+        - applicantId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+          example: "ncr"
+        moduleCode:
+          type: string
+          description: DIGIT module code
+          enum: [SDCRS, PGR, TL, PT, WS]
+          example: "SDCRS"
+        businessService:
+          type: string
+          example: "SDCRS"
+        applicationId:
+          type: string
+          description: Application/report number
+          example: "NCR-SDCRS-2024-000123"
+        applicantId:
+          type: string
+          format: uuid
+          description: User UUID of the applicant
+        applicantType:
+          type: string
+          enum: [TEACHER, CITIZEN, BUSINESS]
+          example: "TEACHER"
+        checkType:
+          type: string
+          description: Type of fraud check to perform
+          enum: [QUICK, FULL, DEEP]
+          default: "FULL"
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, CRITICAL]
+          default: "NORMAL"
+        evidences:
+          type: array
+          items:
+            $ref: '#/components/schemas/FraudEvidence'
+        locationData:
+          $ref: '#/components/schemas/FraudLocationData'
+        additionalData:
+          type: object
+          description: Module-specific additional data
+          additionalProperties: true
+
+    FraudEvidence:
+      type: object
+      description: Evidence item for fraud analysis
+      properties:
+        type:
+          type: string
+          enum: [PHOTO, DOCUMENT, VIDEO]
+        fileStoreId:
+          type: string
+          description: Reference to DIGIT File Store
+        purpose:
+          type: string
+          description: Evidence purpose
+          enum: [DOG_PHOTO, SELFIE, CAPTURE_PHOTO, ID_PROOF, DOCUMENT]
+        metadata:
+          type: object
+          properties:
+            gpsLatitude:
+              type: number
+              format: double
+            gpsLongitude:
+              type: number
+              format: double
+            timestamp:
+              type: integer
+              format: int64
+              description: EXIF timestamp in epoch ms
+            deviceId:
+              type: string
+              description: Device identifier
+            exifPresent:
+              type: boolean
+              description: Whether EXIF metadata was present
+
+    FraudLocationData:
+      type: object
+      description: Location data for geospatial validation
+      properties:
+        reportedLatitude:
+          type: number
+          format: double
+        reportedLongitude:
+          type: number
+          format: double
+        locality:
+          type: string
+        ward:
+          type: string
+        district:
+          type: string
+
+    FraudCheckResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        fraudCheckResult:
+          $ref: '#/components/schemas/FraudCheckResult'
+
+    FraudCheckAsyncResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        fraudCheckId:
+          type: string
+          format: uuid
+          description: ID to track the async check
+        status:
+          type: string
+          enum: [PENDING, PROCESSING]
+        estimatedCompletionMs:
+          type: integer
+          description: Estimated time to complete in milliseconds
+        resultTopic:
+          type: string
+          description: Kafka topic where results will be published
+
+    FraudCheckResult:
+      type: object
+      description: Complete fraud check result
+      properties:
+        id:
+          type: string
+          format: uuid
+        fraudCheckId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+        status:
+          type: string
+          enum: [CLEAN, FLAGGED, REJECTED, ERROR]
+        overallScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Aggregate fraud risk score
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        flagCount:
+          type: integer
+          description: Number of fraud flags raised
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FraudFlag'
+        recommendation:
+          type: string
+          enum: [ALLOW, HOLD_FOR_REVIEW, REJECT, ESCALATE]
+        processingTimeMs:
+          type: integer
+          description: Time taken to process in milliseconds
+        rulesEvaluated:
+          type: integer
+        rulesPassed:
+          type: integer
+        rulesFailed:
+          type: integer
+        checksPerformed:
+          type: object
+          properties:
+            duplicateCheck:
+              type: boolean
+            velocityCheck:
+              type: boolean
+            geoCheck:
+              type: boolean
+            temporalCheck:
+              type: boolean
+            patternCheck:
+              type: boolean
+        hashes:
+          type: object
+          properties:
+            imageHash:
+              type: string
+              description: Perceptual hash of primary image
+            contentHash:
+              type: string
+              description: SHA256 hash of content
+
+    # --------------------------------------------------------------------------
+    # Fraud Flag Models
+    # --------------------------------------------------------------------------
+    FraudFlag:
+      type: object
+      description: Fraud flag raised during analysis
+      properties:
+        id:
+          type: string
+          format: uuid
+        fraudCheckId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        moduleCode:
+          type: string
+        applicationId:
+          type: string
+        applicantId:
+          type: string
+          format: uuid
+        ruleId:
+          type: string
+          description: ID of the triggered rule
+          example: "SDCRS-003"
+        ruleCode:
+          type: string
+          description: Code of the triggered rule
+          example: "GPS_PHOTO_SELFIE_MISMATCH"
+        category:
+          type: string
+          description: Fraud category
+          enum: [DQ, DUP, LOC, VEL, TMP, IDN, COL, EVD]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        status:
+          type: string
+          enum: [OPEN, UNDER_REVIEW, RESOLVED, DISMISSED, ESCALATED]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Score contribution to overall risk
+        details:
+          type: object
+          description: Detailed information about the flag
+          properties:
+            message:
+              type: string
+              description: Human-readable description
+            threshold:
+              type: number
+              description: Rule threshold that was exceeded
+            actualValue:
+              type: number
+              description: Actual value found
+            unit:
+              type: string
+              description: Unit of measurement
+            evidence:
+              type: object
+              description: Evidence data that triggered the flag
+        recommendedAction:
+          type: string
+          enum: [MANUAL_REVIEW, AUTO_REJECT, ESCALATE, ALLOW_WITH_WARNING]
+        autoAction:
+          type: string
+          description: Action automatically taken (if any)
+        resolution:
+          type: string
+          enum: [FALSE_POSITIVE, TRUE_POSITIVE, INCONCLUSIVE, DUPLICATE_FLAG]
+        resolutionReason:
+          type: string
+        resolverId:
+          type: string
+          format: uuid
+        resolvedTime:
+          type: integer
+          format: int64
+        escalatedTo:
+          type: string
+          description: Role escalated to
+        escalatedTime:
+          type: integer
+          format: int64
+        linkedFlagIds:
+          type: array
+          items:
+            type: string
+          description: Related fraud flags
+        linkedApplicationIds:
+          type: array
+          items:
+            type: string
+          description: Related applications
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+
+    FraudFlagSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+        - searchCriteria
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        searchCriteria:
+          $ref: '#/components/schemas/FraudFlagSearchCriteria'
+
+    FraudFlagSearchCriteria:
+      type: object
+      required:
+        - tenantId
+      properties:
+        tenantId:
+          type: string
+        moduleCode:
+          type: string
+        applicationIds:
+          type: array
+          items:
+            type: string
+        applicantIds:
+          type: array
+          items:
+            type: string
+        flagIds:
+          type: array
+          items:
+            type: string
+        ruleIds:
+          type: array
+          items:
+            type: string
+        status:
+          type: array
+          items:
+            type: string
+            enum: [OPEN, UNDER_REVIEW, RESOLVED, DISMISSED, ESCALATED]
+        severity:
+          type: array
+          items:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        category:
+          type: array
+          items:
+            type: string
+            enum: [DQ, DUP, LOC, VEL, TMP, IDN, COL, EVD]
+        fromDate:
+          type: integer
+          format: int64
+        toDate:
+          type: integer
+          format: int64
+        sortBy:
+          type: string
+          enum: [createdTime, severity, score]
+          default: createdTime
+        sortOrder:
+          type: string
+          enum: [ASC, DESC]
+          default: DESC
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+    FraudFlagSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        fraudFlags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FraudFlag'
+        totalCount:
+          type: integer
+
+    FraudFlagResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        fraudFlag:
+          $ref: '#/components/schemas/FraudFlag'
+
+    FraudFlagResolveRequest:
+      type: object
+      required:
+        - RequestInfo
+        - flagResolution
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        flagResolution:
+          type: object
+          required:
+            - flagId
+            - resolution
+            - resolutionReason
+          properties:
+            flagId:
+              type: string
+              format: uuid
+            resolution:
+              type: string
+              enum: [FALSE_POSITIVE, TRUE_POSITIVE, INCONCLUSIVE, DUPLICATE_FLAG]
+            resolutionReason:
+              type: string
+              maxLength: 1000
+            action:
+              type: string
+              enum: [ALLOW_APPLICATION, REJECT_APPLICATION, ESCALATE, NO_ACTION]
+            applyPenalty:
+              type: boolean
+              default: false
+              description: Apply penalty to applicant (for TRUE_POSITIVE)
+
+    FraudFlagEscalateRequest:
+      type: object
+      required:
+        - RequestInfo
+        - flagEscalation
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        flagEscalation:
+          type: object
+          required:
+            - flagId
+            - escalateTo
+            - reason
+          properties:
+            flagId:
+              type: string
+              format: uuid
+            escalateTo:
+              type: string
+              enum: [MC_SUPERVISOR, DISTRICT_ADMIN, STATE_ADMIN, FRAUD_ANALYST]
+            reason:
+              type: string
+              maxLength: 1000
+            priority:
+              type: string
+              enum: [NORMAL, HIGH, CRITICAL]
+              default: "NORMAL"
+
+    # --------------------------------------------------------------------------
+    # Rules Models
+    # --------------------------------------------------------------------------
+    FraudRuleSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+        - searchCriteria
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        searchCriteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            moduleCode:
+              type: string
+            category:
+              type: string
+            enabled:
+              type: boolean
+
+    FraudRuleSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        fraudRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/FraudRule'
+        totalCount:
+          type: integer
+
+    FraudRule:
+      type: object
+      description: Fraud detection rule from MDMS
+      properties:
+        id:
+          type: string
+          example: "SDCRS-003"
+        code:
+          type: string
+          example: "GPS_PHOTO_SELFIE_MISMATCH"
+        name:
+          type: string
+          example: "GPS Mismatch Between Photos"
+        description:
+          type: string
+        category:
+          type: string
+          enum: [DQ, DUP, LOC, VEL, TMP, IDN, COL, EVD]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        enabled:
+          type: boolean
+        applicableModules:
+          type: array
+          items:
+            type: string
+        condition:
+          type: object
+          description: Rule condition configuration
+        action:
+          type: object
+          description: Action to take when rule triggers
+
+    # --------------------------------------------------------------------------
+    # Statistics Models
+    # --------------------------------------------------------------------------
+    FraudStatsRequest:
+      type: object
+      required:
+        - RequestInfo
+        - statsCriteria
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        statsCriteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            moduleCode:
+              type: string
+            fromDate:
+              type: integer
+              format: int64
+            toDate:
+              type: integer
+              format: int64
+            groupBy:
+              type: array
+              items:
+                type: string
+                enum: [severity, category, status, ruleId, applicantType]
+            metrics:
+              type: array
+              items:
+                type: string
+                enum: [totalFlags, resolutionRate, avgResolutionTime, topRules, riskDistribution]
+
+    FraudStatsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        statistics:
+          type: object
+          properties:
+            totalFlags:
+              type: integer
+            openFlags:
+              type: integer
+            resolvedFlags:
+              type: integer
+            resolutionRate:
+              type: number
+              format: double
+              description: Percentage of resolved flags
+            avgResolutionTimeHours:
+              type: number
+              format: double
+            bySeverity:
+              type: object
+              additionalProperties:
+                type: integer
+            byCategory:
+              type: object
+              additionalProperties:
+                type: integer
+            topRules:
+              type: array
+              items:
+                type: object
+                properties:
+                  ruleId:
+                    type: string
+                  ruleCode:
+                    type: string
+                  count:
+                    type: integer
+
+    # --------------------------------------------------------------------------
+    # Risk Profile Models
+    # --------------------------------------------------------------------------
+    RiskProfileRequest:
+      type: object
+      required:
+        - RequestInfo
+        - riskProfileCriteria
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        riskProfileCriteria:
+          type: object
+          required:
+            - tenantId
+            - applicantId
+          properties:
+            tenantId:
+              type: string
+            applicantId:
+              type: string
+              format: uuid
+
+    RiskProfileResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        riskProfile:
+          $ref: '#/components/schemas/ApplicantRiskProfile'
+
+    ApplicantRiskProfile:
+      type: object
+      description: Applicant risk and penalty profile
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        applicantId:
+          type: string
+          format: uuid
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        totalApplications:
+          type: integer
+        flaggedApplications:
+          type: integer
+        confirmedFrauds:
+          type: integer
+        falsePositives:
+          type: integer
+        penaltyLevel:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: 0=None, 1=Warning, 2=Cooldown, 3=Suspension, 4=Ban
+        penaltyStatus:
+          type: string
+          enum: [NONE, WARNING, COOLDOWN, SUSPENDED, BANNED]
+        penaltyReason:
+          type: string
+        penaltyStartTime:
+          type: integer
+          format: int64
+        penaltyExpiryTime:
+          type: integer
+          format: int64
+        lastApplicationTime:
+          type: integer
+          format: int64
+        lastFraudTime:
+          type: integer
+          format: int64
+        lastReviewTime:
+          type: integer
+          format: int64
+        reviewedBy:
+          type: string
+          format: uuid
+        canSubmit:
+          type: boolean
+          description: Whether user is allowed to submit new applications
+        submissionRestriction:
+          type: string
+          description: Reason if canSubmit is false
+        additionalData:
+          type: object
+          additionalProperties: true
+
+    # --------------------------------------------------------------------------
+    # Error Models
+    # --------------------------------------------------------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        Errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        description:
+          type: string
+        params:
+          type: array
+          items:
+            type: string
+
+  # ============================================================================
+  # RESPONSES
+  # ============================================================================
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "VALIDATION_ERROR"
+                message: "tenantId is required"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "UNAUTHORIZED"
+                message: "Invalid or missing authentication token"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ResponseInfo:
+              status: "failed"
+            Errors:
+              - code: "NOT_FOUND"
+                message: "Fraud flag not found"

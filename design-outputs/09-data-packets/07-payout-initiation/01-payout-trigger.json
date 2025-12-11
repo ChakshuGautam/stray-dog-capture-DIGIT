@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "stage": "07-payout-initiation",
+    "step": 1,
+    "description": "MARK_CAPTURED triggers automatic payout initiation via Kafka",
+    "sender": "SDCRS Service",
+    "receiver": "UPI Payout Adapter (via Kafka)",
+    "trigger": "Report status changes to CAPTURED",
+    "previousPacket": "../06-field-visit/05-mark-captured.json",
+    "nextPacket": "02-initiate-payout-workflow.json",
+    "verified": true,
+    "source": "PayoutCallback.java, sdcrs-integration/src/main/java/org/digit/sdcrs/service/PayoutIntegrationService.java"
+  },
+  "kafkaMessage": {
+    "topic": "upi-payout-create",
+    "key": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+    "value": {
+      "reportId": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+      "reportNumber": "DR-DJ-2024-000123",
+      "tenantId": "dj.djibouti-ville",
+      "beneficiary": {
+        "userId": "teacher-uuid-001-abcd-efgh",
+        "name": "Amina Hassan",
+        "phone": "9876543210",
+        "upiVpa": "9876543210@upi"
+      },
+      "amount": 500,
+      "currency": "INR",
+      "purpose": "SDCRS_TEACHER_PAYOUT",
+      "referenceId": "SDCRS-DR-DJ-2024-000123",
+      "notes": {
+        "reportNumber": "DR-DJ-2024-000123",
+        "serviceType": "StrayDogAggressive",
+        "capturedAt": 1734188400000
+      }
+    },
+    "headers": {
+      "X-Correlation-Id": "corr-uuid-001",
+      "X-Tenant-Id": "dj.djibouti-ville"
+    }
+  },
+  "payoutConfig": {
+    "_comment": "From MDMS PayoutConfig.json",
+    "amount": 500,
+    "currency": "INR",
+    "dailyLimit": 5,
+    "monthlyCapPerTeacher": 5000,
+    "minReportsForPayout": 1
+  }
+}

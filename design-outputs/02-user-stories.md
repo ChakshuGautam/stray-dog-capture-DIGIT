@@ -60,7 +60,7 @@ Each story ID links to a detailed specification including acceptance criteria, U
 
 | ID | User Story |
 |----|------------|
-| [T-PAY-01](./user-stories/teacher/T-PAY-01.md) | As a **Teacher**, I want to see my points balance and breakdown (base points + bonuses), so that I understand my earnings. |
+| [T-PAY-01](./user-stories/teacher/T-PAY-01.md) | As a **Teacher**, I want to see my total earnings and pending payouts, so that I understand my earnings. |
 | [T-PAY-02](./user-stories/teacher/T-PAY-02.md) | As a **Teacher**, I want to see my payout history with transaction IDs, so that I can reconcile with my bank statements. |
 | [T-PAY-03](./user-stories/teacher/T-PAY-03.md) | As a **Teacher**, I want to receive SMS notifications when payouts are processed, so that I know when money has been transferred. |
 
@@ -103,17 +103,13 @@ Each story ID links to a detailed specification including acceptance criteria, U
 |----|-----------------|
 | [S-MC-01](./user-stories/system/S-MC-01.md) | The **System** shall route verified/approved applications to the Municipal Corporation queue based on geographic jurisdiction. |
 
-### 2.5 Award Points & Process Payout
+### 2.5 Process Payout
 
 | ID | System Behavior |
 |----|-----------------|
-| [S-PTS-01](./user-stories/system/S-PTS-01.md) | The **System** shall award 50 base points for each successfully captured/resolved incident. |
-| S-PTS-02 | The **System** shall award +25 bonus points for injured/aggressive dog reports. |
-| S-PTS-03 | The **System** shall award +25 bonus points for first report in a new locality. |
-| S-PTS-04 | The **System** shall apply streak bonus (+10%) for 7 consecutive days of reporting. |
-| S-PTS-05 | The **System** shall convert points to currency at 1 point = ₹1. |
-| S-PTS-06 | The **System** shall enforce monthly payout cap of ₹5,000 per teacher. |
-| S-PTS-07 | The **System** shall generate weekly payout files for treasury/DBT integration. |
+| [S-PAY-01](./user-stories/system/S-PAY-01.md) | The **System** shall award ₹500 fixed payout for each successfully captured/resolved incident. |
+| S-PAY-02 | The **System** shall enforce monthly payout cap of ₹5,000 per teacher. |
+| S-PAY-03 | The **System** shall generate weekly payout files for treasury/DBT integration. |
 
 ### 2.6 Send Notification (Automated)
 
@@ -213,7 +209,7 @@ Each story ID links to a detailed specification including acceptance criteria, U
 | [DA-01](./user-stories/district-admin/DA-01.md) | As a **District Administrator**, I want to see a comprehensive dashboard with key metrics, so that I can monitor program activity at a glance. | Dashboard Overview |
 | [DA-02](./user-stories/district-admin/DA-02.md) | As a **District Administrator**, I want to see submission volume trends and verification funnel metrics, so that I can identify bottlenecks. | Submission & Verification Metrics |
 | [DA-03](./user-stories/district-admin/DA-03.md) | As a **District Administrator**, I want to monitor MC action rates and pending cases, so that I can ensure downstream accountability. | MC Action Monitoring |
-| [DA-04](./user-stories/district-admin/DA-04.md) | As a **District Administrator**, I want to see a leaderboard of top-performing blocks and teachers, so that I can recognize high performers. | Teacher Leaderboard |
+| [DA-04](./user-stories/district-admin/DA-04.md) | As a **District Administrator**, I want to see top-performing blocks by submission volume and resolution rate, so that I can identify successful areas. | Performance Metrics |
 | [DA-05](./user-stories/district-admin/DA-05.md) | As a **District Administrator**, I want to manage verifier accounts and monitor their performance, so that verification quality is maintained. | Verifier Management |
 | [DA-06](./user-stories/district-admin/DA-06.md) | As a **District Administrator**, I want to see fraud indicators and suspicious patterns, so that I can identify and address misuse. | Fraud Detection Dashboard |
 | [DA-07](./user-stories/district-admin/DA-07.md) | As a **District Administrator**, I want to generate and export reports, so that I can share them in meetings and with stakeholders. | Report Generation |
@@ -240,12 +236,12 @@ Each story ID links to a detailed specification including acceptance criteria, U
 
 | Resolution Type | Teacher Payout | Condition |
 |-----------------|----------------|-----------|
-| Captured | ₹500 | Dog successfully captured by MC |
-| Owner Claimed | ₹250 | Owner identified and claimed dog |
-| UTL Resolved | ₹100 | Dog not found but area verified |
+| Captured/Resolved | ₹500 | Dog successfully captured/resolved by MC |
+| Unable to Locate | ₹0 | Dog not found at location |
 | Rejected | ₹0 | Invalid or fraudulent submission |
 
 **Monthly Cap**: ₹5,000 per teacher
+**Fixed Rate**: ₹500 per successfully resolved incident
 
 ---
 
@@ -254,10 +250,10 @@ Each story ID links to a detailed specification including acceptance criteria, U
 | Category | Stories | Priority |
 |----------|---------|----------|
 | Teacher | 17 | Authentication, Submission, Offline, Status, Payout |
-| System | 16 | Validation, Auto-Reject, Routing, Points, Notifications |
+| System | 12 | Validation, Auto-Reject, Routing, Payouts, Notifications |
 | Verifier | 12 | Review, Approve, Reject, Notifications |
 | MC Officer | 13 | View, Field, Capture, UTL, Notifications |
-| District Admin | 7 | Dashboard, Metrics, Leaderboard, Fraud, Reports |
+| District Admin | 7 | Dashboard, Metrics, Performance, Fraud, Reports |
 | State Admin | 7 | Statewide Metrics, Comparison, Budget, Fraud, Config, Alerts |
 
 ---

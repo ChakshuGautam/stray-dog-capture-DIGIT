@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "stage": "11-edge-cases",
+    "step": 6,
+    "description": "Supervisor reassigns report to different MC Officer",
+    "sender": "MC Supervisor Web Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Original officer unavailable, supervisor reassigns",
+    "previousPacket": "../05-assignment/03-assign-action.json",
+    "nextPacket": null,
+    "verified": true,
+    "source": "BusinessService-with-UPI.json - REASSIGN action"
+  },
+  "context": {
+    "currentAssignment": {
+      "officerId": "mco-uuid-001",
+      "officerName": "Ibrahim Ali",
+      "assignedAt": 1734183800000
+    },
+    "reassignReason": "Officer on emergency leave"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer supervisor-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "userInfo": {
+          "uuid": "sup-uuid-001",
+          "userName": "SUP001",
+          "roles": [{"code": "MC_SUPERVISOR"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "assignedOfficerId": "mco-uuid-002",
+          "assignedOfficerName": "Yusuf Mohammed",
+          "workflow": {
+            "action": "REASSIGN",
+            "assignee": ["mco-uuid-002"],
+            "comment": "Reassigned from Ibrahim Ali to Yusuf Mohammed due to emergency leave"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "status": "ASSIGNED",
+          "assignedOfficerId": "mco-uuid-002",
+          "assignedOfficerName": "Yusuf Mohammed",
+          "assignedAt": 1734190000000
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "ASSIGNED",
+    "action": "REASSIGN",
+    "nextState": "ASSIGNED",
+    "allowedRoles": ["MC_SUPERVISOR"]
+  },
+  "notifications": {
+    "previousOfficer": {
+      "sms": "Report DR-DJ-2024-000123 has been reassigned to another officer."
+    },
+    "newOfficer": {
+      "sms": "New assignment: Report DR-DJ-2024-000123 (Aggressive dog near Govt High School). Please respond within 24 hours."
+    }
+  }
+}

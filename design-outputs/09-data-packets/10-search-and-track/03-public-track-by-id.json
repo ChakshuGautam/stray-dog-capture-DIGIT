@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "stage": "10-search-and-track",
+    "step": 3,
+    "description": "Public tracking of report using tracking ID (no login required)",
+    "sender": "Public Web/App",
+    "receiver": "SDCRS Service",
+    "trigger": "Anyone enters tracking ID to check status",
+    "previousPacket": null,
+    "nextPacket": null,
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - trackingId filter, _track endpoint"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_track",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734200000000,
+        "msgId": "20241214180000|en_IN"
+      },
+      "trackingId": "ABC12345"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReport": {
+        "reportNumber": "DR-DJ-2024-000123",
+        "trackingId": "ABC12345",
+        "status": "RESOLVED",
+        "statusLabel": "Resolved - Dog Captured",
+        "location": {
+          "locality": "Djibouti Centre",
+          "wardCode": "W005"
+        },
+        "timeline": [
+          {"status": "Report Submitted", "date": "2024-12-14", "time": "10:30 AM"},
+          {"status": "Under Review", "date": "2024-12-14", "time": "10:31 AM"},
+          {"status": "Verified", "date": "2024-12-14", "time": "11:30 AM"},
+          {"status": "Team Assigned", "date": "2024-12-14", "time": "12:30 PM"},
+          {"status": "Field Visit Started", "date": "2024-12-14", "time": "01:25 PM"},
+          {"status": "Dog Captured", "date": "2024-12-14", "time": "01:40 PM"},
+          {"status": "Resolved", "date": "2024-12-14", "time": "01:44 PM"}
+        ],
+        "createdAt": "2024-12-14T10:30:01Z",
+        "resolvedAt": "2024-12-14T13:44:00Z"
+      }
+    }
+  },
+  "privacyNote": {
+    "_comment": "Public tracking shows limited info - no reporter details, no exact address",
+    "hiddenFields": ["reporterId", "reporterName", "reporterPhone", "exactAddress", "latitude", "longitude", "payoutDetails"]
+  }
+}

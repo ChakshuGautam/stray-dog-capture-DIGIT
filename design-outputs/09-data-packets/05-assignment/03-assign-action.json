@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "stage": "05-assignment",
+    "step": 3,
+    "description": "Supervisor assigns report to MC Officer",
+    "sender": "MC Supervisor Web Portal",
+    "receiver": "SDCRS Service → Workflow Service",
+    "trigger": "Supervisor selects officer and clicks 'Assign'",
+    "previousPacket": "02-available-officers.json",
+    "nextPacket": "04-officer-notification.json",
+    "verified": true,
+    "source": "DogReport.java - assignedOfficerId, BusinessService-with-UPI.json - ASSIGN action"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_update",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer supervisor-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734183800000,
+        "action": "_update",
+        "msgId": "20241214143200|en_IN",
+        "userInfo": {
+          "id": 24400,
+          "uuid": "sup-uuid-001",
+          "userName": "SUP001",
+          "name": "Mohammed Farah",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "MC_SUPERVISOR"}]
+        }
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "tenantId": "dj.djibouti-ville",
+          "assignedOfficerId": "mco-uuid-001",
+          "assignedOfficerName": "Ibrahim Ali",
+          "workflow": {
+            "action": "ASSIGN",
+            "assignee": ["mco-uuid-001"],
+            "comment": "Assigned to Ibrahim Ali for Ward 5 coverage"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "status": "ASSIGNED",
+          "assignedOfficerId": "mco-uuid-001",
+          "assignedOfficerName": "Ibrahim Ali",
+          "assignedAt": 1734183800000
+        }
+      ]
+    }
+  },
+  "workflowTransition": {
+    "currentState": "VERIFIED",
+    "action": "ASSIGN",
+    "nextState": "ASSIGNED",
+    "allowedRoles": ["MC_SUPERVISOR"]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "stage": "04-verification",
+    "step": 1,
+    "description": "Verifier opens inbox and sees reports pending verification",
+    "sender": "Verifier Web Portal",
+    "receiver": "SDCRS Service",
+    "trigger": "Verifier logs in and views inbox",
+    "previousPacket": "../03-auto-validation/08-validation-result-pass.json",
+    "nextPacket": "02-report-detail-view.json",
+    "verified": true,
+    "source": "DogReportSearchCriteria.java - status filter"
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://sdcrs-services.egov:8095/sdcrs-services/v1/report/_search",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer verifier-jwt-token..."
+    },
+    "body": {
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "ts": 1734180000000,
+        "action": "_search",
+        "msgId": "20241214133000|en_IN",
+        "authToken": "verifier-jwt-token...",
+        "userInfo": {
+          "id": 24300,
+          "uuid": "ver-uuid-001-abcd-efgh",
+          "userName": "V001",
+          "name": "Ahmed Hassan",
+          "tenantId": "dj.djibouti-ville",
+          "roles": [{"code": "VERIFIER"}]
+        }
+      },
+      "searchCriteria": {
+        "tenantId": "dj.djibouti-ville",
+        "status": ["PENDING_VERIFICATION"],
+        "sortBy": "createdTime",
+        "sortOrder": "ASC",
+        "offset": 0,
+        "limit": 20
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ResponseInfo": {
+        "status": "successful"
+      },
+      "DogReports": [
+        {
+          "id": "dr-uuid-001-abcd-efgh-ijkl-mnop",
+          "reportNumber": "DR-DJ-2024-000123",
+          "trackingId": "ABC12345",
+          "serviceType": "StrayDogAggressive",
+          "status": "PENDING_VERIFICATION",
+          "reporterName": "Ravi Kumar",
+          "reporterSchool": "Govt High School Djibouti",
+          "location": {
+            "locality": "Djibouti Centre",
+            "address": "Near Govt High School Main Gate"
+          },
+          "auditDetails": {
+            "createdTime": 1734176201000
+          }
+        },
+        {
+          "id": "dr-uuid-002-wxyz",
+          "reportNumber": "DR-DJ-2024-000124",
+          "trackingId": "DEF67890",
+          "serviceType": "StrayDogInjured",
+          "status": "PENDING_VERIFICATION",
+          "reporterName": "Sara Ali",
+          "reporterSchool": "Govt Primary School Arhiba",
+          "location": {
+            "locality": "Arhiba",
+            "address": "Near Community Center"
+          },
+          "auditDetails": {
+            "createdTime": 1734177500000
+          }
+        }
+      ],
+      "TotalCount": 2
+    }
+  }
+}

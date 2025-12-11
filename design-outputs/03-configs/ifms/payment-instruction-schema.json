@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Payment Instruction Schema for SDCRS",
+  "description": "Schema for Payment Instruction (PI) entity used in JIT treasury integration",
+  "definitions": {
+    "PaymentInstruction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Payment Instruction"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant identifier (e.g., 'ncr')"
+        },
+        "piNumber": {
+          "type": "string",
+          "description": "Payment Instruction number (e.g., 'SDCRS/PI/2024-25/000001')"
+        },
+        "parentPiNumber": {
+          "type": "string",
+          "description": "Parent PI number for revised PIs"
+        },
+        "piType": {
+          "type": "string",
+          "enum": ["ORIGINAL", "REVISED"],
+          "description": "Type of Payment Instruction"
+        },
+        "piDate": {
+          "type": "integer",
+          "description": "PI creation date in epoch milliseconds"
+        },
+        "piStatus": {
+          "type": "string",
+          "enum": ["INITIATED", "INPROCESS", "COMPLETED", "REJECTED"],
+          "description": "Current status of the Payment Instruction"
+        },
+        "schemeCode": {
+          "type": "string",
+          "description": "Scheme code (e.g., 'SDCRS001')"
+        },
+        "ssuCode": {
+          "type": "string",
+          "description": "Sub-Scheme Unit code"
+        },
+        "ddoCode": {
+          "type": "string",
+          "description": "Drawing and Disbursing Officer code"
+        },
+        "hoaCode": {
+          "type": "string",
+          "description": "Head of Account code"
+        },
+        "sanctionNumber": {
+          "type": "string",
+          "description": "Budget sanction number"
+        },
+        "referenceId": {
+          "type": "string",
+          "description": "Reference to the source entity (Dog Report ID)"
+        },
+        "numBeneficiaries": {
+          "type": "integer",
+          "description": "Number of beneficiaries in this PI"
+        },
+        "grossAmount": {
+          "type": "number",
+          "description": "Total gross amount"
+        },
+        "netAmount": {
+          "type": "number",
+          "description": "Net amount after deductions"
+        },
+        "beneficiaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Beneficiary"
+          },
+          "description": "List of beneficiaries"
+        },
+        "auditDetails": {
+          "$ref": "#/definitions/AuditDetails"
+        }
+      },
+      "required": ["tenantId", "piNumber", "piType", "schemeCode", "beneficiaries"]
+    },
+    "Beneficiary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the beneficiary record"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant identifier"
+        },
+        "beneficiaryId": {
+          "type": "string",
+          "description": "Beneficiary identifier (Teacher ID)"
+        },
+        "beneficiaryType": {
+          "type": "string",
+          "enum": ["INDIVIDUAL", "ORGANIZATION"],
+          "default": "INDIVIDUAL"
+        },
+        "referenceId": {
+          "type": "string",
+          "description": "Reference to source record (Dog Report ID)"
+        },
+        "bankAccountId": {
+          "type": "string",
+          "description": "Reference to bank account in Individual/Organization service"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/BankAccount"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Payout amount for this beneficiary"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["PENDING", "INITIATED", "INPROCESS", "SUCCESS", "FAILED"],
+          "description": "Individual payment status for this beneficiary"
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Bank transaction ID upon successful payment"
+        },
+        "transactionDate": {
+          "type": "integer",
+          "description": "Transaction date in epoch milliseconds"
+        },
+        "failureReason": {
+          "type": "string",
+          "description": "Reason for payment failure (if applicable)"
+        }
+      },
+      "required": ["tenantId", "beneficiaryId", "amount"]
+    },
+    "BankAccount": {
+      "type": "object",
+      "properties": {
+        "accountNumber": {
+          "type": "string",
+          "description": "Bank account number"
+        },
+        "accountHolderName": {
+          "type": "string",
+          "description": "Name of account holder"
+        },
+        "ifscCode": {
+          "type": "string",
+          "description": "IFSC code of the bank branch"
+        },
+        "bankName": {
+          "type": "string",
+          "description": "Name of the bank"
+        },
+        "branchName": {
+          "type": "string",
+          "description": "Name of the branch"
+        },
+        "accountType": {
+          "type": "string",
+          "enum": ["SAVINGS", "CURRENT"],
+          "default": "SAVINGS"
+        }
+      },
+      "required": ["accountNumber", "ifscCode"]
+    },
+    "AuditDetails": {
+      "type": "object",
+      "properties": {
+        "createdBy": {
+          "type": "string"
+        },
+        "createdTime": {
+          "type": "integer"
+        },
+        "lastModifiedBy": {
+          "type": "string"
+        },
+        "lastModifiedTime": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "$ref": "#/definitions/PaymentInstruction"
+}

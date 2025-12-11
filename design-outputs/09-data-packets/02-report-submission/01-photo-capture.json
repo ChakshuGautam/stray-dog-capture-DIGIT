@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "stage": "02-report-submission",
+    "step": 1,
+    "description": "Teacher captures photo of stray dog using mobile camera",
+    "sender": "Mobile Camera",
+    "receiver": "SDCRS Mobile App",
+    "trigger": "Teacher taps 'Report New Dog' and camera opens",
+    "previousPacket": "../01-teacher-login/13-login-complete-app-state.json",
+    "nextPacket": "02-photo-exif-extracted.json",
+    "verified": false,
+    "assumption": "EXIF data structure based on standard JPEG metadata"
+  },
+  "photoCapture": {
+    "fileName": "IMG_20241214_123045.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 2456789,
+    "dimensions": {
+      "width": 4032,
+      "height": 3024
+    }
+  },
+  "exifData": {
+    "_comment": "Raw EXIF data extracted from photo",
+    "Make": "Samsung",
+    "Model": "SM-A525F",
+    "DateTime": "2024:12:14 12:30:45",
+    "DateTimeOriginal": "2024:12:14 12:30:45",
+    "GPSLatitude": "11.5886",
+    "GPSLongitude": "43.1456",
+    "GPSLatitudeRef": "N",
+    "GPSLongitudeRef": "E",
+    "GPSAltitude": "15.5",
+    "GPSDateStamp": "2024:12:14",
+    "GPSTimeStamp": "09:30:45"
+  },
+  "deviceGps": {
+    "_comment": "Current device GPS (may differ slightly from photo EXIF)",
+    "latitude": 11.5887,
+    "longitude": 43.1455,
+    "accuracy": 8.5,
+    "timestamp": 1734176145000
+  }
+}

@@ -1,0 +1,181 @@
+serviceMaps:
+  serviceName: sdcrs-services
+  mappings:
+    - version: 1.0
+      name: sdcrs-report-indexer
+      description: Indexes dog reports to Elasticsearch for dashboard analytics
+      fromTopic: sdcrs-report-indexer
+      isTransaction: false
+      isBatch: true
+      batchSize: 100
+      index: sdcrs-report-index
+      type: general
+      customJsonMapping:
+        indexMapping:
+          # Core Identification
+          - jsonPath: $.DogReport.id
+            fieldName: id
+            type: keyword
+          - jsonPath: $.DogReport.tenantId
+            fieldName: tenantId
+            type: keyword
+          - jsonPath: $.DogReport.reportNumber
+            fieldName: reportNumber
+            type: keyword
+          - jsonPath: $.DogReport.trackingId
+            fieldName: trackingId
+            type: keyword
+          - jsonPath: $.DogReport.reportType
+            fieldName: reportType
+            type: keyword
+          - jsonPath: $.DogReport.status
+            fieldName: status
+            type: keyword
+
+          # Reporter Details
+          - jsonPath: $.DogReport.reporter.id
+            fieldName: reporterId
+            type: keyword
+          - jsonPath: $.DogReport.reporter.name
+            fieldName: reporterName
+            type: text
+
+          # Location Details (Hierarchical)
+          - jsonPath: $.DogReport.location.latitude
+            fieldName: latitude
+            type: float
+          - jsonPath: $.DogReport.location.longitude
+            fieldName: longitude
+            type: float
+          - jsonPath: $.DogReport.location.localityCode
+            fieldName: localityCode
+            type: keyword
+          - jsonPath: $.DogReport.location.wardCode
+            fieldName: wardCode
+            type: keyword
+          - jsonPath: $.DogReport.location.wardName
+            fieldName: wardName
+            type: keyword
+          - jsonPath: $.DogReport.location.districtCode
+            fieldName: districtCode
+            type: keyword
+          - jsonPath: $.DogReport.location.districtName
+            fieldName: districtName
+            type: keyword
+          - jsonPath: $.DogReport.location
+            fieldName: location
+            type: geo_point
+            expression: >
+              ${location.latitude},${location.longitude}
+
+          # Dog Details
+          - jsonPath: $.DogReport.dogDetails.count
+            fieldName: dogCount
+            type: integer
+          - jsonPath: $.DogReport.dogDetails.isAggressive
+            fieldName: isAggressive
+            type: boolean
+
+          # Verification Details
+          - jsonPath: $.DogReport.verification.verifierId
+            fieldName: verifierId
+            type: keyword
+          - jsonPath: $.DogReport.verification.verifierName
+            fieldName: verifierName
+            type: text
+          - jsonPath: $.DogReport.verification.verifiedTime
+            fieldName: verifiedTime
+            type: date
+            format: epoch_millis
+
+          # Assignment Details
+          - jsonPath: $.DogReport.assignment.mcOfficerId
+            fieldName: assignedMcId
+            type: keyword
+          - jsonPath: $.DogReport.assignment.mcOfficerName
+            fieldName: assignedMcName
+            type: text
+          - jsonPath: $.DogReport.assignment.assignedTime
+            fieldName: assignedTime
+            type: date
+            format: epoch_millis
+          - jsonPath: $.DogReport.assignment.fieldVisitStartTime
+            fieldName: fieldVisitStartTime
+            type: date
+            format: epoch_millis
+
+          # Resolution Details
+          - jsonPath: $.DogReport.resolution.type
+            fieldName: resolutionType
+            type: keyword
+          - jsonPath: $.DogReport.resolution.time
+            fieldName: resolutionTime
+            type: date
+            format: epoch_millis
+
+          # Payout Details
+          - jsonPath: $.DogReport.payout.status
+            fieldName: payoutStatus
+            type: keyword
+          - jsonPath: $.DogReport.payout.amount
+            fieldName: payoutAmount
+            type: float
+          - jsonPath: $.DogReport.payout.time
+            fieldName: payoutTime
+            type: date
+            format: epoch_millis
+
+          # SLA Tracking
+          - jsonPath: $.DogReport.slaBreached
+            fieldName: slaBreached
+            type: boolean
+          - jsonPath: $.DogReport.slaBreachReason
+            fieldName: slaBreachReason
+            type: keyword
+
+          # Fraud Prevention
+          - jsonPath: $.DogReport.fraudFlags
+            fieldName: fraudFlags
+            type: keyword
+          - jsonPath: $.DogReport.penaltyType
+            fieldName: penaltyType
+            type: keyword
+
+          # Rejection
+          - jsonPath: $.DogReport.rejectionReason
+            fieldName: rejectionReason
+            type: keyword
+
+          # Audit Details
+          - jsonPath: $.DogReport.auditDetails.createdBy
+            fieldName: createdBy
+            type: keyword
+          - jsonPath: $.DogReport.auditDetails.createdTime
+            fieldName: createdTime
+            type: date
+            format: epoch_millis
+          - jsonPath: $.DogReport.auditDetails.lastModifiedBy
+            fieldName: lastModifiedBy
+            type: keyword
+          - jsonPath: $.DogReport.auditDetails.lastModifiedTime
+            fieldName: lastModifiedTime
+            type: date
+            format: epoch_millis
+
+          # Computed Fields for Analytics
+          - fieldName: timeToVerification
+            type: long
+            expression: >
+              ${verifiedTime} != null ? ${verifiedTime} - ${createdTime} : null
+          - fieldName: timeToAssignment
+            type: long
+            expression: >
+              ${assignedTime} != null ? ${assignedTime} - ${createdTime} : null
+          - fieldName: timeToFieldVisit
+            type: long
+            expression: >
+              ${fieldVisitStartTime} != null && ${assignedTime} != null ? ${fieldVisitStartTime} - ${assignedTime} : null
+          - fieldName: timeToResolution
+            type: long
+            expression: >
+              ${resolutionTime} != null ? ${resolutionTime} - ${createdTime} : null
