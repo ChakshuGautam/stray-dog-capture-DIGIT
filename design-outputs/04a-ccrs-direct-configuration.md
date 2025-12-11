@@ -10,6 +10,14 @@ This document describes how to implement SDCRS by **directly using CCRS (Citizen
 
 **Approach:** Configure CCRS with new ServiceDefs, custom workflow, and use `additionalDetail` JSONB for dog-specific data.
 
+### Configuration Files
+
+All configuration files for this approach are available in:
+- **[`04a-ccrs/`](./04a-ccrs/)** - Main directory with all CCRS configuration files
+- **[`04a-ccrs/README.md`](./04a-ccrs/README.md)** - Directory overview and file descriptions
+- **[`04a-ccrs/configs/`](./04a-ccrs/configs/)** - Schema and template configurations
+- **[`04a-ccrs/data/ncr/`](./04a-ccrs/data/ncr/)** - MDMS data files (ServiceDefs, Workflow, Roles)
+
 ---
 
 ## Architecture Decision
@@ -27,7 +35,7 @@ This document describes how to implement SDCRS by **directly using CCRS (Citizen
 
 ## 1. ServiceDefs Configuration
 
-### File: `RAINMAKER-PGR.ServiceDefs.json`
+**Config File:** [`RAINMAKER-PGR/ServiceDefs.json`](./04a-ccrs/data/ncr/RAINMAKER-PGR/ServiceDefs.json)
 
 Add the following stray dog report types to the existing ServiceDefs:
 
@@ -84,7 +92,7 @@ Add the following stray dog report types to the existing ServiceDefs:
 
 ## 2. Workflow Configuration
 
-### File: `SdcrsWorkflowConfig.json`
+**Config File:** [`Workflow/SdcrsWorkflowConfig.json`](./04a-ccrs/data/ncr/Workflow/SdcrsWorkflowConfig.json)
 
 Custom workflow for SDCRS that maps to the process workflow:
 
@@ -371,6 +379,8 @@ Custom workflow for SDCRS that maps to the process workflow:
 
 ## 3. Role Mapping
 
+**Config File:** [`configs/role-mapping.json`](./04a-ccrs/configs/role-mapping.json)
+
 ### SDCRS Roles → PGR Roles
 
 | SDCRS Role | PGR Role | Description |
@@ -385,7 +395,7 @@ Custom workflow for SDCRS that maps to the process workflow:
 
 ### New Roles to Add
 
-If using SDCRS-specific role codes, add to `ACCESSCONTROL-ROLES/roles.json`:
+If using SDCRS-specific role codes, add to [`ACCESSCONTROL-ROLES/roles.json`](./04a-ccrs/data/ncr/ACCESSCONTROL-ROLES/roles.json):
 
 ```json
 [
@@ -415,6 +425,8 @@ If using SDCRS-specific role codes, add to `ACCESSCONTROL-ROLES/roles.json`:
 ---
 
 ## 4. additionalDetail JSONB Structure
+
+**Schema File:** [`configs/additionalDetail-schema.json`](./04a-ccrs/configs/additionalDetail-schema.json)
 
 Dog-specific data stored in PGR's `additionalDetail` field:
 
@@ -567,7 +579,7 @@ For custom analytics on dog-specific fields, can add custom indexer mappings for
 
 ## 9. Notification Templates
 
-### File: `channel/templates.json`
+**Config File:** [`configs/notification-templates.json`](./04a-ccrs/configs/notification-templates.json)
 
 Add SDCRS-specific notification templates:
 
@@ -679,5 +691,5 @@ sdcrs-payout-consumer/
 ---
 
 *Document Version: 1.0*
-*Last Updated: December 2024*
+*Last Updated: December 2025*
 *Option: A - CCRS Direct Configuration*
